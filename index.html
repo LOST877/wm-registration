@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wheel Masters - Весенний Лайт</title>
+  <!-- Подключаем шрифты Oswald (заголовки) и Roboto (основной текст) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Шапка -->
+  <header class="header">
+    <div class="container header-container">
+      <div class="logo">
+        <img src="/assets/wm_logo.webp" alt="Wheel Masters Logo" class="logo-img">
+        <span class="logo-text">WHEEL<br>MASTERS</span>
+      </div>
+      <nav class="nav">
+        <ul class="nav-list">
+          <li><a href="#hero" class="nav-link active">Главная</a></li>
+          <li><a href="#about" class="nav-link">О гонке</a></li>
+          <li><a href="#registration" class="nav-link">Регистрация</a></li>
+          <li><a href="#sponsors" class="nav-link">Спонсоры</a></li>
+          <li><a href="#footer" class="nav-link">Контакты</a></li>
+        </ul>
+      </nav>
+      <!-- Кнопка мобильного меню (бургер) -->
+      <button class="mobile-menu-btn" id="mobile-btn">☰</button>
+    </div>
+  </header>
+
+  <!-- Главный блок (Hero) -->
+  <section id="hero" class="hero">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <h1 class="hero-title">ВЕСЕННИЙ ЛАЙТ</h1>
+      <h2 class="hero-subtitle">КРОСС-КАНТРИ. ВОРОНЕЖ.<br>ОТКРЫТА РЕГИСТРАЦИЯ</h2>
+      <div class="hero-buttons">
+        <a href="#registration" class="btn btn-primary">ЗАРЕГИСТРИРОВАТЬСЯ</a>
+        <a href="#about" class="btn btn-outline">ИНФО</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- О гонке -->
+  <section id="about" class="about section">
+    <div class="container">
+      <h2 class="section-title">О ГОНКЕ</h2>
+      <div class="about-card">
+        <div class="info-item">
+          <strong>Дата:</strong> 16 мая 2026г. Начало регистрации 10:00. Старт в 12:00.
+        </div>
+        <div class="info-item">
+          <strong>Место:</strong> г.Воронеж, лес за СОК "Олимпик", сразу у асфальтового круга. <br>
+          <a href="https://yandex.ru/maps/-/CPFvIN43" target="_blank" class="link">Смотреть координаты на карте</a>
+        </div>
+        <div class="info-item desc">
+          <strong>Описание:</strong> лайтовая трасса с офигенным флоу, дружеская атмосфера, беспристрастное судейство, грамоты и медальки согласно занятым местам, классные фотки с лучших точек, призы от спонсоров, и, конечно, печеньки.<br>
+          Детский заезд проводится по специальной отдельной трассе в сопровождении взрослых.<br>
+          Несовершеннолетним участником обязательно иметь письменное разрешение на участие в спортивном мероприятии от родителей
+          (можно будет написать на месте).<br>
+          Организаторы в праве объединять категории, если в них нет минимум 5 участников.
+        </div>
+        <div class="info-item desc">
+        <strong>Категории участников:</strong> при регистрации на сайте выбираете один из 5 вариантов: М, Ж, Ю, Д, дети. На старте жеребьевка по категориям согласно результатам прошлого сезона, новички автоматически попадают в самую лайтовую категорию.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Регистрация -->
+  <section id="registration" class="registration section bg-light">
+    <div class="container">
+      <h2 class="section-title">РЕГИСТРАЦИЯ УЧАСТНИКА</h2>
+      <p class="section-desc">Заполните форму, чтобы стать участником гонки</p>
+
+      <form class="reg-form" id="regForm">
+        <div class="form-grid">
+          <div class="input-group">
+            <label>Фамилия</label>
+            <input type="text" required placeholder="Иванов">
+          </div>
+          <div class="input-group">
+            <label>Имя</label>
+            <input type="text" required placeholder="Иван">
+          </div>
+          <div class="input-group">
+            <label>Отчество</label>
+            <input type="text" placeholder="Иванович">
+          </div>
+          <div class="input-group">
+            <label>Дата рождения</label>
+            <input type="date" required>
+          </div>
+          <div class="input-group">
+            <label>Город</label>
+            <input type="text" required placeholder="Воронеж">
+          </div>
+          <div class="input-group">
+            <label>Номер телефона</label>
+            <input type="tel" required placeholder="+7 (999) 000-00-00">
+          </div>
+          <div class="input-group">
+            <label>Email</label>
+            <input type="email" required placeholder="mail@example.com">
+          </div>
+          <div class="input-group">
+            <label>Команда (если есть)</label>
+            <input type="text" placeholder="Название команды">
+          </div>
+        </div>
+        <div class="input-group full-width">
+          <label>Категория</label>
+          <select required>
+            <option value="" disabled selected>Выберите категорию...</option>
+            <option value="elite">М</option>
+            <option value="amateur">Ж</option>
+            <option value="juniors">Ю</option>
+            <option value="juniors">Д</option>
+            <option value="juniors">Дети</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary submit-btn">ОТПРАВИТЬ ЗАЯВКУ</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Участники -->
+  <section id="participants" class="participants section">
+    <div class="container">
+      <h2 class="section-title">УЧАСТНИКИ</h2>
+      <div class="table-container">
+        <table class="participants-table">
+          <thead>
+            <tr>
+              <th>Имя</th>
+              <th>Команда</th>
+              <th>Категория</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Пример данных (в будущем будут грузиться из базы) -->
+            <tr>
+              <td>Ника Ялика</td>
+              <td>Кросс-Кантри</td>
+              <td>Ж</td>
+            </tr>
+            <tr>
+              <td>Иван Попов</td>
+              <td>Лично</td>
+              <td>М</td>
+            </tr>
+            <tr>
+              <td>Алина Макова</td>
+              <td>Воронеж Team</td>
+              <td>Д</td>
+            </tr>
+            <tr>
+              <td>Денис Пархомов</td>
+              <td>Воронеж Team</td>
+              <td>Ю</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Спонсоры -->
+  <section id="sponsors" class="sponsors section bg-light">
+    <div class="container">
+      <h2 class="section-title text-center">СПОНСОРЫ</h2>
+      <div class="sponsor-logos">
+        <div class="sponsor">
+          <a href="http://sportvital.ru/" target="_blank">SPORT VITAL</a>
+        </div>
+        <div class="sponsor"><a href="https://vk.com/velovoronezh" target="_blank">ВЕЛОВОРОНЕЖ</a></div>
+        <div class="sponsor"><a href="https://www.velo36.ru/" target="_blank">ВЕЛО36</a></div>
+        <div class="sponsor"><a href="https://velomania.ru" target="_blank">VELOMANIA</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Подвал (Контакты) -->
+  <footer id="footer" class="footer section">
+    <div class="container footer-container">
+      <div class="footer-info">
+        <h2 class="section-title text-white">КОНТАКТЫ</h2>
+        <div class="socials">
+          <a href="https://vk.com/wm_xc" target="_blank">Группа VK</a>
+          <a href="tel:+79805346277">Антон +7(980) 534-62-77</a>
+          <a href="tel:+79204043494">Кирилл +7(920) 404-34-94</a>
+        </div>
+      </div>
+    </div>
+    <div class="copyright">
+      <p>© 2026 Wheel Masters</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
