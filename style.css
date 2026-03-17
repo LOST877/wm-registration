@@ -168,7 +168,7 @@ html {
   display: flex;
   align-items: center;
   /* ФОНОВОЕ ФОТО. Сюда нужно вставить ссылку на ваше фото гонщика */
-  background-image: url('/assets/banner.png');
+  background-image: url('assets/banner.png');
   background-size: cover;
   background-position: center;
   margin-top: 60px;
@@ -379,7 +379,7 @@ html {
 /* --- АДАПТИВНОСТЬ (МОБИЛЬНЫЕ УСТРОЙСТВА) --- */
 @media (max-width: 768px) {
   .hero {
-    background-image: url('/assets/banner-mobile.png');
+    background-image: url('assets/banner-mobile.png');
     background-position: center;
   }
 
