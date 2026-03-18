@@ -1,0 +1,7 @@
+# Храним данные БД здесь
+SetEnv DB_HOST "127.0.1.29"
+SetEnv DB_PORT "3306"
+SetEnv DB_NAME "wm_reg"
+SetEnv DB_USER "root"
+SetEnv DB_PASS ""
+SetEnv DB_CHARSET "utf8"
