@@ -216,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${part.team || '-'}</td>
           <td>${part.city || '-'}</td>
           <td>${part.category}</td>
+          <td>${part.is_paid ? '🟢' : '🔴'}</td>
         `;
         tbody.appendChild(tr);
       });

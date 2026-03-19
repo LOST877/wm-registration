@@ -17,7 +17,8 @@ try {
       CONCAT(r.last_name, ' ', r.first_name) AS name,
       r.team,
       r.city,
-      c.name AS category
+      c.name AS category,
+      r.is_paid
     FROM registrations r
     JOIN race_categories rc ON r.race_category_id = rc.id
     JOIN categories c ON rc.category_id = c.id

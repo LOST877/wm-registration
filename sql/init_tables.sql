@@ -45,6 +45,7 @@ CREATE TABLE registrations (
   email VARCHAR(255) NOT NULL,
   team VARCHAR(255),
   race_category_id INT NOT NULL,
+  is_paid TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   UNIQUE KEY unique_reg_participant (phone, first_name, last_name),
