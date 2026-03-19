@@ -70,19 +70,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (response.ok) {
-        alert('Спасибо! Ваша заявка успешно отправлена.');
+        showPopup('success', 'Спасибо!', 'Ваша заявка успешно отправлена.');
         regForm.reset();
       } else if (response.status === 409) {
-        alert(`Ошибка: ${result.message}`);
+        showPopup('error', 'Ошибка', result.message);
       } else {
-        alert(`Ошибка: ${result.message || 'Не удалось отправить заявку.'}`);
+        showPopup('error', 'Ошибка', result.message || 'Не удалось отправить заявку.');
       }
     } catch (error) {
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'ОТПРАВИТЬ ЗАЯВКУ';
       }
-      alert('Сетевая ошибка. Проверьте подключение и попробуйте позже.');
+      showPopup('error', 'Сетевая ошибка', 'Проверьте подключение и попробуйте позже.');
       console.error('Ошибка отправки:', error);
     }
   });
@@ -234,4 +234,57 @@ document.addEventListener('DOMContentLoaded', () => {
       .toLowerCase()
       .replace(/(?:^|\s|-|')(\w)/g, (_, c) => c.toUpperCase());
   }
+
+  // ===== ПОПАПЫ (MODALS) ===== //
+  // Создаем попап один раз
+  if (!document.getElementById('popup-overlay')) {
+    const popupHTML = `
+      <div id="popup-overlay" class="popup-overlay">
+        <div class="popup-container">
+          <button id="popup-close" class="popup-close" aria-label="Закрыть">&times;</button>
+          <span id="popup-icon" class="popup-icon">☁️</span>
+          <h3 id="popup-title" class="popup-title"></h3>
+          <p id="popup-text" class="popup-text"></p>
+          <div id="popup-actions" class="popup-actions">
+            <button id="popup-confirm-btn" class="btn btn-primary">OK</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+  }
+
+  const popupOverlay = document.getElementById('popup-overlay');
+  const popupTitle = document.getElementById('popup-title');
+  const popupText = document.getElementById('popup-text');
+  const popupIcon = document.getElementById('popup-icon');
+  const popupCloseBtn = document.getElementById('popup-close');
+  const popupConfirmBtn = document.getElementById('popup-confirm-btn');
+
+  // Закрытие попапа
+  function closePopup() {
+    popupOverlay.classList.remove('active', 'popup-success', 'popup-error', 'popup-warning');
+  }
+
+  // Показ попапа
+  window.showPopup = function (type, title, text) {
+    popupOverlay.classList.add('active', `popup-${type}`);
+
+    // Установка контента
+    popupTitle.textContent = title;
+    popupText.textContent = text;
+
+    // Иконки
+    const icons = { success: '✅', error: '❌', warning: '⚠️' };
+    popupIcon.textContent = icons[type] || '☁️';
+
+    // Кнопка OK
+    popupConfirmBtn.onclick = closePopup;
+    popupCloseBtn.onclick = closePopup;
+
+    // Закрытие по клику вне окна
+    popupOverlay.onclick = (e) => {
+      if (e.target === popupOverlay) closePopup();
+    };
+  };
 });

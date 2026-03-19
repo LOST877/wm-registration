@@ -4,8 +4,6 @@ header("Content-Type: application/json");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-require_once __DIR__ . '/../config/db.php';
-
 try {
   $config = require_once __DIR__ . '/../config/db.php';
   $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
