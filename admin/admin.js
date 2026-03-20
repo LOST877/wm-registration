@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRaces(result.races);
       } else if (response.status === 401) {
         dashboardSection.style.display = 'none';
-        authSection.style.display = 'block';
+        authSection.style.display = 'flex';
       }
     } catch (err) {
       console.error('Data fetch error:', err);
