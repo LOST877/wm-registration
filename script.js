@@ -293,4 +293,51 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === popupOverlay) closePopup();
     };
   };
+
+  // Форматирование телефона по шаблону +7 (XXX) XXX-XX-XX
+  document.querySelectorAll('input[data-phone-mask]').forEach(input => {
+    // При фокусе — сразу +7, если поле пустое
+    input.addEventListener('focus', () => {
+      const val = input.value.trim();
+      if (val === '' || !val.startsWith('+7')) {
+        input.value = '+7';
+      }
+    });
+
+    // При потере фокуса — оставляем только цифры и +7 в начале
+    input.addEventListener('blur', () => {
+      const digits = input.value.replace(/\D/g, '');
+      if (digits.startsWith('7') || digits.startsWith('8')) {
+        input.value = '+7' + digits.slice(1, 11);
+      } else if (digits.length > 0) {
+        input.value = '+7' + digits.slice(2, 12);
+      } else {
+        input.value = '';
+      }
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+
+    // Ограничение ввода: только цифры, максимум 10 после +7
+    input.addEventListener('input', (e) => {
+      const val = input.value;
+      const startPos = input.selectionStart;
+
+      // Оставляем только цифры
+      let digits = val.replace(/\D/g, '');
+
+      // Если ввели буквы/символы, удаляем их
+      if (digits !== val.replace(/[^\d+()\- ]/g, '')) {
+        input.value = '+' + digits.slice(0, 11);
+        input.setSelectionRange(startPos, startPos);
+        return;
+      }
+
+      // Ограничиваем 10 цифрами после +7
+      if (digits.length > 11) {
+        input.value = '+7' + digits.slice(1, 11);
+        input.setSelectionRange(input.value.length, input.value.length);
+        return;
+      }
+    });
+  });
 });
