@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="race-info">
                         📍 ${escapeHtml(race.location)} | 
                         👥 ${race.participants_count} участников
+                        ${race.payment_info ? `<br><strong>Оплата:</strong> ${escapeHtml(race.payment_info)}` : ''}
                     </div>
                     <div class="category-list">
                         ${race.categories.map(c => `<span class="category-tag">${escapeHtml(c.category_name)}</span>`).join('')}
