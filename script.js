@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return '';
     return name
       .toLowerCase()
-      .replace(/(?:^|\s|-|')(\w)/g, (_, c) => c.toUpperCase());
+      .replace(/(?:^|[\s-'])([а-яёa-z])/gi, (_, c) => c.toUpperCase());
   }
 
   // ===== ПОПАПЫ (MODALS) ===== //
