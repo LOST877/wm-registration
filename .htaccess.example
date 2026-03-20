@@ -1,0 +1,14 @@
+# Храним данные БД здесь
+SetEnv DB_HOST "127.0.1.29"
+SetEnv DB_PORT "3306"
+SetEnv DB_NAME "wm_reg"
+SetEnv DB_USER "root"
+SetEnv DB_PASS ""
+SetEnv DB_CHARSET "utf8"
+
+# api/admin/_auth.php — только POST с локального сервера
+<Files "_auth.php">
+    <If "%{REQUEST_METHOD} != 'POST'">
+        Require all denied
+    </If>
+</Files>

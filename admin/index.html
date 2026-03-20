@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ-панель — Wheel Masters</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+  <header>
+    <h1>Админ-панель</h1>
+  </header>
+
+  <main>
+    <!-- Форма авторизации -->
+    <section id="auth-section" class="auth-section">
+      <div class="auth-box">
+        <h2>Вход</h2>
+        <form id="login-form">
+          <input type="text" id="username" name="username" placeholder="Логин" required>
+          <input type="password" id="password" name="password" placeholder="Пароль" required>
+          <button type="submit">Вход</button>
+        </form>
+        <div id="auth-error" class="auth-error"></div>
+      </div>
+    </section>
+
+    <!-- Дашборд (скрыт по умолчанию) -->
+    <section id="dashboard-section" class="dashboard-section" style="display: none;">
+      <div class="dashboard-header">
+        <h2>Гонки</h2>
+      </div>
+      <div id="races-container"></div>
+    </section>
+  </main>
+
+  <!-- Модальное окно редактирования участника -->
+  <div id="participant-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Редактирование участника</h3>
+        <button class="close-btn">&times;</button>
+      </div>
+      <form id="participant-form">
+        <input type="hidden" id="participant-id">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="last-name">Фамилия *</label>
+            <input type="text" id="last-name" required>
+          </div>
+          <div class="form-group">
+            <label for="first-name">Имя *</label>
+            <input type="text" id="first-name" required>
+          </div>
+          <div class="form-group">
+            <label for="middle-name">Отчество</label>
+            <input type="text" id="middle-name">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="birth-date">Дата рождения</label>
+            <input type="date" id="birth-date">
+          </div>
+          <div class="form-group">
+            <label for="phone">Телефон</label>
+            <input type="tel" id="phone" placeholder="+7 (999) 000-00-00">
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="example@mail.com">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">Город</label>
+            <input type="text" id="city">
+          </div>
+          <div class="form-group">
+            <label for="team">Команда</label>
+            <input type="text" id="team">
+          </div>
+          <div class="form-group">
+            <label for="category-id">Категория *</label>
+            <select id="category-id" required>
+              <option value="">Выберите категорию</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group form-checkbox">
+          <label>
+            <input type="checkbox" id="is-paid">
+            <span>Оплата получена</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel">Отмена</button>
+          <button type="submit" class="btn-save">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+
+</html>
