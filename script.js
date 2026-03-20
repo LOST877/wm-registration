@@ -146,6 +146,12 @@ document.addEventListener('DOMContentLoaded', () => {
             `<strong>Описание:</strong> ${race.description}`;
         }
 
+        // Оплата
+        if (race.payment_info) {
+          document.getElementById('about-payment').innerHTML =
+            `<strong>Оплата:</strong> ${race.payment_info}`;
+        }
+
         // Обновляем race_id
         const raceIdInput = document.querySelector('input[name="race_id"]');
         if (raceIdInput) raceIdInput.value = race.id;
@@ -212,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       participants.forEach(part => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${part.name}</td>
+          <td>${part.last_name} ${part.first_name}</td>
           <td>${part.team || '-'}</td>
           <td>${part.city || '-'}</td>
           <td>${part.category}</td>

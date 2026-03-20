@@ -6,6 +6,7 @@ CREATE TABLE races (
   location VARCHAR(255),
   location_link VARCHAR(255),
   description TEXT,
+  payment_info TEXT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -33,27 +34,29 @@ CREATE TABLE race_categories (
   FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
--- Таблица регистраций (связана с race_categories)
+-- Таблица регистраций (прямая связь с гонками)
 CREATE TABLE registrations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   last_name VARCHAR(255) NOT NULL,
   first_name VARCHAR(255) NOT NULL,
   middle_name VARCHAR(255),
   birth_date DATE NOT NULL,
+  race_id INT NOT NULL,
+  race_category_id INT NULL,
   city VARCHAR(255) NOT NULL,
   phone VARCHAR(50) NOT NULL,
   email VARCHAR(255) NOT NULL,
   team VARCHAR(255),
-  race_category_id INT NOT NULL,
   is_paid TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  UNIQUE KEY unique_reg_participant (phone, first_name, last_name),
+  UNIQUE KEY unique_reg_race_participant (race_id, phone, first_name, last_name),
+  INDEX idx_race_id (race_id),
   INDEX idx_race_category_id (race_category_id),
+  INDEX idx_phone (phone),
 
-  FOREIGN KEY (race_category_id) REFERENCES race_categories(id)
-    ON DELETE RESTRICT  -- чтобы не удалять категорию, пока есть регистрации
-    ON UPDATE CASCADE
+  FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE,
+  FOREIGN KEY (race_category_id) REFERENCES race_categories(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Таблица администраторов

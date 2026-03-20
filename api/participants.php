@@ -13,24 +13,24 @@ try {
   $raceId = (int)($_GET['race_id'] ?? 1);
 
   $stmt = $pdo->prepare("
-    SELECT 
-      r.id,
-      r.last_name,
-      r.first_name,
-      r.middle_name,
-      r.birth_date,
-      r.city,
-      r.phone,
-      r.email,
-      r.team,
-      r.is_paid,
-      c.name AS category
-    FROM registrations r
-    JOIN race_categories rc ON r.race_category_id = rc.id
-    JOIN categories c ON rc.category_id = c.id
-    WHERE rc.race_id = ?
-    ORDER BY r.created_at DESC
-  ");
+        SELECT 
+            r.id,
+            r.last_name,
+            r.first_name,
+            r.middle_name,
+            r.birth_date,
+            r.city,
+            r.phone,
+            r.email,
+            r.team,
+            r.is_paid,
+            c.name AS category
+        FROM registrations r
+        LEFT JOIN race_categories rc ON r.race_category_id = rc.id
+        LEFT JOIN categories c ON rc.category_id = c.id
+        WHERE r.race_id = ?
+        ORDER BY r.created_at DESC
+    ");
   $stmt->execute([$raceId]);
   $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

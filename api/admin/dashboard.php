@@ -24,10 +24,10 @@ try {
             r.name AS race_name,
             r.date,
             r.location,
+            r.payment_info,
             COUNT(reg.id) AS participants_count
         FROM races r
-        LEFT JOIN race_categories rc ON r.id = rc.race_id
-        LEFT JOIN registrations reg ON rc.id = reg.race_category_id
+        LEFT JOIN registrations reg ON r.id = reg.race_id
         GROUP BY r.id
         ORDER BY r.date DESC
     ');
@@ -39,35 +39,36 @@ try {
   foreach ($races as $race) {
     // 2.1. Категории гонки
     $stmt = $pdo->prepare('
-        SELECT c.id, c.name AS category_name
-        FROM race_categories rc
-        JOIN categories c ON rc.category_id = c.id
-        WHERE rc.race_id = ?
-        ORDER BY rc.sort_order
-    ');
+            SELECT c.id, c.name AS category_name
+            FROM race_categories rc
+            JOIN categories c ON rc.category_id = c.id
+            WHERE rc.race_id = ?
+            ORDER BY rc.sort_order
+        ');
     $stmt->execute([$race['id']]);
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2.2. Участники — сразу с категорией
+    // 2.2. Участники — напрямую по race_id
     $stmt = $pdo->prepare('
-        SELECT 
-            reg.last_name,
-            reg.first_name,
-            reg.middle_name,
-            reg.birth_date,
-            reg.is_paid,
-            reg.phone,
-            reg.email,
-            reg.city,
-            reg.team,
-            c.name AS category_name,
-            reg.created_at
-        FROM registrations reg
-        JOIN race_categories rc ON reg.race_category_id = rc.id
-        JOIN categories c ON rc.category_id = c.id
-        WHERE rc.race_id = ?
-        ORDER BY reg.created_at DESC
-    ');
+            SELECT 
+                reg.id,
+                reg.last_name,
+                reg.first_name,
+                reg.middle_name,
+                reg.birth_date,
+                reg.is_paid,
+                reg.phone,
+                reg.email,
+                reg.city,
+                reg.team,
+                c.name AS category_name,
+                reg.created_at
+            FROM registrations reg
+            LEFT JOIN race_categories rc ON reg.race_category_id = rc.id
+            LEFT JOIN categories c ON rc.category_id = c.id
+            WHERE reg.race_id = ?
+            ORDER BY reg.created_at DESC
+        ');
     $stmt->execute([$race['id']]);
     $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
