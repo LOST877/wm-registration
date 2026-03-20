@@ -1,5 +1,5 @@
 # 🚀 PROJECT_KNOWLEDGE.md  
-*Документ формируется: 2026-04-05 | Версия: v0.9 (public site only)*
+*Документ обновлён: 2026-04-05 | Версия: v1.0*
 
 ---
 
@@ -7,10 +7,11 @@
 **Wheel Masters** — публичный сайт для регистрации на кросс-кантри гонки на велосипедах.  
 Позволяет:
 - Показывать актуальную информацию об активной гонке (название, дата, место, описание)
-- Принимать заявки от участников с проверкой дублей (по телефону + ФИО)
-- Отображать список зарегистрировавшихся
+- Принимать заявки от участников с проверкой дублей (по `race_id`, телефону + ФИО)
+- Отображать список зарегистрировавшихся с признаком `is_paid`
 - Автоматически подставлять данные из БД  
-*Админка — в разработке, пока не используется.*
+- Админка: управление гонками, редактирование участников, экспорт в CSV  
+*Ключевое: админка готова и работает.*
 
 ---
 
@@ -34,13 +35,27 @@
 │   ├── banner.png                  # Десктопный баннер (Hero)
 │   └── banner-mobile.png           # Мобильный баннер (Hero)
 ├── api/
-│   ├── race.php                    # GET: активная гонка + категории
-│   ├── categories.php              # GET: категории по race_id (альтернатива)
+│   ├── race.php                    # GET: активная гонка (без категорий)
+│   ├── categories.php              # GET: категории по race_id
 │   ├── participants.php            # GET: список участников текущей гонки
 │   ├── register.php                # POST: регистрация (проверка дублей, форматирование)
-│   └── admin/                      # (в разработке)
-│       └── _auth.php               # (в разработке)
-└── PROJECT_KNOWLEDGE.md            # Этот файл
+│   ├── admin/                      # ✅ Готово (авторизация, управление)
+│   │   ├── _auth.php               # POST: авторизация
+│   │   ├── races.php               # GET: список гонок
+│   │   ├── dashboard.php           # GET: панель администратора
+│   │   └── participant/
+│   │       ├── get.php             # GET: данные участника
+│   │       └── update.php          # POST: обновление участника
+├── config/
+│   └── db.php                      # Конфиг БД (env-переменные)
+├── sql/
+│   └── init_tables.sql             # Создание таблиц БД
+├── admin/
+│   ├── index.html                  # Интерфейс админки
+│   ├── admin.css                   # Стили админки
+│   └── admin.js                    # Логика админки
+├── hash.php                        # Генерация хеша пароля
+└── PROJECT_KNOLEDGE.md             # Этот файл
 ```
 
 ---
@@ -50,24 +65,27 @@
 ### Таблицы:
 | Таблица | Описание |
 |---------|----------|
-| `races` | Информация о гонках (id, name, date, location, location_link, description, is_active) |
-| `categories` | Абстрактные категории (id, name) — например, "М", "Ж", "Юниоры 2010-2012" |
-| `race_categories` | Связь N:M между гонками и категориями (race_id, category_id, sort_order, is_default) |
-| `registrations` | Заявки участников (race_category_id, ФИО, телефон, email и т.д.) |
-| `admin_users` | Пользователи админ-панели — пока не используется, но таблица создана |
+| `races` | Гонки (id, name, date, location, location_link, description, payment_info, is_active, created_at) |
+| `categories` | Абстрактные категории (id, name, description, created_at) |
+| `race_categories` | Связь N:M (id, race_id, category_id, sort_order) — уникальность `(race_id, category_id)` |
+| `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, is_paid, created_at) |
+| `admin_users` | Администраторы (id, username, password (hash), full_name, created_at) |
 
 ### Важные правила:
 - Активной может быть **только одна гонка** (`is_active = 1`)
-- Уникальность для регистрации: `(phone, first_name, last_name)` — запрет на дубли
+- Уникальность для регистрации: **`(race_id, phone, first_name, last_name)`** — запрет на дубли
 - Категории можно переиспользовать между гонками через `race_categories`
 - Сортировка категорий: по `sort_order` в `race_categories` (по умолчанию `0`)
+- `is_paid` (TINYINT) — флаг оплаты: `0` или `1`
+- `payment_info` (TEXT) — описание способа оплаты в гонке
+- Поле `email` — **обязательное** (`NOT NULL`)
 
 ---
 
 ## 🌐 API Endpoint'ы
 
 ### 1. `GET api/race.php`  
-**Описание:** Возвращает активную гонку + список категорий для неё  
+**Описание:** Возвращает активную гонку **без категорий** — категории загружаются отдельно  
 **Пример ответа:**  
 ```json
 {
@@ -76,16 +94,15 @@
   "date": "2026-05-16",
   "location": "г.Воронеж, лес за СОК \"Олимпик\"",
   "location_link": "https://yandex.ru/maps/-/CPFvIN43",
-  "description": "Лайтовая трасса...",
-  "categories": [
-    { "id": 1, "name": "М", "sort_order": 0 },
-    { "id": 2, "name": "Ж", "sort_order": 0 }
-  ]
+  "description": "Лайтовая трасса с офигенным флоу...",
+  "payment_info": "Оплата 1000 руб. на сайт"
 }
 ```
 **Ошибки:**  
 - `404` — нет активных гонок  
-- `500` — ошибка сервера
+- `500` — ошибка сервера  
+
+> **Важно:** Категории загружаются через `GET api/categories.php?race_id={id}` — это разделение оптимизирует load.
 
 ---
 
@@ -107,10 +124,17 @@
 ```json
 [
   {
-    "name": "Иванов Иван",
-    "team": "Воронеж Team",
+    "id": 42,
+    "last_name": "Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "birth_date": "2000-01-01",
     "city": "Воронеж",
-    "category": "М"
+    "phone": "+7 (999) 000-00-00",
+    "email": "mail@example.com",
+    "team": "Воронеж Team",
+    "category": "М",
+    "is_paid": 1
   }
 ]
 ```
@@ -136,14 +160,14 @@
 ```
 
 **Проверки:**  
-- Уникальность `(phone, first_name, last_name)`  
-- Активность гонки и неистечение даты  
-- Форматирование ФИО и города (первая буква заглавная)  
+- Уникальность `(race_id, phone, first_name, last_name)`  
+- Активность гонки  
+- Форматирование ФИО и города на сервере  
 
 **Пример ответа:**  
-- `200 OK`: `{"success": true, "message": "Регистрация прошла успешно!"}`  
-- `409 Conflict`: `{"success": false, "message": "Участник «Иванов Иван» с телефоном +7... уже зарегистрирован..."}`  
-- `400/500`: соответствующие ошибки
+- `200 OK`: `{"success": true, "message": "Registration successful", "id": 42}`  
+- `409 Conflict`: `{"success": false, "error": "Duplicate registration"}`  
+- `400/404/500`: `{"success": false, "error": "..."}`  
 
 ---
 
@@ -177,8 +201,8 @@
 ### 1. Развертывание локально:
 - Установить Open Server Panel
 - Скопировать файлы в `C:\OpenServer\domains\localhost\wm_race\`
-- В `api/*.php` заменить `$host = '127.0.1.29:3306'` на `'127.0.1.29'` (без порта, если стандартный 3306)
-- В `api/register.php` и `api/race.php` убедиться, что `$username = 'root'`, `$password = ''`
+- В `config/db.php` — убедиться, что переменные окружения заданы: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`
+- По умолчанию: `$host = '127.0.1.29'; $port = 3306; $username = 'root'; $password = ''`
 
 ### 2. Настройка БД (`wm_reg`):
 Выполнить в `phpMyAdmin`:
@@ -186,25 +210,17 @@
 CREATE DATABASE IF NOT EXISTS wm_reg CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE wm_reg;
 
-CREATE TABLE races (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  date DATE NOT NULL,
-  location VARCHAR(255),
-  location_link VARCHAR(500),
-  description TEXT,
-  is_active BOOLEAN DEFAULT TRUE
-) ENGINE=InnoDB;
-
--- Добавьте остальные таблицы из схемы выше
+-- Выполнить sql/init_tables.sql
+source sql/init_tables.sql;
 ```
 
 ### 3. Создание тестовой гонки:
 ```sql
-INSERT INTO races (name, date, location, location_link, description, is_active)
+INSERT INTO races (name, date, location, location_link, description, payment_info, is_active)
 VALUES ('Весенний Лайт', '2026-05-16', 'г.Воронеж, лес за СОК "Олимпик"', 
         'https://yandex.ru/maps/-/CPFvIN43', 
-        'Лайтовая трасса с офигенным флоу...', TRUE);
+        'Лайтовая трасса с офигенным флоу...',
+        'Оплата 1000 руб. на сайт', TRUE);
 
 -- Вставка категорий и связей
 INSERT INTO categories (name) VALUES ('М'), ('Ж'), ('Ю'), ('Д'), ('Дети');
@@ -213,8 +229,9 @@ VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5);
 ```
 
 ### 4. Проверка:
-- Откройте `http://localhost/wm_race/` — должна отобразиться гонка и категории
+- Откройте `http://localhost/wm_race/` — должна отобразиться гонка, категории подгружаются отдельно
 - Отправьте тестовую регистрацию — проверьте таблицу `registrations`
+- Админка: `http://localhost/wm_race/admin/` — авторизоваться логином `admin`, пароль сгенерировать через `hash.php`
 
 ---
 
@@ -222,12 +239,13 @@ VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5);
 
 | Функция | Статус | Комментарий |
 |--------|--------|-------------|
-| Админка | ❌ Не готова | В разработке, хранится в `/admin/`, но не включена в документ |
-| CSRF-защита | ⚠️ Запланирована | Требует добавления `csrf_token` в формы и проверки на сервере |
-| Личный кабинет пользователя | ⏳ В планах | Потребует `users` + `user_sessions` таблицы |
-| Загрузка аватаров/сканов | ⏳ В планах | Требует `uploads/` папки и настройки `move_uploaded_file()` |
-| Экспорт в CSV | ⏳ В админке | Реализован через `fputcsv()` в админке |
+| Админка | ✅ Готова | Полностью реализована: `admin/`, `api/admin/`, авторизация через `_auth.php` |
+| CSRF-защита | ⚠️ Запланирована | Требует `csrf_token` в forms и проверки через `hash_equals()` |
+| Личный кабинет | ⏳ В планах | Требует `users` + `user_sessions` таблицы |
+| Загрузка аватаров | ⏳ В планах | Требует `uploads/` и `move_uploaded_file()` |
+| Экспорт в CSV | ✅ В админке | Реализован через `fputcsv()` |
 | Переименование категории | ❌ Блокировано | Если категория используется в гонках — нельзя |
+| `api/race.php` возвращает категории | ❌ Нет | Категории грузятся отдельно: `api/categories.php?race_id={id}` |
 
 ---
 
@@ -247,4 +265,5 @@ VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5);
 
 **Контакт для вопросов:**  
 Разработчик: Wheel Masters Team  
-Последнее обновление: 2026-04-05
+Последнее обновление: 2026-04-05  
+Версия: v1.0 (обновлён статус админки, добавлены `payment_info`, `is_paid`, исправлены API-описания)
