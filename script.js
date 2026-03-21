@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         showPopup('success', 'Спасибо!', 'Ваша заявка успешно отправлена.');
         regForm.reset();
+        loadParticipants(currentRaceId);
       } else if (response.status === 409) {
         showPopup('error', 'Ошибка', result.message);
       } else {
