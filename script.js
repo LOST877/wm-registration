@@ -26,11 +26,21 @@ document.addEventListener('DOMContentLoaded', () => {
   loadRaceInfo();
 
   // 3. Отправка формы
+  // 3. Отправка формы
   const regForm = document.getElementById('regForm');
   const submitBtn = document.getElementById('submitBtn');
 
   regForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Валидация телефона — минимум 11 цифр (+7 + 10 цифр)
+    const phoneInput = regForm.querySelector('[name="phone"]');
+    const phoneDigits = phoneInput.value.replace(/\D/g, '');
+    if (phoneDigits.length < 11) {
+      showPopup('error', 'Ошибка', 'Номер телефона должен содержать 10 цифр (формат +7 XXX XXX XX XX).');
+      phoneInput.focus();
+      return;
+    }
 
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -48,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
       middleName,
       birthDate: regForm.querySelector('[name="birthDate"]').value,
       city,
-      phone: regForm.querySelector('[name="phone"]').value,
+      phone: phoneInput.value,
       email: regForm.querySelector('[name="email"]').value,
       team: regForm.querySelector('[name="team"]').value || null,
       race_category_id: regForm.querySelector('[name="race_category_id"]').value,
