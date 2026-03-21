@@ -151,6 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('about-location').innerHTML = locationHtml;
         }
 
+        // Карта
+        const mapContainer = document.getElementById('about-map');
+        if (race.iframe_html) {
+          mapContainer.innerHTML = race.iframe_html;
+        }
+
         // Описание
         if (race.description) {
           document.getElementById('about-description').innerHTML =

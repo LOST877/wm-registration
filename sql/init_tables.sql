@@ -5,6 +5,7 @@ CREATE TABLE races (
   date DATE NOT NULL,
   location VARCHAR(255),
   location_link VARCHAR(255),
+  iframe_html TEXT NULL,
   description TEXT,
   payment_info TEXT NULL,
   is_active BOOLEAN DEFAULT TRUE,
