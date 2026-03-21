@@ -65,7 +65,7 @@
 ### Таблицы:
 | Таблица | Описание |
 |---------|----------|
-| `races` | Гонки (id, name, date, location, location_link, description, payment_info, is_active, created_at) |
+| `races` | Гонки (id, name, date, location, location_link, iframe_html, description, payment_info, is_active, created_at) |
 | `categories` | Абстрактные категории (id, name, description, created_at) |
 | `race_categories` | Связь N:M (id, race_id, category_id, sort_order) — уникальность `(race_id, category_id)` |
 | `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, is_paid, created_at) |

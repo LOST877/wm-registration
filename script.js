@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Закрытие меню при клике на ссылку на мобилке
-  document.querySelectorAll('.nav-link').forEach(link => {
+  document.querySelectorAll('.nav-link').forEach((link) => {
     link.addEventListener('click', () => {
       navList.classList.remove('active');
     });
@@ -32,14 +32,32 @@ document.addEventListener('DOMContentLoaded', () => {
   regForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Валидация телефона — минимум 11 цифр (+7 + 10 цифр)
+    const phoneInput = regForm.querySelector('[name="phone"]');
+    const phoneDigits = phoneInput.value.replace(/\D/g, '');
+    if (phoneDigits.length < 11) {
+      showPopup(
+        'error',
+        'Ошибка',
+        'Номер телефона должен содержать 10 цифр (формат +7 XXX XXX XX XX).'
+      );
+      phoneInput.focus();
+      return;
+    }
+
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Отправка...';
     }
 
-    const lastName = formatName(regForm.querySelector('[name="lastName"]').value);
-    const firstName = formatName(regForm.querySelector('[name="firstName"]').value);
-    const middleName = formatName(regForm.querySelector('[name="middleName"]').value) || null;
+    const lastName = formatName(
+      regForm.querySelector('[name="lastName"]').value
+    );
+    const firstName = formatName(
+      regForm.querySelector('[name="firstName"]').value
+    );
+    const middleName =
+      formatName(regForm.querySelector('[name="middleName"]').value) || null;
     const city = formatName(regForm.querySelector('[name="city"]').value);
 
     const formData = {
@@ -48,10 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
       middleName,
       birthDate: regForm.querySelector('[name="birthDate"]').value,
       city,
-      phone: regForm.querySelector('[name="phone"]').value,
+      phone: phoneInput.value,
       email: regForm.querySelector('[name="email"]').value,
       team: regForm.querySelector('[name="team"]').value || null,
-      race_category_id: regForm.querySelector('[name="race_category_id"]').value,
+      race_category_id: regForm.querySelector('[name="race_category_id"]')
+        .value,
       race_id: currentRaceId,
     };
 
@@ -72,17 +91,26 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         showPopup('success', 'Спасибо!', 'Ваша заявка успешно отправлена.');
         regForm.reset();
+        loadParticipants(currentRaceId);
       } else if (response.status === 409) {
         showPopup('error', 'Ошибка', result.message);
       } else {
-        showPopup('error', 'Ошибка', result.message || 'Не удалось отправить заявку.');
+        showPopup(
+          'error',
+          'Ошибка',
+          result.message || 'Не удалось отправить заявку.'
+        );
       }
     } catch (error) {
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'ОТПРАВИТЬ ЗАЯВКУ';
       }
-      showPopup('error', 'Сетевая ошибка', 'Проверьте подключение и попробуйте позже.');
+      showPopup(
+        'error',
+        'Сетевая ошибка',
+        'Проверьте подключение и попробуйте позже.'
+      );
       console.error('Ошибка отправки:', error);
     }
   });
@@ -93,15 +121,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('scroll', () => {
     let current = '';
-    sections.forEach(section => {
+    sections.forEach((section) => {
       const sectionTop = section.offsetTop;
       const sectionHeight = section.clientHeight;
-      if (pageYOffset >= (sectionTop - 100)) {
+      if (pageYOffset >= sectionTop - 100) {
         current = section.getAttribute('id');
       }
     });
 
-    navLinks.forEach(link => {
+    navLinks.forEach((link) => {
       link.classList.remove('active');
       if (link.getAttribute('href').includes(current)) {
         link.classList.add('active');
@@ -119,17 +147,31 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRaceId = race.id;
 
         // Hero
-        document.getElementById('hero-title').textContent = race.name.toUpperCase();
+        document.getElementById('hero-title').textContent =
+          race.name.toUpperCase();
 
         // Дата
         const dateObj = new Date(race.date + 'T00:00:00');
-        const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-          'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        const months = [
+          'января',
+          'февраля',
+          'марта',
+          'апреля',
+          'мая',
+          'июня',
+          'июля',
+          'августа',
+          'сентября',
+          'октября',
+          'ноября',
+          'декабря',
+        ];
         const day = dateObj.getUTCDate();
         const month = months[dateObj.getUTCMonth()];
         const year = dateObj.getUTCFullYear();
-        document.getElementById('about-date').innerHTML =
-          `<strong>Дата:</strong> ${day} ${month} ${year}г.`;
+        document.getElementById(
+          'about-date'
+        ).innerHTML = `<strong>Дата:</strong> ${day} ${month} ${year}г.`;
 
         // Локация
         if (race.location) {
@@ -140,16 +182,24 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('about-location').innerHTML = locationHtml;
         }
 
+        // Карта
+        if (race.iframe_html) {
+          const mapContainer = document.getElementById('about-map');
+          mapContainer.innerHTML = race.iframe_html;
+        }
+
         // Описание
         if (race.description) {
-          document.getElementById('about-description').innerHTML =
-            `<strong>Описание:</strong> ${race.description}`;
+          document.getElementById(
+            'about-description'
+          ).innerHTML = `<strong>Описание:</strong> ${race.description}`;
         }
 
         // Оплата
         if (race.payment_info) {
-          document.getElementById('about-payment').innerHTML =
-            `<strong>Оплата:</strong> ${race.payment_info}`;
+          document.getElementById(
+            'about-payment'
+          ).innerHTML = `<strong>Оплата:</strong> ${race.payment_info}`;
         }
 
         // Обновляем race_id
@@ -162,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Загружаем участников для этой гонки
         loadParticipants(race.id);
       }
-
     } catch (err) {
       console.warn('Не удалось загрузить данные гонки:', err);
     }
@@ -173,28 +222,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const select = document.querySelector('select[name="race_category_id"]');
     if (!select) return;
 
-    select.innerHTML = '<option value="" disabled>Загрузка категорий...</option>';
+    select.innerHTML =
+      '<option value="" disabled>Загрузка категорий...</option>';
 
     try {
       const res = await fetch(`api/categories.php?race_id=${raceId}`);
       const categories = await res.json();
 
       if (!categories.length) {
-        select.innerHTML = '<option value="" disabled>Нет доступных категорий</option>';
+        select.innerHTML =
+          '<option value="" disabled>Нет доступных категорий</option>';
         return;
       }
 
-      select.innerHTML = '<option value="" disabled selected>Выберите категорию...</option>';
-      categories.forEach(cat => {
+      select.innerHTML =
+        '<option value="" disabled selected>Выберите категорию...</option>';
+      categories.forEach((cat) => {
         const opt = document.createElement('option');
         opt.value = cat.id;
         opt.textContent = cat.name;
         select.appendChild(opt);
       });
-
     } catch (err) {
       console.error(err);
-      select.innerHTML = '<option value="" disabled>Ошибка загрузки категорий</option>';
+      select.innerHTML =
+        '<option value="" disabled>Ошибка загрузки категорий</option>';
     }
   }
 
@@ -203,19 +255,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('participants-tbody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="4" class="loading">Загрузка участников...</td></tr>';
+    tbody.innerHTML =
+      '<tr><td colspan="4" class="loading">Загрузка участников...</td></tr>';
 
     try {
       const res = await fetch(`api/participants.php?race_id=${raceId}`);
       const participants = await res.json();
 
       if (!participants || !participants.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="no-data">Список участников пока пуст</td></tr>';
+        tbody.innerHTML =
+          '<tr><td colspan="4" class="no-data">Список участников пока пуст</td></tr>';
         return;
       }
 
       tbody.innerHTML = '';
-      participants.forEach(part => {
+      participants.forEach((part) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${part.last_name} ${part.first_name}</td>
@@ -226,10 +280,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         tbody.appendChild(tr);
       });
-
     } catch (err) {
       console.error('Ошибка загрузки участников:', err);
-      tbody.innerHTML = '<tr><td colspan="4" class="error">Ошибка загрузки списка участников</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="4" class="error">Ошибка загрузки списка участников</td></tr>';
     }
   }
 
@@ -238,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return '';
     return name
       .toLowerCase()
-      .replace(/(?:^|\s|-|')(\w)/g, (_, c) => c.toUpperCase());
+      .replace(/(?:^|[\s-'])([а-яёa-z])/gi, (_, c) => c.toUpperCase());
   }
 
   // ===== ПОПАПЫ (MODALS) ===== //
@@ -269,7 +323,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Закрытие попапа
   function closePopup() {
-    popupOverlay.classList.remove('active', 'popup-success', 'popup-error', 'popup-warning');
+    popupOverlay.classList.remove(
+      'active',
+      'popup-success',
+      'popup-error',
+      'popup-warning'
+    );
   }
 
   // Показ попапа
@@ -293,4 +352,51 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === popupOverlay) closePopup();
     };
   };
+
+  // Форматирование телефона по шаблону +7 (XXX) XXX-XX-XX
+  document.querySelectorAll('input[data-phone-mask]').forEach((input) => {
+    // При фокусе — сразу +7, если поле пустое
+    input.addEventListener('focus', () => {
+      const val = input.value.trim();
+      if (val === '' || !val.startsWith('+7')) {
+        input.value = '+7';
+      }
+    });
+
+    // При потере фокуса — оставляем только цифры и +7 в начале
+    input.addEventListener('blur', () => {
+      const digits = input.value.replace(/\D/g, '');
+      if (digits.startsWith('7') || digits.startsWith('8')) {
+        input.value = '+7' + digits.slice(1, 11);
+      } else if (digits.length > 0) {
+        input.value = '+7' + digits.slice(2, 12);
+      } else {
+        input.value = '';
+      }
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+
+    // Ограничение ввода: только цифры, максимум 10 после +7
+    input.addEventListener('input', (e) => {
+      const val = input.value;
+      const startPos = input.selectionStart;
+
+      // Оставляем только цифры
+      let digits = val.replace(/\D/g, '');
+
+      // Если ввели буквы/символы, удаляем их
+      if (digits !== val.replace(/[^\d+()\- ]/g, '')) {
+        input.value = '+' + digits.slice(0, 11);
+        input.setSelectionRange(startPos, startPos);
+        return;
+      }
+
+      // Ограничиваем 10 цифрами после +7
+      if (digits.length > 11) {
+        input.value = '+7' + digits.slice(1, 11);
+        input.setSelectionRange(input.value.length, input.value.length);
+        return;
+      }
+    });
+  });
 });

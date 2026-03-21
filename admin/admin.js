@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('../api/admin/_auth.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData
+        body: formData,
       });
 
       const result = await response.json();
@@ -81,25 +81,49 @@ document.addEventListener('DOMContentLoaded', () => {
   // Отрисовка гонок
   function renderRaces(races) {
     if (!races.length) {
-      racesContainer.innerHTML = '<div class="empty-state">Нет запланированных гонок</div>';
+      racesContainer.innerHTML =
+        '<div class="empty-state">Нет запланированных гонок</div>';
       return;
     }
 
-    racesContainer.innerHTML = races.map(race => {
-      // Если нет участников
-      if (!race.participants.length) {
-        return `
+    racesContainer.innerHTML = races
+      .map((race) => {
+        // Если нет участников
+        if (!race.participants.length) {
+          return `
                 <section class="race-card">
                     <div class="race-header">
                         <h3>${escapeHtml(race.race_name)}</h3>
-                        <small>${new Date(race.date).toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</small>
+                        <small>${new Date(race.date).toLocaleDateString(
+                          'ru-RU',
+                          {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          }
+                        )}</small>
                     </div>
                     <div class="race-info">
                         📍 ${escapeHtml(race.location)} | 
                         👥 ${race.participants_count} участников
+                        ${
+                          race.payment_info
+                            ? `<br><strong>Оплата:</strong> ${escapeHtml(
+                                race.payment_info
+                              )}`
+                            : ''
+                        }
                     </div>
                     <div class="category-list">
-                        ${race.categories.map(c => `<span class="category-tag">${escapeHtml(c.category_name)}</span>`).join('')}
+                        ${race.categories
+                          .map(
+                            (c) =>
+                              `<span class="category-tag">${escapeHtml(
+                                c.category_name
+                              )}</span>`
+                          )
+                          .join('')}
                     </div>
                     <div class="table-container">
                         <table>
@@ -108,51 +132,87 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </section>
             `;
-      }
+        }
 
-      const firstParticipant = race.participants[0];
-      const columns = Object.keys(firstParticipant).filter(key => key !== 'id');
+        const firstParticipant = race.participants[0];
+        const columns = Object.keys(firstParticipant).filter(
+          (key) => key !== 'id'
+        );
 
-      const headers = {
-        is_paid: 'Оплата',
-        last_name: 'Фамилия',
-        first_name: 'Имя',
-        middle_name: 'Отчество',
-        birth_date: 'Дата рождения',
-        phone: 'Телефон',
-        email: 'Email',
-        city: 'Город',
-        team: 'Команда',
-        category_name: 'Категория',
-        created_at: 'Дата реги'
-      };
+        const headers = {
+          is_paid: 'Оплата',
+          last_name: 'Фамилия',
+          first_name: 'Имя',
+          middle_name: 'Отчество',
+          birth_date: 'Дата рождения',
+          phone: 'Телефон',
+          email: 'Email',
+          city: 'Город',
+          team: 'Команда',
+          category_name: 'Категория',
+          created_at: 'Дата реги',
+        };
 
-      return `
+        return `
             <section class="race-card">
                 <div class="race-header">
                     <h3>${escapeHtml(race.race_name)}</h3>
-                    <small>${new Date(race.date).toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</small>
+                    <small>${new Date(race.date).toLocaleDateString('ru-RU', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}</small>
                 </div>
                 <div class="race-info">
                     📍 ${escapeHtml(race.location)} | 
                     👥 ${race.participants_count} участников
-                    ${race.payment_info ? `<br><strong>Оплата:</strong> ${escapeHtml(race.payment_info)}` : ''}
+                    ${
+                      race.payment_info
+                        ? `<br><strong>Оплата:</strong> ${escapeHtml(
+                            race.payment_info
+                          )}`
+                        : ''
+                    }
                 </div>
                 <div class="category-list">
-                    ${race.categories.map(c => `<span class="category-tag">${escapeHtml(c.category_name)}</span>`).join('')}
+                    ${race.categories
+                      .map(
+                        (c) =>
+                          `<span class="category-tag">${escapeHtml(
+                            c.category_name
+                          )}</span>`
+                      )
+                      .join('')}
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                ${columns.map(col => `<th>${escapeHtml(headers[col] || col)}</th>`).join('')}
+                                ${columns
+                                  .map(
+                                    (col) =>
+                                      `<th>${escapeHtml(
+                                        headers[col] || col
+                                      )}</th>`
+                                  )
+                                  .join('')}
                                 <th>Действия</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${race.participants.map((p, idx) => `
+                            ${race.participants
+                              .map(
+                                (p, idx) => `
                                 <tr>
-                                    ${columns.map(col => `<td>${escapeHtml(p[col] || '-')}</td>`).join('')}
+                                    ${columns
+                                      .map(
+                                        (col) =>
+                                          `<td>${escapeHtml(
+                                            p[col] || '-'
+                                          )}</td>`
+                                      )
+                                      .join('')}
                                     <td>
                                         <button class="edit-participant-btn" 
                                                 data-participant-id="${p.id}"
@@ -162,16 +222,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </button>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `
+                              )
+                              .join('')}
                         </tbody>
                     </table>
                 </div>
             </section>
         `;
-    }).join('');
+      })
+      .join('');
 
     // Вешаем обработчики на кнопки редактирования
-    document.querySelectorAll('.edit-participant-btn').forEach(btn => {
+    document.querySelectorAll('.edit-participant-btn').forEach((btn) => {
       btn.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -188,9 +251,12 @@ document.addEventListener('DOMContentLoaded', () => {
     currentRaceId = parseInt(raceId);
 
     try {
-      const response = await fetch(`../api/admin/participant/get.php?id=${participantId}`, {
-        credentials: 'same-origin'
-      });
+      const response = await fetch(
+        `../api/admin/participant/get.php?id=${participantId}`,
+        {
+          credentials: 'same-origin',
+        }
+      );
 
       if (!response.ok) {
         alert(`Ошибка сервера: ${response.status} ${response.statusText}`);
@@ -216,8 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Заполняем select категорий
         const categorySelect = document.getElementById('category-id');
-        categorySelect.innerHTML = '<option value="">Выберите категорию</option>';
-        result.categories.forEach(cat => {
+        categorySelect.innerHTML =
+          '<option value="">Выберите категорию</option>';
+        result.categories.forEach((cat) => {
           const option = document.createElement('option');
           option.value = cat.id;
           option.textContent = cat.name;
@@ -260,51 +327,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Сохранение
   if (saveBtn && document.getElementById('participant-form')) {
-    document.getElementById('participant-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    document
+      .getElementById('participant-form')
+      .addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-      const formData = {
-        id: parseInt(document.getElementById('participant-id').value),
-        last_name: document.getElementById('last-name').value.trim(),
-        first_name: document.getElementById('first-name').value.trim(),
-        middle_name: document.getElementById('middle-name').value.trim(),
-        birth_date: document.getElementById('birth-date').value || null,
-        phone: document.getElementById('phone').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        city: document.getElementById('city').value.trim(),
-        team: document.getElementById('team').value.trim(),
-        race_category_id: document.getElementById('category-id').value ? parseInt(document.getElementById('category-id').value) : null,
-        is_paid: document.getElementById('is-paid').checked ? '1' : '0',
-        race_id: currentRaceId
-      };
+        const formData = {
+          id: parseInt(document.getElementById('participant-id').value),
+          last_name: document.getElementById('last-name').value.trim(),
+          first_name: document.getElementById('first-name').value.trim(),
+          middle_name: document.getElementById('middle-name').value.trim(),
+          birth_date: document.getElementById('birth-date').value || null,
+          phone: document.getElementById('phone').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          city: document.getElementById('city').value.trim(),
+          team: document.getElementById('team').value.trim(),
+          race_category_id: document.getElementById('category-id').value
+            ? parseInt(document.getElementById('category-id').value)
+            : null,
+          is_paid: document.getElementById('is-paid').checked ? '1' : '0',
+          race_id: currentRaceId,
+        };
 
-      if (!formData.race_category_id) {
-        alert('Выберите категорию');
-        return;
-      }
-
-      try {
-        const response = await fetch('../api/admin/participant/update.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-          credentials: 'same-origin'
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          alert('Данные успешно обновлены');
-          closeParticipantEdit();
-          fetchAdminData();
-        } else {
-          alert(result.error || 'Ошибка обновления данных');
+        if (!formData.race_category_id) {
+          alert('Выберите категорию');
+          return;
         }
-      } catch (err) {
-        console.error('Update participant error:', err);
-        alert('Сетевая ошибка. Проверьте подключение.');
-      }
-    });
+
+        try {
+          const response = await fetch('../api/admin/participant/update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+            credentials: 'same-origin',
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            alert('Данные успешно обновлены');
+            closeParticipantEdit();
+            fetchAdminData();
+          } else {
+            alert(result.error || 'Ошибка обновления данных');
+          }
+        } catch (err) {
+          console.error('Update participant error:', err);
+          alert('Сетевая ошибка. Проверьте подключение.');
+        }
+      });
   }
 
   // HTML-экранирование
