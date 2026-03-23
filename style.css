@@ -364,7 +364,8 @@ html {
   margin-bottom: 15px;
 }
 
-.socials a {
+.socials a,
+.socials h3 {
   color: var(--text-light);
   text-decoration: none;
   margin-right: 15px;
