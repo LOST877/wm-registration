@@ -93,12 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
         regForm.reset();
         loadParticipants(currentRaceId);
       } else if (response.status === 409) {
-        showPopup('error', 'Ошибка', result.message);
+        showPopup('error', 'Ошибка', result.error);
       } else {
         showPopup(
           'error',
           'Ошибка',
-          result.message || 'Не удалось отправить заявку.'
+          result.error || 'Не удалось отправить заявку.'
         );
       }
     } catch (error) {
