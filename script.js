@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Валидация телефона — минимум 11 цифр (+7 + 10 цифр)
     const phoneInput = regForm.querySelector('[name="phone"]');
-    const phoneDigits = phoneInput.value.replace(/\D/g, '');
+    const phoneDigits = phoneInput.dataset.digits.replace(/\D/g, '');
     if (phoneDigits.length < 11) {
       showPopup(
         'error',
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
       middleName,
       birthDate: regForm.querySelector('[name="birthDate"]').value,
       city,
-      phone: phoneInput.value,
+      phone: phoneDigits,
       email: regForm.querySelector('[name="email"]').value,
       team: regForm.querySelector('[name="team"]').value || null,
       race_category_id: regForm.querySelector('[name="race_category_id"]')
@@ -93,12 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
         regForm.reset();
         loadParticipants(currentRaceId);
       } else if (response.status === 409) {
-        showPopup('error', 'Ошибка', result.message);
+        showPopup('error', 'Ошибка', result.error);
       } else {
         showPopup(
           'error',
           'Ошибка',
-          result.message || 'Не удалось отправить заявку.'
+          result.error || 'Не удалось отправить заявку.'
         );
       }
     } catch (error) {
@@ -354,49 +354,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Форматирование телефона по шаблону +7 (XXX) XXX-XX-XX
-  document.querySelectorAll('input[data-phone-mask]').forEach((input) => {
-    // При фокусе — сразу +7, если поле пустое
-    input.addEventListener('focus', () => {
-      const val = input.value.trim();
-      if (val === '' || !val.startsWith('+7')) {
-        input.value = '+7';
-      }
+  const phoneInput = document.querySelector('input[data-phone-mask]');
+  if (phoneInput) {
+    const mask = IMask(phoneInput, {
+      mask: '+{7}(000)000-00-00',
+      lazy: false,
+      placeholderChar: '_',
     });
 
-    // При потере фокуса — оставляем только цифры и +7 в начале
-    input.addEventListener('blur', () => {
-      const digits = input.value.replace(/\D/g, '');
-      if (digits.startsWith('7') || digits.startsWith('8')) {
-        input.value = '+7' + digits.slice(1, 11);
-      } else if (digits.length > 0) {
-        input.value = '+7' + digits.slice(2, 12);
-      } else {
-        input.value = '';
-      }
-      input.setSelectionRange(input.value.length, input.value.length);
-    });
-
-    // Ограничение ввода: только цифры, максимум 10 после +7
-    input.addEventListener('input', (e) => {
-      const val = input.value;
-      const startPos = input.selectionStart;
-
-      // Оставляем только цифры
-      let digits = val.replace(/\D/g, '');
-
-      // Если ввели буквы/символы, удаляем их
-      if (digits !== val.replace(/[^\d+()\- ]/g, '')) {
-        input.value = '+' + digits.slice(0, 11);
-        input.setSelectionRange(startPos, startPos);
-        return;
-      }
-
-      // Ограничиваем 10 цифрами после +7
-      if (digits.length > 11) {
-        input.value = '+7' + digits.slice(1, 11);
-        input.setSelectionRange(input.value.length, input.value.length);
-        return;
-      }
-    });
-  });
+    phoneInput.addEventListener(
+      'input',
+      (e) => (phoneInput.dataset.digits = mask.unmaskedValue)
+    );
+  }
 });
