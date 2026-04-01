@@ -140,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         const headers = {
+          payment_amount: 'Сумма оплаты',
           is_paid: 'Оплата',
           last_name: 'Фамилия',
           first_name: 'Имя',
@@ -189,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <table>
                         <thead>
                             <tr>
+                                <th>Действия</th>
                                 ${columns
                                   .map(
                                     (col) =>
@@ -197,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                       )}</th>`
                                   )
                                   .join('')}
-                                <th>Действия</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -205,14 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
                               .map(
                                 (p, idx) => `
                                 <tr>
-                                    ${columns
-                                      .map(
-                                        (col) =>
-                                          `<td>${escapeHtml(
-                                            p[col] || '-'
-                                          )}</td>`
-                                      )
-                                      .join('')}
                                     <td>
                                         <button class="edit-participant-btn" 
                                                 data-participant-id="${p.id}"
@@ -221,6 +214,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                             ✎
                                         </button>
                                     </td>
+                                    ${columns
+                                      .map(
+                                        (col) =>
+                                          `<td>${escapeHtml(
+                                            p[col] || '-'
+                                          )}</td>`
+                                      )
+                                      .join('')}
                                 </tr>
                             `
                               )
@@ -279,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('city').value = p.city || '';
         document.getElementById('team').value = p.team || '';
         document.getElementById('is-paid').checked = !!p.is_paid;
+        document.getElementById('payment-amount').value = p.payment_amount || '';
 
         // Заполняем select категорий
         const categorySelect = document.getElementById('category-id');
@@ -346,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ? parseInt(document.getElementById('category-id').value)
             : null,
           is_paid: document.getElementById('is-paid').checked ? '1' : '0',
+          payment_amount: document.getElementById('payment-amount').value,
           race_id: currentRaceId,
         };
 
@@ -395,3 +398,5 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+

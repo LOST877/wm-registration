@@ -46,6 +46,7 @@ try {
             r.city,
             r.team,
             r.is_paid,
+            r.payment_amount,
             c.id AS category_id,
             c.name AS category_name
         FROM registrations r

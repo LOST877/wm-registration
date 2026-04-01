@@ -38,6 +38,7 @@ $email = trim($data['email'] ?? '');
 $city = trim($data['city'] ?? '');
 $team = trim($data['team'] ?? '');
 $isPaid = $data['is_paid'] ?? null;
+$paymentAmount = isset($data['payment_amount']) && $data['payment_amount'] !== '' ? floatval($data['payment_amount']) : null;
 
 if ($participantId === null || !is_numeric($participantId) || (int)$participantId <= 0) {
   http_response_code(400);
@@ -125,7 +126,8 @@ try {
             email = ?,
             city = ?,
             team = ?,
-            is_paid = ?
+            is_paid = ?,
+            payment_amount = ?
         WHERE id = ?
     ');
   $stmt->execute([
@@ -140,6 +142,7 @@ try {
     $city,
     $team,
     (int)$isPaid,
+    $paymentAmount,
     (int)$participantId
   ]);
 
