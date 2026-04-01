@@ -57,6 +57,7 @@ try {
                 reg.middle_name,
                 reg.birth_date,
                 reg.is_paid,
+                reg.payment_amount,
                 reg.phone,
                 reg.email,
                 reg.city,
