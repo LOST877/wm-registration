@@ -301,6 +301,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const regSection = document.getElementById('registration');
     if (regSection) regSection.style.display = 'none';
+
+    const navRegLink = document.getElementById('nav-reg-link');
+    if (navRegLink) {
+      navRegLink.textContent = 'Участники';
+      navRegLink.href = '#participants';
+    }
   }
 
   // Вспомогательная функция форматирования ФИО
