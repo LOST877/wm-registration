@@ -151,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
           race.name.toUpperCase();
 
         // Дата
-        const dateObj = new Date(race.date + 'T00:00:00');
         const months = [
           'января',
           'февраля',
@@ -166,9 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
           'ноября',
           'декабря',
         ];
-        const day = dateObj.getUTCDate();
-        const month = months[dateObj.getUTCMonth()];
-        const year = dateObj.getUTCFullYear();
+        const [year, monthIndex, day] = race.date.split('-').map(Number);
+        const month = months[monthIndex - 1];
         document.getElementById(
           'about-date'
         ).innerHTML = `<strong>Дата:</strong> ${day} ${month} ${year}г.`;
