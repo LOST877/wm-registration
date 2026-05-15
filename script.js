@@ -204,14 +204,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const raceIdInput = document.querySelector('input[name="race_id"]');
         if (raceIdInput) raceIdInput.value = race.id;
 
-        // Режим регистрации
-        applyRegistrationState(race.registration_open);
+        // Применяем состояние гонки
+        applyRaceState(race);
 
-        // Загружаем категории в форму
-        loadCategories(race.id);
-
-        // Загружаем участников для этой гонки
-        loadParticipants(race.id);
+        if (race.is_finished == 1) {
+          loadResults(race.id);
+        } else {
+          loadCategories(race.id);
+          loadParticipants(race.id);
+        }
       }
     } catch (err) {
       console.warn('Не удалось загрузить данные гонки:', err);
@@ -288,22 +289,137 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function applyRegistrationState(isOpen) {
-    if (isOpen == 1 || isOpen === true) return;
-
-    document.getElementById('hero-reg-status').textContent = 'РЕГИСТРАЦИЯ ЗАКРЫТА';
-
+  function applyRaceState(race) {
+    const regStatus = document.getElementById('hero-reg-status');
     const regBtn = document.getElementById('hero-reg-btn');
-    regBtn.textContent = 'СПИСОК УЧАСТНИКОВ';
-    regBtn.href = '#participants';
-
-    const regSection = document.getElementById('registration');
-    if (regSection) regSection.style.display = 'none';
-
     const navRegLink = document.getElementById('nav-reg-link');
-    if (navRegLink) {
-      navRegLink.textContent = 'Участники';
-      navRegLink.href = '#participants';
+    const regSection = document.getElementById('registration');
+    const participantsSection = document.getElementById('participants');
+    const resultsSection = document.getElementById('results');
+
+    if (race.is_finished == 1) {
+      regStatus.textContent = 'ГОНКА ЗАВЕРШЕНА';
+      regBtn.textContent = 'РЕЗУЛЬТАТЫ';
+      regBtn.href = '#results';
+      if (navRegLink) {
+        navRegLink.textContent = 'Результаты';
+        navRegLink.href = '#results';
+      }
+      if (regSection) regSection.style.display = 'none';
+      if (participantsSection) participantsSection.style.display = 'none';
+      if (resultsSection) resultsSection.style.display = 'block';
+    } else if (race.registration_open != 1) {
+      regStatus.textContent = 'РЕГИСТРАЦИЯ ЗАКРЫТА';
+      regBtn.textContent = 'СПИСОК УЧАСТНИКОВ';
+      regBtn.href = '#participants';
+      if (navRegLink) {
+        navRegLink.textContent = 'Участники';
+        navRegLink.href = '#participants';
+      }
+      if (regSection) regSection.style.display = 'none';
+    }
+  }
+
+  async function loadResults(raceId) {
+    const tbody = document.getElementById('results-tbody');
+    const tabsContainer = document.getElementById('results-categories');
+    const theadRow = document.getElementById('results-thead-row');
+    if (!tbody || !tabsContainer || !theadRow) return;
+
+    try {
+      const res = await fetch(`api/results.php?race_id=${raceId}`);
+      const data = await res.json();
+
+      if (!data.success || !data.results.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="no-data">Результаты пока не опубликованы</td></tr>';
+        return;
+      }
+
+      const results = data.results;
+
+      const seenCats = new Set();
+      const categories = [];
+      results.forEach((r) => {
+        if (r.category && !seenCats.has(r.category)) {
+          seenCats.add(r.category);
+          categories.push(r.category);
+        }
+      });
+
+      const tabs = ['Абсолют', ...categories];
+      let activeFilter = 'Абсолют';
+
+      function getLapCount(rows) {
+        if (!rows.length) return 0;
+        const first = rows[0];
+        const laps = [first.lap_1, first.lap_2, first.lap_3, first.lap_4, first.lap_5];
+        let count = 0;
+        for (const l of laps) {
+          if (l !== null && l !== undefined) count++;
+          else break;
+        }
+        return count;
+      }
+
+      function renderTable() {
+        const isAbsolut = activeFilter === 'Абсолют';
+        const rows = isAbsolut
+          ? results
+          : results.filter((r) => r.category === activeFilter);
+
+        const lapCount = getLapCount(rows);
+
+        let ths = '<th>Место</th><th>Номер</th><th>Участник</th><th>Год</th><th>Город</th>';
+        if (isAbsolut) ths += '<th>Категория</th>';
+        for (let i = 1; i <= lapCount; i++) ths += `<th>Круг ${i}</th>`;
+        theadRow.innerHTML = ths;
+
+        tbody.innerHTML = '';
+        if (!rows.length) {
+          const colspan = (isAbsolut ? 6 : 5) + lapCount;
+          tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">Нет данных для этой категории</td></tr>`;
+          return;
+        }
+
+        rows.forEach((r, idx) => {
+          const place = isAbsolut ? r.place : idx + 1;
+          const name = [r.last_name, r.first_name].filter(Boolean).join(' ');
+          const tr = document.createElement('tr');
+
+          let cells = `<td>${place}</td><td>${r.bib_number ?? '-'}</td>`;
+          cells += `<td>${name}</td>`;
+          cells += `<td>${r.birth_year ?? '-'}</td>`;
+          cells += `<td>${r.city ?? '-'}</td>`;
+          if (isAbsolut) cells += `<td>${r.category ?? '-'}</td>`;
+          for (let i = 1; i <= lapCount; i++) {
+            cells += `<td>${r[`lap_${i}`] ?? '-'}</td>`;
+          }
+          tr.innerHTML = cells;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function buildTabs() {
+        tabsContainer.innerHTML = tabs
+          .map(
+            (t) =>
+              `<button class="category-tab${t === activeFilter ? ' active' : ''}" data-cat="${t}">${t}</button>`
+          )
+          .join('');
+        tabsContainer.querySelectorAll('.category-tab').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            activeFilter = btn.dataset.cat;
+            buildTabs();
+            renderTable();
+          });
+        });
+      }
+
+      buildTabs();
+      renderTable();
+    } catch (err) {
+      console.error('Ошибка загрузки результатов:', err);
+      tbody.innerHTML = '<tr><td colspan="10" class="error">Ошибка загрузки результатов</td></tr>';
     }
   }
 

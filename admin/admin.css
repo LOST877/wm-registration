@@ -494,3 +494,51 @@ tr:hover {
     max-height: 95vh;
   }
 }
+
+/* Импорт результатов CSV */
+.results-import {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: 0.75rem 0;
+}
+
+.results-import label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.results-import .csv-file-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.results-import .import-csv-btn {
+  padding: 0.4rem 1rem;
+  background: var(--primary);
+  color: var(--text-light);
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.results-import .import-csv-btn:hover {
+  background: var(--primary-hover);
+}
+
+.results-import .import-csv-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.import-status {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}

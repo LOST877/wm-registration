@@ -109,6 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                  ${race.registration_open == 1 ? 'checked' : ''}>
                           Регистрация открыта
                         </label>
+                        <label class="reg-toggle">
+                          <input type="checkbox" class="race-finished-checkbox"
+                                 data-race-id="${race.id}"
+                                 ${race.is_finished == 1 ? 'checked' : ''}>
+                          Гонка завершена
+                        </label>
                     </div>
                     <div class="race-info">
                         📍 ${escapeHtml(race.location)} |
@@ -120,6 +126,12 @@ document.addEventListener('DOMContentLoaded', () => {
                               )}`
                             : ''
                         }
+                    </div>
+                    <div class="results-import">
+                        <label>Результаты (CSV):</label>
+                        <input type="file" class="csv-file-input" accept=".csv" data-race-id="${race.id}">
+                        <button class="import-csv-btn" data-race-id="${race.id}">Загрузить</button>
+                        <span class="import-status"></span>
                     </div>
                     <div class="category-list">
                         ${race.categories
@@ -176,9 +188,15 @@ document.addEventListener('DOMContentLoaded', () => {
                              ${race.registration_open == 1 ? 'checked' : ''}>
                       Регистрация открыта
                     </label>
+                    <label class="reg-toggle">
+                      <input type="checkbox" class="race-finished-checkbox"
+                             data-race-id="${race.id}"
+                             ${race.is_finished == 1 ? 'checked' : ''}>
+                      Гонка завершена
+                    </label>
                 </div>
                 <div class="race-info">
-                    📍 ${escapeHtml(race.location)} | 
+                    📍 ${escapeHtml(race.location)} |
                     👥 ${race.participants_count} участников
                     ${
                       race.payment_info
@@ -187,6 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
                           )}`
                         : ''
                     }
+                </div>
+                <div class="results-import">
+                    <label>Результаты (CSV):</label>
+                    <input type="file" class="csv-file-input" accept=".csv" data-race-id="${race.id}">
+                    <button class="import-csv-btn" data-race-id="${race.id}">Загрузить</button>
+                    <span class="import-status"></span>
                 </div>
                 <div class="category-list">
                     ${race.categories
@@ -269,6 +293,79 @@ document.addEventListener('DOMContentLoaded', () => {
           alert('Сетевая ошибка. Проверьте подключение.');
         } finally {
           checkbox.disabled = false;
+        }
+      });
+    });
+
+    // Вешаем обработчики на чекбоксы «Гонка завершена»
+    document.querySelectorAll('.race-finished-checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('change', async () => {
+        const raceId = parseInt(checkbox.dataset.raceId);
+        const newValue = checkbox.checked ? 1 : 0;
+        checkbox.disabled = true;
+        try {
+          const response = await fetch('../api/admin/race_update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: raceId, is_finished: newValue }),
+            credentials: 'same-origin',
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            checkbox.checked = !checkbox.checked;
+            alert(result.error || 'Ошибка обновления');
+          }
+        } catch (err) {
+          checkbox.checked = !checkbox.checked;
+          alert('Сетевая ошибка. Проверьте подключение.');
+        } finally {
+          checkbox.disabled = false;
+        }
+      });
+    });
+
+    // Вешаем обработчики на кнопки импорта CSV
+    document.querySelectorAll('.import-csv-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const raceId = parseInt(btn.dataset.raceId);
+        const container = btn.closest('.results-import');
+        const fileInput = container.querySelector('.csv-file-input');
+        const statusEl = container.querySelector('.import-status');
+
+        if (!fileInput.files.length) {
+          statusEl.textContent = 'Выберите файл';
+          statusEl.style.color = 'var(--danger)';
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('race_id', raceId);
+        formData.append('file', fileInput.files[0]);
+
+        btn.disabled = true;
+        statusEl.textContent = 'Загрузка...';
+        statusEl.style.color = 'var(--text-secondary)';
+
+        try {
+          const response = await fetch('../api/admin/results_import.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+          });
+          const result = await response.json();
+          if (response.ok && result.success) {
+            statusEl.textContent = `Импортировано: ${result.imported} строк`;
+            statusEl.style.color = 'green';
+            fileInput.value = '';
+          } else {
+            statusEl.textContent = result.error || 'Ошибка импорта';
+            statusEl.style.color = 'var(--danger)';
+          }
+        } catch (err) {
+          statusEl.textContent = 'Сетевая ошибка';
+          statusEl.style.color = 'var(--danger)';
+        } finally {
+          btn.disabled = false;
         }
       });
     });

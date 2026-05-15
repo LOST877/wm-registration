@@ -12,7 +12,7 @@ try {
 
   // Получаем первую активную гонку
   $stmt = $pdo->prepare("
-    SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open
+    SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open, is_finished
     FROM races
     WHERE is_active = 1 
     ORDER BY date ASC 

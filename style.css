@@ -592,3 +592,35 @@ html {
     right: 10px;
   }
 }
+
+/* --- РЕЗУЛЬТАТЫ ГОНКИ --- */
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.category-tab {
+  padding: 0.4rem 1rem;
+  border: 2px solid var(--primary-color);
+  background: transparent;
+  color: var(--primary-color);
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  text-transform: uppercase;
+}
+
+.category-tab:hover {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.category-tab.active {
+  background: var(--primary-color);
+  color: #fff;
+}

@@ -10,6 +10,7 @@ CREATE TABLE races (
   payment_info TEXT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   registration_open TINYINT(1) NOT NULL DEFAULT 1,
+  is_finished TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -61,6 +62,27 @@ CREATE TABLE registrations (
   FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE,
   FOREIGN KEY (race_category_id) REFERENCES race_categories(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
+
+-- Таблица результатов гонки (импорт из CSV хронометража)
+CREATE TABLE race_results (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  race_id INT NOT NULL,
+  place INT NOT NULL,
+  bib_number INT,
+  last_name VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  middle_name VARCHAR(255),
+  city VARCHAR(255),
+  birth_year YEAR,
+  category VARCHAR(50),
+  lap_1 VARCHAR(20),
+  lap_2 VARCHAR(20),
+  lap_3 VARCHAR(20),
+  lap_4 VARCHAR(20),
+  lap_5 VARCHAR(20),
+  INDEX idx_race_id (race_id),
+  FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Таблица администраторов
 CREATE TABLE IF NOT EXISTS admin_users (

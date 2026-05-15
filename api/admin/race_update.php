@@ -23,7 +23,7 @@ if (!isset($data['id']) || !is_numeric($data['id'])) {
 }
 
 $raceId = (int)$data['id'];
-$allowed = ['registration_open'];
+$allowed = ['registration_open', 'is_finished'];
 $updates = [];
 $params = [];
 
