@@ -9,6 +9,7 @@ CREATE TABLE races (
   description TEXT,
   payment_info TEXT NULL,
   is_active BOOLEAN DEFAULT TRUE,
+  registration_open TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

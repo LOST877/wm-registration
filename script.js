@@ -206,6 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const raceIdInput = document.querySelector('input[name="race_id"]');
         if (raceIdInput) raceIdInput.value = race.id;
 
+        // Режим регистрации
+        applyRegistrationState(race.registration_open);
+
         // Загружаем категории в форму
         loadCategories(race.id);
 
@@ -285,6 +288,19 @@ document.addEventListener('DOMContentLoaded', () => {
       tbody.innerHTML =
         '<tr><td colspan="4" class="error">Ошибка загрузки списка участников</td></tr>';
     }
+  }
+
+  function applyRegistrationState(isOpen) {
+    if (isOpen == 1 || isOpen === true) return;
+
+    document.getElementById('hero-reg-status').textContent = 'РЕГИСТРАЦИЯ ЗАКРЫТА';
+
+    const regBtn = document.getElementById('hero-reg-btn');
+    regBtn.textContent = 'СПИСОК УЧАСТНИКОВ';
+    regBtn.href = '#participants';
+
+    const regSection = document.getElementById('registration');
+    if (regSection) regSection.style.display = 'none';
   }
 
   // Вспомогательная функция форматирования ФИО

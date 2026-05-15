@@ -25,6 +25,7 @@ try {
             r.date,
             r.location,
             r.payment_info,
+            r.registration_open,
             COUNT(reg.id) AS participants_count
         FROM races r
         LEFT JOIN registrations reg ON r.id = reg.race_id

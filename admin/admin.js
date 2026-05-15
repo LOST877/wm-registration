@@ -103,9 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             day: 'numeric',
                           }
                         )}</small>
+                        <label class="reg-toggle">
+                          <input type="checkbox" class="reg-open-checkbox"
+                                 data-race-id="${race.id}"
+                                 ${race.registration_open == 1 ? 'checked' : ''}>
+                          Регистрация открыта
+                        </label>
                     </div>
                     <div class="race-info">
-                        📍 ${escapeHtml(race.location)} | 
+                        📍 ${escapeHtml(race.location)} |
                         👥 ${race.participants_count} участников
                         ${
                           race.payment_info
@@ -164,6 +170,12 @@ document.addEventListener('DOMContentLoaded', () => {
                       month: 'long',
                       day: 'numeric',
                     })}</small>
+                    <label class="reg-toggle">
+                      <input type="checkbox" class="reg-open-checkbox"
+                             data-race-id="${race.id}"
+                             ${race.registration_open == 1 ? 'checked' : ''}>
+                      Регистрация открыта
+                    </label>
                 </div>
                 <div class="race-info">
                     📍 ${escapeHtml(race.location)} | 
@@ -233,6 +245,33 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       })
       .join('');
+
+    // Вешаем обработчики на чекбоксы «Регистрация открыта»
+    document.querySelectorAll('.reg-open-checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('change', async () => {
+        const raceId = parseInt(checkbox.dataset.raceId);
+        const newValue = checkbox.checked ? 1 : 0;
+        checkbox.disabled = true;
+        try {
+          const response = await fetch('../api/admin/race_update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: raceId, registration_open: newValue }),
+            credentials: 'same-origin',
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            checkbox.checked = !checkbox.checked;
+            alert(result.error || 'Ошибка обновления');
+          }
+        } catch (err) {
+          checkbox.checked = !checkbox.checked;
+          alert('Сетевая ошибка. Проверьте подключение.');
+        } finally {
+          checkbox.disabled = false;
+        }
+      });
+    });
 
     // Вешаем обработчики на кнопки редактирования
     document.querySelectorAll('.edit-participant-btn').forEach((btn) => {
