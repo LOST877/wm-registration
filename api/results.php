@@ -19,13 +19,18 @@ try {
 
   $stmt = $pdo->prepare("
     SELECT place, bib_number, last_name, first_name, middle_name,
-           city, birth_year, category, lap_1, lap_2, lap_3, lap_4, lap_5
+           city, birth_year, category, laps
     FROM race_results
     WHERE race_id = ?
     ORDER BY place ASC
   ");
   $stmt->execute([$raceId]);
   $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  foreach ($results as &$r) {
+    $r['laps'] = $r['laps'] ? json_decode($r['laps'], true) : [];
+  }
+  unset($r);
 
   echo json_encode(['success' => true, 'results' => $results]);
   exit;

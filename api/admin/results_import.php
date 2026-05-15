@@ -65,8 +65,8 @@ try {
   $stmt = $pdo->prepare("
     INSERT INTO race_results
       (race_id, place, bib_number, last_name, first_name, middle_name,
-       city, birth_year, category, lap_1, lap_2, lap_3, lap_4, lap_5)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       city, birth_year, category, laps)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ");
 
   $imported = 0;
@@ -80,21 +80,19 @@ try {
     $birthYear  = isset($row[6]) && $row[6] !== '' ? (int)$row[6] : null;
     $category   = trim($row[7] ?? '') ?: null;
 
-    $lap = function ($val) {
-      $v = trim($val ?? '');
-      return ($v === '' || $v === '-') ? null : $v;
-    };
-    $lap1 = $lap($row[8]  ?? '');
-    $lap2 = $lap($row[9]  ?? '');
-    $lap3 = $lap($row[10] ?? '');
-    $lap4 = $lap($row[11] ?? '');
-    $lap5 = $lap($row[12] ?? '');
+    $laps = [];
+    for ($i = 8; isset($row[$i]); $i++) {
+      $v = trim($row[$i]);
+      if ($v === '' || $v === '-') break;
+      $laps[] = $v;
+    }
 
     if (!$lastName || !$firstName) continue;
 
     $stmt->execute([
       $raceId, $place, $bib, $lastName, $firstName, $middleName,
-      $city, $birthYear, $category, $lap1, $lap2, $lap3, $lap4, $lap5,
+      $city, $birthYear, $category,
+      $laps ? json_encode($laps, JSON_UNESCAPED_UNICODE) : null,
     ]);
     $imported++;
   }

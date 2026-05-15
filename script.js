@@ -351,14 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       function getLapCount(rows) {
         if (!rows.length) return 0;
-        const first = rows[0];
-        const laps = [first.lap_1, first.lap_2, first.lap_3, first.lap_4, first.lap_5];
-        let count = 0;
-        for (const l of laps) {
-          if (l !== null && l !== undefined) count++;
-          else break;
-        }
-        return count;
+        return rows[0].laps ? rows[0].laps.length : 0;
       }
 
       function renderTable() {
@@ -391,8 +384,8 @@ document.addEventListener('DOMContentLoaded', () => {
           cells += `<td>${r.birth_year ?? '-'}</td>`;
           cells += `<td>${r.city ?? '-'}</td>`;
           if (isAbsolut) cells += `<td>${r.category ?? '-'}</td>`;
-          for (let i = 1; i <= lapCount; i++) {
-            cells += `<td>${r[`lap_${i}`] ?? '-'}</td>`;
+          for (let i = 0; i < lapCount; i++) {
+            cells += `<td>${r.laps[i] ?? '-'}</td>`;
           }
           tr.innerHTML = cells;
           tbody.appendChild(tr);
