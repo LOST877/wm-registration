@@ -11,22 +11,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Настройка SSH
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-      - name: Деплой через rsync
-        run: |
-          rsync -avz --delete \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.htaccess' \
-            --exclude='.htaccess.example' \
-            --exclude='hash.php' \
-            --exclude='CLAUDE.md' \
-            --exclude='PROJECT_KNOLEDGE.md' \
-            --exclude='sql/' \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30" \
-            ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/wm-registration/public_html/
+      - name: Деплой через FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /home/wm-registration/public_html/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .htaccess
+            .htaccess.example
+            hash.php
+            CLAUDE.md
+            PROJECT_KNOLEDGE.md
+            sql/**
