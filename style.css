@@ -317,6 +317,21 @@ html {
   background-color: #f9f9f9;
 }
 
+.participants-table tbody tr {
+  cursor: pointer;
+}
+
+.participants-table tbody tr.selected {
+  background: #fde8e2 !important;
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
+.results .table-container {
+  max-height: calc(100dvh - 220px);
+  overflow-y: auto;
+}
+
 /* --- СПОНСОРЫ --- */
 .sponsor-logos {
   display: flex;
@@ -591,6 +606,11 @@ html {
     top: 10px;
     right: 10px;
   }
+
+  .category-tab {
+    font-size: 1rem;
+    padding: 0.6rem 1.2rem;
+  }
 }
 
 /* --- РЕЗУЛЬТАТЫ ГОНКИ --- */
@@ -613,6 +633,12 @@ html {
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
   text-transform: uppercase;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  min-height: 44px;
+  min-width: 44px;
+  line-height: 1;
 }
 
 .category-tab:hover {

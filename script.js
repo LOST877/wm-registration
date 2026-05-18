@@ -389,6 +389,11 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           tr.innerHTML = cells;
           tbody.appendChild(tr);
+          tr.addEventListener('click', () => {
+            const already = tr.classList.contains('selected');
+            tbody.querySelectorAll('tr.selected').forEach(el => el.classList.remove('selected'));
+            if (!already) tr.classList.add('selected');
+          });
         });
       }
 
