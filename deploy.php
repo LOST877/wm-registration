@@ -14,26 +14,13 @@ if (($data['ref'] ?? '') !== 'refs/heads/main') {
     exit('Not main');
 }
 
-$dir = escapeshellarg(__DIR__);
-$cmd = "cd $dir && git pull origin main 2>&1";
-$output = '';
+$keyPath = getenv('GITHUB_DEPLOY_KEY');
+$sshCmd  = "ssh -i $keyPath -o StrictHostKeyChecking=no -o BatchMode=yes";
+$dir     = escapeshellarg(__DIR__);
+$cmd     = "GIT_SSH_COMMAND=" . escapeshellarg($sshCmd) . " git -C $dir pull origin main 2>&1";
 
-if (function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
-    exec($cmd, $lines, $code);
-    $output = implode("\n", $lines) . "\nexit: $code";
-} elseif (function_exists('shell_exec')) {
-    $output = shell_exec($cmd) ?? 'shell_exec returned null';
-} elseif (function_exists('passthru')) {
-    ob_start();
-    passthru($cmd);
-    $output = ob_get_clean();
-} elseif (function_exists('system')) {
-    ob_start();
-    system($cmd);
-    $output = ob_get_clean();
-} else {
-    $output = 'ERROR: all shell functions disabled';
-}
+exec($cmd, $lines, $code);
+$output = implode("\n", $lines) . "\nexit: $code";
 
 $log = date('Y-m-d H:i:s') . "\n" . $output . "\n---\n";
 file_put_contents(__DIR__ . '/deploy.log', $log, FILE_APPEND);
