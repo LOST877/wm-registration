@@ -14,6 +14,29 @@ if (($data['ref'] ?? '') !== 'refs/heads/main') {
     exit('Not main');
 }
 
-$output = shell_exec('cd ' . escapeshellarg(__DIR__) . ' && git pull origin main 2>&1');
+$dir = escapeshellarg(__DIR__);
+$cmd = "cd $dir && git pull origin main 2>&1";
+$output = '';
+
+if (function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
+    exec($cmd, $lines, $code);
+    $output = implode("\n", $lines) . "\nexit: $code";
+} elseif (function_exists('shell_exec')) {
+    $output = shell_exec($cmd) ?? 'shell_exec returned null';
+} elseif (function_exists('passthru')) {
+    ob_start();
+    passthru($cmd);
+    $output = ob_get_clean();
+} elseif (function_exists('system')) {
+    ob_start();
+    system($cmd);
+    $output = ob_get_clean();
+} else {
+    $output = 'ERROR: all shell functions disabled';
+}
+
+$log = date('Y-m-d H:i:s') . "\n" . $output . "\n---\n";
+file_put_contents(__DIR__ . '/deploy.log', $log, FILE_APPEND);
+
 http_response_code(200);
 echo $output;
