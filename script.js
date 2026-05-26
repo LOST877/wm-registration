@@ -338,13 +338,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const activeId = currentId ? parseInt(currentId, 10) : null;
       switcher.innerHTML = races
         .map((r) => {
-          const year = r.date ? r.date.split('-')[0] : '';
-          const label = year ? `${escapeHtml(r.name)} ${escapeHtml(year)}` : escapeHtml(r.name);
           const isActive = r.id === activeId;
           const href = `?race=${encodeURIComponent(r.id)}`;
-          return `<a href="${href}" class="race-tab${isActive ? ' active' : ''}">${label}</a>`;
+          return `<a href="${href}" class="race-tab${isActive ? ' active' : ''}">${escapeHtml(r.name)}</a>`;
         })
         .join('');
+      const header = document.querySelector('.header');
+      const headerH = header ? header.offsetHeight : 60;
+      switcher.style.marginTop = headerH + 'px';
       switcher.style.display = '';
       const hero = document.querySelector('.hero');
       if (hero) hero.style.marginTop = '0';
