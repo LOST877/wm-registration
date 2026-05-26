@@ -207,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </label>
                     <button class="edit-race-btn" data-race-id="${race.id}">Редактировать гонку</button>
                     <button class="delete-race-btn" data-race-id="${race.id}">Удалить</button>
+                    <button class="export-csv-btn" data-race-id="${race.id}">Выгрузить участников (.csv)</button>
                 </div>
                 <div class="race-info">
                     📍 ${escapeHtml(race.location)} |
@@ -380,6 +381,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
           btn.disabled = false;
         }
+      });
+    });
+
+    // Вешаем обработчики на кнопки экспорта CSV
+    document.querySelectorAll('.export-csv-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raceId = parseInt(btn.dataset.raceId);
+        window.location.href = `../api/admin/export_csv.php?race_id=${raceId}`;
       });
     });
 
