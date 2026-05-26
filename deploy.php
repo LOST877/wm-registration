@@ -14,10 +14,8 @@ if (($data['ref'] ?? '') !== 'refs/heads/main') {
     exit('Not main');
 }
 
-$keyPath = getenv('GITHUB_DEPLOY_KEY');
-$sshCmd  = "ssh -i $keyPath -o StrictHostKeyChecking=no -o BatchMode=yes";
-$dir     = escapeshellarg(__DIR__);
-$cmd     = "GIT_SSH_COMMAND=" . escapeshellarg($sshCmd) . " git -C $dir pull origin main 2>&1";
+$dir = escapeshellarg(__DIR__);
+$cmd = "git -C $dir pull origin main 2>&1";
 
 exec($cmd, $lines, $code);
 $output = implode("\n", $lines) . "\nexit: $code";
