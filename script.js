@@ -1,5 +1,11 @@
 let currentRaceId = 1;
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Мобильное меню (бургер)
   const mobileBtn = document.getElementById('mobile-btn');
@@ -164,19 +170,32 @@ document.addEventListener('DOMContentLoaded', () => {
           'ноября',
           'декабря',
         ];
-        const [year, monthIndex, day] = race.date.split('-').map(Number);
+        const datePart = race.date.split(' ')[0];
+        const timePart = race.date.split(' ')[1];
+        const [year, monthIndex, day] = datePart.split('-').map(Number);
         const month = months[monthIndex - 1];
+        const hm = timePart ? timePart.slice(0, 5) : '00:00';
+        const timeStr = hm !== '00:00' ? `, начало в ${hm}` : '';
         document.getElementById(
           'about-date'
-        ).innerHTML = `<strong>Дата:</strong> ${day} ${month} ${year}г.`;
+        ).innerHTML = `<strong>Дата:</strong> ${day} ${month} ${year}г.${timeStr}`;
 
         // Локация
         if (race.location) {
-          let locationHtml = `<strong>Место:</strong> ${race.location}`;
+          const locationEl = document.getElementById('about-location');
+          locationEl.innerHTML = `<strong>Место:</strong> ${escapeHtml(race.location)}`;
           if (race.location_link) {
-            locationHtml += `<br><a href="${race.location_link}" target="_blank" class="link">Смотреть координаты на карте</a>`;
+            const a = document.createElement('a');
+            a.href = race.location_link;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.className = 'link';
+            a.textContent = 'Смотреть координаты на карте';
+            if (a.protocol === 'https:' || a.protocol === 'http:') {
+              locationEl.appendChild(document.createElement('br'));
+              locationEl.appendChild(a);
+            }
           }
-          document.getElementById('about-location').innerHTML = locationHtml;
         }
 
         // Карта
@@ -189,14 +208,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (race.description) {
           document.getElementById(
             'about-description'
-          ).innerHTML = `<strong>Описание:</strong> ${race.description}`;
+          ).innerHTML = `<strong>Описание:</strong> ${escapeHtml(race.description)}`;
         }
 
         // Оплата
         if (race.payment_info) {
           document.getElementById(
             'about-payment'
-          ).innerHTML = `<strong>Оплата:</strong> ${race.payment_info}`;
+          ).innerHTML = `<strong>Оплата:</strong> ${escapeHtml(race.payment_info)}`;
         }
 
         // Обновляем race_id

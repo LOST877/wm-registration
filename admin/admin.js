@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentParticipantId = null;
   let currentRaceId = null;
+  let racesData = [];
 
   // Проверка авторизации при загрузке
   fetchAdminData();
@@ -80,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Отрисовка гонок
   function renderRaces(races) {
+    racesData = races;
     if (!races.length) {
       racesContainer.innerHTML =
         '<div class="empty-state">Нет запланированных гонок</div>';
@@ -94,15 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <section class="race-card">
                     <div class="race-header">
                         <h3>${escapeHtml(race.race_name)}</h3>
-                        <small>${new Date(race.date).toLocaleDateString(
-                          'ru-RU',
-                          {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          }
-                        )}</small>
+                        <small>${formatRaceDate(race.date)}</small>
                         <label class="reg-toggle">
                           <input type="checkbox" class="reg-open-checkbox"
                                  data-race-id="${race.id}"
@@ -115,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                  ${race.is_finished == 1 ? 'checked' : ''}>
                           Гонка завершена
                         </label>
+                        <button class="edit-race-btn" data-race-id="${race.id}">Редактировать гонку</button>
                     </div>
                     <div class="race-info">
                         📍 ${escapeHtml(race.location)} |
@@ -176,12 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <section class="race-card">
                 <div class="race-header">
                     <h3>${escapeHtml(race.race_name)}</h3>
-                    <small>${new Date(race.date).toLocaleDateString('ru-RU', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}</small>
+                    <small>${formatRaceDate(race.date)}</small>
                     <label class="reg-toggle">
                       <input type="checkbox" class="reg-open-checkbox"
                              data-race-id="${race.id}"
@@ -194,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                              ${race.is_finished == 1 ? 'checked' : ''}>
                       Гонка завершена
                     </label>
+                    <button class="edit-race-btn" data-race-id="${race.id}">Редактировать гонку</button>
                 </div>
                 <div class="race-info">
                     📍 ${escapeHtml(race.location)} |
@@ -370,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Вешаем обработчики на кнопки редактирования
+    // Вешаем обработчики на кнопки редактирования участника
     document.querySelectorAll('.edit-participant-btn').forEach((btn) => {
       btn.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -378,6 +369,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const participantId = btn.dataset.participantId;
         const raceId = btn.dataset.raceId;
         await openParticipantEdit(participantId, raceId);
+      });
+    });
+
+    // Вешаем обработчики на кнопки редактирования гонки
+    document.querySelectorAll('.edit-race-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const raceId = parseInt(btn.dataset.raceId);
+        const race = racesData.find((r) => r.id === raceId);
+        if (race) openRaceEditModal(race);
       });
     });
   }
@@ -522,6 +523,94 @@ document.addEventListener('DOMContentLoaded', () => {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function formatRaceDate(dateStr) {
+    const d = new Date(dateStr.replace(' ', 'T'));
+    const datePart = d.toLocaleDateString('ru-RU', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const h = d.getHours();
+    const m = d.getMinutes();
+    if (h !== 0 || m !== 0) {
+      return `${datePart}, ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    return datePart;
+  }
+
+  // Редактирование гонки
+  const raceModal = document.getElementById('race-modal');
+  const raceCloseBtn = document.getElementById('race-close-btn');
+  const raceCancelBtn = document.getElementById('race-cancel-btn');
+  const raceForm = document.getElementById('race-form');
+
+  function openRaceEditModal(race) {
+    document.getElementById('race-edit-id').value = race.id;
+    document.getElementById('race-name').value = race.race_name || '';
+    document.getElementById('race-date').value = race.date
+      ? race.date.replace(' ', 'T').slice(0, 16)
+      : '';
+    document.getElementById('race-location').value = race.location || '';
+    document.getElementById('race-location-link').value = race.location_link || '';
+    document.getElementById('race-iframe').value = race.iframe_html || '';
+    document.getElementById('race-description').value = race.description || '';
+    document.getElementById('race-payment').value = race.payment_info || '';
+    raceModal.style.display = 'flex';
+  }
+
+  function closeRaceEditModal() {
+    raceModal.style.display = 'none';
+  }
+
+  if (raceCloseBtn) raceCloseBtn.addEventListener('click', closeRaceEditModal);
+  if (raceCancelBtn) raceCancelBtn.addEventListener('click', closeRaceEditModal);
+  if (raceModal) {
+    raceModal.addEventListener('click', (e) => {
+      if (e.target === raceModal) closeRaceEditModal();
+    });
+  }
+
+  if (raceForm) {
+    raceForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = {
+        id: parseInt(document.getElementById('race-edit-id').value),
+        name: document.getElementById('race-name').value.trim(),
+        date: document.getElementById('race-date').value || null,
+        location: document.getElementById('race-location').value.trim(),
+        location_link: document.getElementById('race-location-link').value.trim(),
+        iframe_html: document.getElementById('race-iframe').value.trim(),
+        description: document.getElementById('race-description').value.trim(),
+        payment_info: document.getElementById('race-payment').value.trim(),
+      };
+
+      if (!formData.name) {
+        alert('Название гонки не может быть пустым');
+        return;
+      }
+
+      try {
+        const response = await fetch('../api/admin/race_update.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+          credentials: 'same-origin',
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          closeRaceEditModal();
+          fetchAdminData();
+        } else {
+          alert(result.error || 'Ошибка сохранения');
+        }
+      } catch (err) {
+        console.error('Race update error:', err);
+        alert('Сетевая ошибка. Проверьте подключение.');
+      }
+    });
   }
 });
 

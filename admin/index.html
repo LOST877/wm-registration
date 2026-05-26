@@ -128,6 +128,72 @@
       </div>
     </div>
 
-    <script src="admin.js?v=3"></script>
+    <!-- Модальное окно редактирования гонки -->
+    <div id="race-modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Редактирование гонки</h3>
+          <button id="race-close-btn" class="close-btn">&times;</button>
+        </div>
+        <form id="race-form">
+          <input type="hidden" id="race-edit-id" />
+
+          <div class="form-section">
+            <h4 class="form-section-title">Основное</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="race-name">Название гонки *</label>
+                <input type="text" id="race-name" required />
+              </div>
+              <div class="form-group">
+                <label for="race-date">Дата и время</label>
+                <input type="datetime-local" id="race-date" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section-title">Место проведения</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="race-location">Адрес</label>
+                <input type="text" id="race-location" />
+              </div>
+              <div class="form-group">
+                <label for="race-location-link">Ссылка на карту</label>
+                <input type="url" id="race-location-link" placeholder="https://yandex.ru/maps/..." />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="race-iframe">Embed-код карты</label>
+              <textarea id="race-iframe" rows="3" placeholder="<iframe ...></iframe>"></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section-title">Описание</h4>
+            <div class="form-group">
+              <label for="race-description">Описание гонки</label>
+              <textarea id="race-description" rows="4"></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section-title">Оплата</h4>
+            <div class="form-group">
+              <label for="race-payment">Информация об оплате</label>
+              <textarea id="race-payment" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="race-cancel-btn" class="btn-cancel">Отмена</button>
+            <button type="submit" class="btn-save">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="admin.js?v=4"></script>
   </body>
 </html>
