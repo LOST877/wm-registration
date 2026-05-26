@@ -567,6 +567,59 @@ tr:hover {
   margin-bottom: 0.75rem;
 }
 
+/* Markdown-редактор */
+.md-toolbar {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.md-btn {
+  padding: 0.2rem 0.55rem;
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: var(--text-main);
+  line-height: 1.5;
+  transition: background 0.15s;
+}
+
+.md-btn:hover {
+  background: #e0e0e0;
+}
+
+.md-btn.md-preview-toggle {
+  margin-left: auto;
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.md-btn.md-preview-toggle:hover {
+  background: #ffe5e0;
+}
+
+.md-preview {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.6rem;
+  min-height: 70px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  background: var(--bg-light);
+}
+
+.md-preview p { margin: 0 0 0.5em; }
+.md-preview p:last-child { margin-bottom: 0; }
+.md-preview ul,
+.md-preview ol { margin: 0.25em 0 0.5em 1.5em; }
+.md-preview li { margin-bottom: 0.15em; }
+.md-preview h2,
+.md-preview h3 { font-size: 1rem; font-weight: 700; margin: 0.75em 0 0.25em; }
+
 /* Кнопка редактирования гонки */
 .edit-race-btn {
   padding: 0.35rem 0.85rem;

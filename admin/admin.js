@@ -1,3 +1,9 @@
+marked.use({
+  gfm: true,
+  breaks: true,
+  renderer: { html() { return ''; } },
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
   const authSection = document.getElementById('auth-section');
@@ -525,6 +531,85 @@ document.addEventListener('DOMContentLoaded', () => {
     return div.innerHTML;
   }
 
+  // Markdown-редактор
+  function initMarkdownEditor(id) {
+    const textarea = document.getElementById(id);
+    if (!textarea) return;
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'md-toolbar';
+
+    const actions = [
+      { label: 'Ж',        title: 'Жирный',                fn: () => wrapSelection(textarea, '**', '**') },
+      { label: 'К',        title: 'Курсив',                 fn: () => wrapSelection(textarea, '*', '*') },
+      { label: 'H2',       title: 'Заголовок',              fn: () => prefixLines(textarea, '## ') },
+      { label: '•',        title: 'Маркированный список',   fn: () => prefixLines(textarea, '- ') },
+      { label: '1.',       title: 'Нумерованный список',    fn: () => prefixLines(textarea, '1. ') },
+    ];
+
+    actions.forEach(({ label, title, fn }) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'md-btn';
+      btn.textContent = label;
+      btn.title = title;
+      btn.addEventListener('click', () => { fn(); textarea.focus(); });
+      toolbar.appendChild(btn);
+    });
+
+    const previewBtn = document.createElement('button');
+    previewBtn.type = 'button';
+    previewBtn.className = 'md-btn md-preview-toggle';
+    previewBtn.textContent = 'Предпросмотр';
+    toolbar.appendChild(previewBtn);
+
+    const preview = document.createElement('div');
+    preview.className = 'md-preview';
+    preview.style.display = 'none';
+
+    previewBtn.addEventListener('click', () => {
+      const showingPreview = preview.style.display !== 'none';
+      if (showingPreview) {
+        preview.style.display = 'none';
+        textarea.style.display = '';
+        previewBtn.textContent = 'Предпросмотр';
+      } else {
+        preview.innerHTML = marked.parse(textarea.value || '');
+        preview.style.display = 'block';
+        textarea.style.display = 'none';
+        previewBtn.textContent = 'Редактировать';
+      }
+    });
+
+    textarea.parentNode.insertBefore(toolbar, textarea);
+    textarea.insertAdjacentElement('afterend', preview);
+  }
+
+  function wrapSelection(textarea, before, after) {
+    const s = textarea.selectionStart;
+    const e = textarea.selectionEnd;
+    const selected = textarea.value.substring(s, e) || 'текст';
+    textarea.value =
+      textarea.value.substring(0, s) + before + selected + after + textarea.value.substring(e);
+    textarea.selectionStart = s + before.length;
+    textarea.selectionEnd = s + before.length + selected.length;
+  }
+
+  function prefixLines(textarea, prefix) {
+    const s = textarea.selectionStart;
+    const e = textarea.selectionEnd;
+    const val = textarea.value;
+    const lineStart = val.lastIndexOf('\n', s - 1) + 1;
+    const chunk = val.substring(lineStart, e);
+    const prefixed = chunk.split('\n').map((l) => prefix + l).join('\n');
+    textarea.value = val.substring(0, lineStart) + prefixed + val.substring(e);
+    textarea.selectionStart = lineStart + prefix.length;
+    textarea.selectionEnd = lineStart + prefixed.length;
+  }
+
+  initMarkdownEditor('race-description');
+  initMarkdownEditor('race-payment');
+
   function formatRaceDate(dateStr) {
     const d = new Date(dateStr.replace(' ', 'T'));
     const datePart = d.toLocaleDateString('ru-RU', {
@@ -548,6 +633,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const raceForm = document.getElementById('race-form');
 
   function openRaceEditModal(race) {
+    // Сбросить предпросмотры
+    document.querySelectorAll('#race-form .md-preview').forEach((p) => { p.style.display = 'none'; });
+    document.querySelectorAll('#race-form textarea').forEach((t) => { t.style.display = ''; });
+    document.querySelectorAll('#race-form .md-preview-toggle').forEach((b) => { b.textContent = 'Предпросмотр'; });
+
     document.getElementById('race-edit-id').value = race.id;
     document.getElementById('race-name').value = race.race_name || '';
     document.getElementById('race-date').value = race.date

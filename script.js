@@ -6,6 +6,12 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+marked.use({
+  gfm: true,
+  breaks: true,
+  renderer: { html() { return ''; } },
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Мобильное меню (бургер)
   const mobileBtn = document.getElementById('mobile-btn');
@@ -206,16 +212,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Описание
         if (race.description) {
-          document.getElementById(
-            'about-description'
-          ).innerHTML = `<strong>Описание:</strong> ${escapeHtml(race.description)}`;
+          document.getElementById('about-description').innerHTML =
+            `<strong>Описание:</strong><div class="md-content">${marked.parse(race.description)}</div>`;
         }
 
         // Оплата
         if (race.payment_info) {
-          document.getElementById(
-            'about-payment'
-          ).innerHTML = `<strong>Оплата:</strong> ${escapeHtml(race.payment_info)}`;
+          document.getElementById('about-payment').innerHTML =
+            `<strong>Оплата:</strong><div class="md-content">${marked.parse(race.payment_info)}</div>`;
         }
 
         // Обновляем race_id
