@@ -32,6 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const raceId = urlParams.get('race') || urlParams.get('race_id'); // null → загрузить активную гонку
 
+  // Прижимаем hero под фиксированный хедер по его реальной высоте
+  const headerEl = document.querySelector('.header');
+  const heroEl = document.querySelector('.hero');
+  if (headerEl && heroEl) heroEl.style.marginTop = headerEl.offsetHeight + 'px';
+
   // Загрузка информации о гонке
   loadRaceInfo(raceId);
 
