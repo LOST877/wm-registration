@@ -164,11 +164,15 @@ document.addEventListener('DOMContentLoaded', () => {
           'ноября',
           'декабря',
         ];
-        const [year, monthIndex, day] = race.date.split('-').map(Number);
+        const datePart = race.date.split(' ')[0];
+        const timePart = race.date.split(' ')[1];
+        const [year, monthIndex, day] = datePart.split('-').map(Number);
         const month = months[monthIndex - 1];
+        const hm = timePart ? timePart.slice(0, 5) : '00:00';
+        const timeStr = hm !== '00:00' ? `, начало в ${hm}` : '';
         document.getElementById(
           'about-date'
-        ).innerHTML = `<strong>Дата:</strong> ${day} ${month} ${year}г.`;
+        ).innerHTML = `<strong>Дата:</strong> ${day} ${month} ${year}г.${timeStr}`;
 
         // Локация
         if (race.location) {

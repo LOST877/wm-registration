@@ -19,11 +19,14 @@ try {
 
   // 1. Все гонки с количеством участников
   $racesStmt = $pdo->prepare('
-        SELECT 
+        SELECT
             r.id,
             r.name AS race_name,
             r.date,
             r.location,
+            r.location_link,
+            r.iframe_html,
+            r.description,
             r.payment_info,
             r.registration_open,
             r.is_finished,

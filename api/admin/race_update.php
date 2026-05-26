@@ -23,15 +23,42 @@ if (!isset($data['id']) || !is_numeric($data['id'])) {
 }
 
 $raceId = (int)$data['id'];
-$allowed = ['registration_open', 'is_finished'];
 $updates = [];
 $params = [];
 
-foreach ($allowed as $field) {
+// Валидация названия до сборки запроса
+if (array_key_exists('name', $data) && trim((string)$data['name']) === '') {
+  http_response_code(400);
+  echo json_encode(['error' => 'Название гонки не может быть пустым']);
+  exit;
+}
+
+// Булевы поля
+foreach (['registration_open', 'is_finished'] as $field) {
   if (array_key_exists($field, $data)) {
     $updates[] = "$field = ?";
     $params[] = (int)$data[$field];
   }
+}
+
+// Строковые поля
+foreach (['name', 'location', 'location_link', 'iframe_html', 'description', 'payment_info'] as $field) {
+  if (array_key_exists($field, $data)) {
+    $updates[] = "$field = ?";
+    $params[] = $data[$field] !== null ? trim((string)$data[$field]) : null;
+  }
+}
+
+// Поле даты: ожидается формат datetime-local YYYY-MM-DDTHH:MM
+if (array_key_exists('date', $data) && $data['date'] !== null && $data['date'] !== '') {
+  $dt = DateTime::createFromFormat('Y-m-d\TH:i', $data['date']);
+  if (!$dt) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Неверный формат даты']);
+    exit;
+  }
+  $updates[] = "date = ?";
+  $params[] = $dt->format('Y-m-d H:i:s');
 }
 
 if (!$updates) {
