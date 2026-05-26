@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Подстановка race_id и загрузка информации о гонке
   const urlParams = new URLSearchParams(window.location.search);
-  const raceId = urlParams.get('race'); // null → загрузить активную гонку
+  const raceId = urlParams.get('race') || urlParams.get('race_id'); // null → загрузить активную гонку
 
   // Загрузка информации о гонке
   loadRaceInfo(raceId);
