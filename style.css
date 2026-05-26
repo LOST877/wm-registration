@@ -63,6 +63,7 @@ html {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  margin-top: 60px; /* отступ под фиксированную шапку */
 }
 
 .race-switcher::-webkit-scrollbar {

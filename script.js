@@ -346,6 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .join('');
       switcher.style.display = '';
+      const hero = document.querySelector('.hero');
+      if (hero) hero.style.marginTop = '0';
     } catch (err) {
       console.warn('Не удалось загрузить список гонок:', err);
     }
