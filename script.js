@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
           loadResults(race.id);
         } else {
           loadCategories(race.id);
-          loadParticipants(race.id);
+          loadParticipants(race.id, !!race.payment_info);
         }
       }
     } catch (err) {
@@ -384,12 +384,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Вспомогательная функция загрузки участников
-  async function loadParticipants(raceId) {
+  async function loadParticipants(raceId, showPayment) {
     const tbody = document.getElementById('participants-tbody');
+    const thPayment = document.getElementById('th-payment');
     if (!tbody) return;
 
+    const cols = showPayment ? 5 : 4;
+    if (thPayment) thPayment.style.display = showPayment ? '' : 'none';
+
     tbody.innerHTML =
-      '<tr><td colspan="4" class="loading">Загрузка участников...</td></tr>';
+      `<tr><td colspan="${cols}" class="loading">Загрузка участников...</td></tr>`;
 
     try {
       const res = await fetch(`api/participants.php?race_id=${raceId}`);
@@ -397,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!participants || !participants.length) {
         tbody.innerHTML =
-          '<tr><td colspan="4" class="no-data">Список участников пока пуст</td></tr>';
+          `<tr><td colspan="${cols}" class="no-data">Список участников пока пуст</td></tr>`;
         return;
       }
 
@@ -405,18 +409,18 @@ document.addEventListener('DOMContentLoaded', () => {
       participants.forEach((part) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${part.last_name} ${part.first_name}</td>
-          <td>${part.team || '-'}</td>
-          <td>${part.city || '-'}</td>
-          <td>${part.category}</td>
-          <td>${part.is_paid ? '🟢' : '🔴'}</td>
+          <td>${escapeHtml(part.last_name)} ${escapeHtml(part.first_name)}</td>
+          <td>${escapeHtml(part.team || '-')}</td>
+          <td>${escapeHtml(part.city || '-')}</td>
+          <td>${escapeHtml(part.category || '-')}</td>
+          ${showPayment ? `<td>${part.is_paid ? '🟢' : '🔴'}</td>` : ''}
         `;
         tbody.appendChild(tr);
       });
     } catch (err) {
       console.error('Ошибка загрузки участников:', err);
       tbody.innerHTML =
-        '<tr><td colspan="4" class="error">Ошибка загрузки списка участников</td></tr>';
+        `<tr><td colspan="${cols}" class="error">Ошибка загрузки списка участников</td></tr>`;
     }
   }
 
