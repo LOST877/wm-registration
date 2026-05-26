@@ -747,3 +747,151 @@ tr:hover {
   margin-top: 0.25rem;
   display: block;
 }
+
+/* ── Редактор категорий в модальном окне гонки ── */
+
+.race-category-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.race-category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  min-height: 44px;
+}
+
+.race-category-item .cat-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: var(--primary);
+  flex: 1;
+}
+
+.cat-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.btn-cat-up,
+.btn-cat-down,
+.btn-cat-remove {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-cat-up:hover,
+.btn-cat-down:hover {
+  background: #ffe5e0;
+  border-color: var(--primary);
+}
+
+.btn-cat-remove {
+  color: var(--danger);
+  border-color: var(--danger);
+  font-size: 1.2rem;
+}
+
+.btn-cat-remove:hover {
+  background: #fde8e2;
+}
+
+.btn-cat-up:disabled,
+.btn-cat-down:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: #fff;
+}
+
+.race-category-add-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.race-category-add-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  min-height: 44px;
+  transition: border-color 0.2s;
+}
+
+.race-category-add-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(211, 64, 27, 0.15);
+}
+
+.btn-cat-add {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: var(--text-light);
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.btn-cat-add:hover {
+  background: var(--primary-hover);
+}
+
+.btn-cat-add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.race-category-status {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+  min-height: 1.2em;
+}
+
+@media (max-width: 480px) {
+  .race-category-add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .race-category-add-input {
+    width: 100%;
+  }
+
+  .btn-cat-add {
+    width: 100%;
+  }
+}

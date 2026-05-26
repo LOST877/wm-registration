@@ -235,6 +235,23 @@
             </div>
           </div>
 
+          <div class="form-section" id="race-categories-section">
+            <h4 class="form-section-title">Категории</h4>
+            <div id="race-category-edit-list" class="race-category-edit-list"></div>
+            <div class="race-category-add-row">
+              <input
+                type="text"
+                id="race-category-add-input"
+                class="race-category-add-input"
+                placeholder="Название категории (напр. М, Ж, Ю16)"
+                maxlength="100"
+                autocomplete="off"
+              />
+              <button type="button" id="race-category-add-btn" class="btn-cat-add">+ Добавить</button>
+            </div>
+            <span id="race-category-status" class="race-category-status"></span>
+          </div>
+
           <div class="form-actions">
             <button type="button" id="race-cancel-btn" class="btn-cancel">Отмена</button>
             <button type="submit" class="btn-save">Сохранить</button>
@@ -244,6 +261,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
-    <script src="admin.js?v=5"></script>
+    <script src="admin.js?v=6"></script>
   </body>
 </html>

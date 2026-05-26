@@ -49,11 +49,11 @@ try {
   foreach ($races as $race) {
     // 2.1. Категории гонки
     $stmt = $pdo->prepare('
-            SELECT c.id, c.name AS category_name
+            SELECT c.id, c.name AS category_name, rc.id AS race_category_id, rc.sort_order
             FROM race_categories rc
             JOIN categories c ON rc.category_id = c.id
             WHERE rc.race_id = ?
-            ORDER BY rc.sort_order
+            ORDER BY rc.sort_order, c.id
         ');
     $stmt->execute([$race['id']]);
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);

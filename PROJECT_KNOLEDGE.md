@@ -171,6 +171,30 @@
 - `409 Conflict`: `{"success": false, "error": "Duplicate registration"}`  
 - `400/404/500`: `{"success": false, "error": "..."}`  
 
+### 5. `POST api/admin/race_category.php` *(требует сессию)*
+**Описание:** Управление категориями конкретной гонки — добавление, удаление, изменение порядка.
+
+**Действие `add`:**
+```json
+{ "action": "add", "race_id": 1, "name": "Ю16" }
+```
+Ответ: `{"success": true, "race_category_id": 17, "category_id": 5, "category_name": "Ю16", "sort_order": 3}`  
+- Категория создаётся глобально если не существует (`INSERT IGNORE`), затем привязывается к гонке  
+- `409` — категория уже привязана к этой гонке  
+
+**Действие `remove`:**
+```json
+{ "action": "remove", "race_category_id": 17, "confirmed": false }
+```
+- Если есть участники с этой категорией и `confirmed` не `true`: возвращает `{"success": false, "warn": true, "affected_count": 4}`  
+- После подтверждения (`confirmed: true`) — удаляет, FK `ON DELETE SET NULL` обнуляет `registrations.race_category_id`  
+
+**Действие `reorder`:**
+```json
+{ "action": "reorder", "race_id": 1, "ordered_ids": [17, 12, 9] }
+```
+Устанавливает `sort_order = index + 1` для каждого ID. Проверяет что все ID принадлежат указанной гонке.
+
 ---
 
 ## 🔐 Безопасность
@@ -250,6 +274,7 @@ VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5);
 | Экспорт в CSV | ✅ В админке | Реализован через `fputcsv()` |
 | Переименование категории | ❌ Блокировано | Если категория используется в гонках — нельзя |
 | `api/race.php` возвращает категории | ❌ Нет | Категории грузятся отдельно: `api/categories.php?race_id={id}` |
+| Управление категориями гонки | ✅ Готово | `api/admin/race_category.php` — add/remove/reorder; UI в модальном окне гонки |
 
 ---
 

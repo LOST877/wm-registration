@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentParticipantId = null;
   let currentRaceId = null;
   let racesData = [];
+  let allCategoriesData = [];
 
   // Проверка авторизации при загрузке
   fetchAdminData();
@@ -72,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        allCategoriesData = result.all_categories || [];
         renderRaces(result.races);
       } else if (response.status === 401) {
         dashboardSection.style.display = 'none';
@@ -699,7 +701,199 @@ document.addEventListener('DOMContentLoaded', () => {
     return datePart;
   }
 
-  // Редактирование гонки
+  // ── Управление категориями гонки ──────────────────────────────────────
+
+  function renderRaceCategoryList(raceId) {
+    const race = racesData.find((r) => r.id === raceId);
+    if (!race) return;
+    const list = document.getElementById('race-category-edit-list');
+    if (!list) return;
+
+    list.innerHTML = race.categories
+      .map(
+        (cat, idx) => `
+        <div class="race-category-item" data-rc-id="${cat.race_category_id}">
+          <span class="cat-name">${escapeHtml(cat.category_name)}</span>
+          <div class="cat-actions">
+            <button type="button" class="btn-cat-up" ${idx === 0 ? 'disabled' : ''}
+                    data-rc-id="${cat.race_category_id}" aria-label="Выше">▲</button>
+            <button type="button" class="btn-cat-down" ${idx === race.categories.length - 1 ? 'disabled' : ''}
+                    data-rc-id="${cat.race_category_id}" aria-label="Ниже">▼</button>
+            <button type="button" class="btn-cat-remove"
+                    data-rc-id="${cat.race_category_id}"
+                    aria-label="Удалить">×</button>
+          </div>
+        </div>`
+      )
+      .join('');
+
+    bindCategoryListHandlers(raceId);
+  }
+
+  function renderRaceCardCategories(raceId) {
+    const race = racesData.find((r) => r.id === raceId);
+    if (!race) return;
+    const editBtn = document.querySelector(`.edit-race-btn[data-race-id="${raceId}"]`);
+    const card = editBtn?.closest('.race-card')?.querySelector('.category-list');
+    if (!card) return;
+    card.innerHTML = race.categories
+      .map((c) => `<span class="category-tag">${escapeHtml(c.category_name)}</span>`)
+      .join('');
+  }
+
+  function bindCategoryListHandlers(raceId) {
+    const list = document.getElementById('race-category-edit-list');
+    if (!list) return;
+    const newList = list.cloneNode(true);
+    list.parentNode.replaceChild(newList, list);
+
+    newList.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const rcId = parseInt(btn.dataset.rcId, 10);
+      if (btn.classList.contains('btn-cat-remove')) {
+        const race = racesData.find((r) => r.id === raceId);
+        const catName = race?.categories.find((c) => c.race_category_id === rcId)?.category_name || '';
+        await handleCatRemove(raceId, rcId, catName);
+      } else if (btn.classList.contains('btn-cat-up')) {
+        await handleCatReorder(raceId, 'up', rcId);
+      } else if (btn.classList.contains('btn-cat-down')) {
+        await handleCatReorder(raceId, 'down', rcId);
+      }
+    });
+  }
+
+  async function handleCatAdd(raceId) {
+    const input  = document.getElementById('race-category-add-input');
+    const status = document.getElementById('race-category-status');
+    const addBtn = document.getElementById('race-category-add-btn');
+    const name = input.value.trim();
+    if (!name) return;
+
+    addBtn.disabled = true;
+    status.textContent = '';
+    status.style.color = '';
+
+    try {
+      const res = await fetch('../api/admin/race_category.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', race_id: raceId, name }),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        const race = racesData.find((r) => r.id === raceId);
+        if (race) {
+          race.categories.push({
+            id:                result.category_id,
+            category_name:     result.category_name,
+            race_category_id:  result.race_category_id,
+            sort_order:        result.sort_order,
+          });
+        }
+        input.value = '';
+        renderRaceCategoryList(raceId);
+        renderRaceCardCategories(raceId);
+      } else {
+        status.textContent = result.error || 'Ошибка';
+        status.style.color = 'var(--danger)';
+      }
+    } catch (err) {
+      status.textContent = 'Сетевая ошибка';
+      status.style.color = 'var(--danger)';
+    } finally {
+      addBtn.disabled = false;
+    }
+  }
+
+  async function handleCatRemove(raceId, rcId, catName) {
+    const status = document.getElementById('race-category-status');
+
+    async function doRemove(confirmed) {
+      try {
+        const res = await fetch('../api/admin/race_category.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', race_category_id: rcId, confirmed }),
+          credentials: 'same-origin',
+        });
+        const result = await res.json();
+
+        if (!res.ok) {
+          status.textContent = result.error || 'Ошибка удаления';
+          status.style.color = 'var(--danger)';
+          return;
+        }
+
+        if (result.warn) {
+          const ok = confirm(
+            `Удалить категорию «${catName}»?\n\n` +
+            `${result.affected_count} участник(ов) потеряют привязку к категории ` +
+            `(их регистрации сохранятся).\n\nПродолжить?`
+          );
+          if (ok) await doRemove(true);
+          return;
+        }
+
+        if (result.success) {
+          const race = racesData.find((r) => r.id === raceId);
+          if (race) {
+            race.categories = race.categories.filter((c) => c.race_category_id !== rcId);
+          }
+          renderRaceCategoryList(raceId);
+          renderRaceCardCategories(raceId);
+        } else {
+          status.textContent = result.error || 'Ошибка удаления';
+          status.style.color = 'var(--danger)';
+        }
+      } catch (err) {
+        status.textContent = 'Сетевая ошибка';
+        status.style.color = 'var(--danger)';
+      }
+    }
+
+    await doRemove(false);
+  }
+
+  async function handleCatReorder(raceId, direction, rcId) {
+    const race = racesData.find((r) => r.id === raceId);
+    if (!race) return;
+
+    const cats = race.categories;
+    const idx  = cats.findIndex((c) => c.race_category_id === rcId);
+    if (idx < 0) return;
+
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= cats.length) return;
+
+    [cats[idx], cats[swapIdx]] = [cats[swapIdx], cats[idx]];
+    renderRaceCategoryList(raceId);
+    renderRaceCardCategories(raceId);
+
+    const orderedIds = cats.map((c) => c.race_category_id);
+    try {
+      const res = await fetch('../api/admin/race_category.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reorder', race_id: raceId, ordered_ids: orderedIds }),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        [cats[idx], cats[swapIdx]] = [cats[swapIdx], cats[idx]];
+        renderRaceCategoryList(raceId);
+        renderRaceCardCategories(raceId);
+      }
+    } catch (err) {
+      [cats[idx], cats[swapIdx]] = [cats[swapIdx], cats[idx]];
+      renderRaceCategoryList(raceId);
+      renderRaceCardCategories(raceId);
+    }
+  }
+
+  // ── Редактирование гонки ───────────────────────────────────────────────
   const raceModal = document.getElementById('race-modal');
   const raceCloseBtn = document.getElementById('race-close-btn');
   const raceCancelBtn = document.getElementById('race-cancel-btn');
@@ -746,6 +940,27 @@ document.addEventListener('DOMContentLoaded', () => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+
+    // Секция категорий
+    renderRaceCategoryList(race.id);
+
+    const addInput  = document.getElementById('race-category-add-input');
+    const addBtnEl  = document.getElementById('race-category-add-btn');
+    const statusEl  = document.getElementById('race-category-status');
+    if (addInput)  { addInput.value = ''; }
+    if (statusEl)  { statusEl.textContent = ''; statusEl.style.color = ''; }
+
+    // Клонируем кнопку чтобы снять обработчики предыдущего открытия
+    if (addBtnEl) {
+      const newBtn = addBtnEl.cloneNode(true);
+      addBtnEl.parentNode.replaceChild(newBtn, addBtnEl);
+      newBtn.addEventListener('click', () => handleCatAdd(race.id));
+    }
+    if (addInput) {
+      addInput.onkeydown = (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); handleCatAdd(race.id); }
+      };
+    }
 
     raceModal.style.display = 'flex';
   }
