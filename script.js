@@ -279,11 +279,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderSponsors(race) {
     const section = document.getElementById('sponsors');
     const container = document.getElementById('sponsor-logos');
+    const navItem = document.getElementById('nav-sponsors-item');
+    const hide = () => { if (section) section.style.display = 'none'; if (navItem) navItem.style.display = 'none'; };
     if (!section || !container) return;
-    if (!race.sponsors_json) { section.style.display = 'none'; return; }
+    if (!race.sponsors_json) { hide(); return; }
     let sponsors;
-    try { sponsors = JSON.parse(race.sponsors_json); } catch { section.style.display = 'none'; return; }
-    if (!Array.isArray(sponsors) || sponsors.length === 0) { section.style.display = 'none'; return; }
+    try { sponsors = JSON.parse(race.sponsors_json); } catch { hide(); return; }
+    if (!Array.isArray(sponsors) || sponsors.length === 0) { hide(); return; }
     container.innerHTML = sponsors.map((s) => {
       const name = escapeHtml(s.name || '');
       return isSafeUrl(s.url)
@@ -291,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : `<div class="sponsor">${name}</div>`;
     }).join('');
     section.style.display = '';
+    if (navItem) navItem.style.display = '';
   }
 
   function renderContacts(race) {
