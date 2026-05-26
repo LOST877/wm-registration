@@ -305,10 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try { contacts = JSON.parse(race.contacts_json); } catch { return; }
     if (!Array.isArray(contacts) || contacts.length === 0) return;
     const html = contacts.map((item) => {
-      if (item.vk) {
-        const vkHref = isSafeUrl(item.vk) ? escapeHtml(item.vk) : '#';
-        return `<div class="socials"><a href="${vkHref}" target="_blank" rel="noopener noreferrer">Группа VK</a></div>`;
-      }
       if (item.role && Array.isArray(item.entries)) {
         const links = item.entries.map((entry) => {
           const label = [entry.name, entry.phone].filter(Boolean).join(' ');
@@ -319,6 +315,11 @@ document.addEventListener('DOMContentLoaded', () => {
           return `<span>${escapeHtml(label)}</span>`;
         }).join('');
         return `<div class="socials"><h3>${escapeHtml(item.role)}</h3>${links}</div>`;
+      }
+      const linkKey = Object.keys(item).find((k) => k !== 'role' && k !== 'entries');
+      if (linkKey && typeof item[linkKey] === 'string') {
+        const href = isSafeUrl(item[linkKey]) ? escapeHtml(item[linkKey]) : '#';
+        return `<div class="socials"><a href="${href}" target="_blank" rel="noopener noreferrer">${escapeHtml(linkKey)}</a></div>`;
       }
       return '';
     }).join('');
