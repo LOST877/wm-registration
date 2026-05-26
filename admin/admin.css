@@ -403,6 +403,13 @@ tr:hover {
   font-size: 0.9rem;
 }
 
+#race-description,
+#race-payment,
+#race-sponsors,
+#race-contacts {
+  min-height: 200px;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -637,4 +644,106 @@ tr:hover {
 .edit-race-btn:hover {
   background: #ffe5e0;
   border-color: var(--primary);
+}
+
+/* Кнопка создания гонки */
+.btn-create-race {
+  padding: 0.5rem 1.25rem;
+  min-height: 44px;
+  background: var(--primary);
+  color: var(--text-light);
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-create-race:hover {
+  background: var(--primary-hover);
+}
+.btn-create-race:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Кнопка удаления гонки */
+.delete-race-btn {
+  padding: 0.35rem 0.85rem;
+  min-height: 44px;
+  background: var(--bg-light);
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--danger);
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.delete-race-btn:hover {
+  background: #fde8e2;
+}
+.delete-race-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Кнопка загрузки баннера */
+.btn-upload {
+  padding: 0.35rem 0.85rem;
+  min-height: 44px;
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--primary);
+  transition: background 0.2s, border-color 0.2s;
+  margin-top: 0.4rem;
+  display: block;
+}
+.btn-upload:hover {
+  background: #ffe5e0;
+  border-color: var(--primary);
+}
+.btn-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Превью баннера */
+.banner-preview {
+  min-height: 50px;
+  margin-bottom: 0.4rem;
+  background: var(--bg-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  overflow: hidden;
+}
+.banner-preview img {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: cover;
+}
+
+/* Статус загрузки */
+.upload-status {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* Подсказка под полем */
+.field-hint {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
 }

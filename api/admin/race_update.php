@@ -73,7 +73,30 @@ if (array_key_exists('date', $data) && $data['date'] !== null && $data['date'] !
   $params[] = $dt->format('Y-m-d H:i:s');
 }
 
-if (!$updates) {
+// JSON-поля (sponsors_json, contacts_json)
+foreach (['sponsors_json', 'contacts_json'] as $field) {
+  if (array_key_exists($field, $data)) {
+    $val = $data[$field];
+    if ($val !== null && $val !== '') {
+      $decoded = json_decode($val);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(400);
+        echo json_encode(['error' => "Поле {$field} содержит невалидный JSON"]);
+        exit;
+      }
+      $updates[] = "$field = ?";
+      $params[] = trim((string)$val);
+    } else {
+      $updates[] = "$field = ?";
+      $params[] = null;
+    }
+  }
+}
+
+// is_active обрабатывается отдельно (требует транзакцию)
+$hasIsActive = array_key_exists('is_active', $data);
+
+if (!$updates && !$hasIsActive) {
   http_response_code(400);
   echo json_encode(['error' => 'No fields to update']);
   exit;
@@ -88,13 +111,30 @@ try {
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
   );
 
-  $params[] = $raceId;
-  $stmt = $pdo->prepare('UPDATE races SET ' . implode(', ', $updates) . ' WHERE id = ?');
-  $stmt->execute($params);
+  $pdo->beginTransaction();
 
+  if ($updates) {
+    $params[] = $raceId;
+    $stmt = $pdo->prepare('UPDATE races SET ' . implode(', ', $updates) . ' WHERE id = ?');
+    $stmt->execute($params);
+  }
+
+  // is_active: при установке в 1 — сбросить у всех остальных
+  if ($hasIsActive) {
+    $isActive = (int)(bool)$data['is_active'];
+    if ($isActive === 1) {
+      $pdo->prepare('UPDATE races SET is_active = 0')->execute();
+    }
+    $pdo->prepare('UPDATE races SET is_active = ? WHERE id = ?')->execute([$isActive, $raceId]);
+  }
+
+  $pdo->commit();
   echo json_encode(['success' => true]);
   exit;
 } catch (PDOException $e) {
+  if (isset($pdo) && $pdo->inTransaction()) {
+    $pdo->rollBack();
+  }
   error_log('Race update error: ' . $e->getMessage());
   http_response_code(500);
   echo json_encode(['error' => 'Database error']);

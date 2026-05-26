@@ -14,14 +14,16 @@ try {
 
   if ($raceId !== null && $raceId > 0) {
     $stmt = $pdo->prepare("
-      SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open, is_finished
+      SELECT id, name, date, location, location_link, iframe_html, description, payment_info,
+             registration_open, is_finished, banner_desktop, banner_mobile, sponsors_json, contacts_json
       FROM races
       WHERE id = ? AND (is_active = 1 OR is_finished = 1)
     ");
     $stmt->execute([$raceId]);
   } else {
     $stmt = $pdo->prepare("
-      SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open, is_finished
+      SELECT id, name, date, location, location_link, iframe_html, description, payment_info,
+             registration_open, is_finished, banner_desktop, banner_mobile, sponsors_json, contacts_json
       FROM races
       WHERE is_active = 1
       ORDER BY date ASC

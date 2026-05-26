@@ -232,6 +232,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Применяем состояние гонки
         applyRaceState(race);
 
+        // Per-race медиаконтент
+        renderBanners(race);
+        renderSponsors(race);
+        renderContacts(race);
+
         if (race.is_finished == 1) {
           loadResults(race.id);
         } else {
@@ -242,6 +247,80 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.warn('Не удалось загрузить данные гонки:', err);
     }
+  }
+
+  function renderBanners(race) {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+    hero.dataset.bannerDesktop = race.banner_desktop || '';
+    hero.dataset.bannerMobile  = race.banner_mobile  || '';
+    const isMobile = window.innerWidth <= 768;
+    const file = isMobile ? race.banner_mobile : race.banner_desktop;
+    if (file) hero.style.backgroundImage = `url('assets/races/${encodeURIComponent(file)}')`;
+  }
+
+  let bannerResizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(bannerResizeTimer);
+    bannerResizeTimer = setTimeout(() => {
+      const hero = document.querySelector('.hero');
+      if (!hero) return;
+      const isMobile = window.innerWidth <= 768;
+      const file = isMobile ? hero.dataset.bannerMobile : hero.dataset.bannerDesktop;
+      if (file) hero.style.backgroundImage = `url('assets/races/${encodeURIComponent(file)}')`;
+    }, 150);
+  });
+
+  function isSafeUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    return /^https?:\/\//i.test(url.trim());
+  }
+
+  function renderSponsors(race) {
+    const section = document.getElementById('sponsors');
+    const container = document.getElementById('sponsor-logos');
+    if (!section || !container) return;
+    if (!race.sponsors_json) { section.style.display = 'none'; return; }
+    let sponsors;
+    try { sponsors = JSON.parse(race.sponsors_json); } catch { section.style.display = 'none'; return; }
+    if (!Array.isArray(sponsors) || sponsors.length === 0) { section.style.display = 'none'; return; }
+    container.innerHTML = sponsors.map((s) => {
+      const name = escapeHtml(s.name || '');
+      return isSafeUrl(s.url)
+        ? `<div class="sponsor"><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${name}</a></div>`
+        : `<div class="sponsor">${name}</div>`;
+    }).join('');
+    section.style.display = '';
+  }
+
+  function renderContacts(race) {
+    const dynamic  = document.getElementById('contacts-dynamic');
+    const fallback = document.getElementById('contacts-fallback');
+    if (!dynamic) return;
+    if (!race.contacts_json) return;
+    let contacts;
+    try { contacts = JSON.parse(race.contacts_json); } catch { return; }
+    if (!Array.isArray(contacts) || contacts.length === 0) return;
+    const html = contacts.map((item) => {
+      if (item.vk) {
+        const vkHref = isSafeUrl(item.vk) ? escapeHtml(item.vk) : '#';
+        return `<div class="socials"><a href="${vkHref}" target="_blank" rel="noopener noreferrer">Группа VK</a></div>`;
+      }
+      if (item.role && Array.isArray(item.entries)) {
+        const links = item.entries.map((entry) => {
+          const label = [entry.name, entry.phone].filter(Boolean).join(' ');
+          if (entry.phone) {
+            const tel = entry.phone.replace(/\s/g, '');
+            return `<a href="tel:${escapeHtml(tel)}">${escapeHtml(label)}</a>`;
+          }
+          return `<span>${escapeHtml(label)}</span>`;
+        }).join('');
+        return `<div class="socials"><h3>${escapeHtml(item.role)}</h3>${links}</div>`;
+      }
+      return '';
+    }).join('');
+    dynamic.innerHTML = html;
+    if (fallback) fallback.style.display = 'none';
   }
 
   async function loadRaceSwitcher(currentId) {

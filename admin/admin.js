@@ -104,6 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h3>${escapeHtml(race.race_name)}</h3>
                         <small>${formatRaceDate(race.date)}</small>
                         <label class="reg-toggle">
+                          <input type="checkbox" class="race-active-checkbox"
+                                 data-race-id="${race.id}"
+                                 ${race.is_active == 1 ? 'checked' : ''}>
+                          Активна
+                        </label>
+                        <label class="reg-toggle">
                           <input type="checkbox" class="reg-open-checkbox"
                                  data-race-id="${race.id}"
                                  ${race.registration_open == 1 ? 'checked' : ''}>
@@ -116,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                           Гонка завершена
                         </label>
                         <button class="edit-race-btn" data-race-id="${race.id}">Редактировать гонку</button>
+                        <button class="delete-race-btn" data-race-id="${race.id}">Удалить</button>
                     </div>
                     <div class="race-info">
                         📍 ${escapeHtml(race.location)} |
@@ -179,6 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3>${escapeHtml(race.race_name)}</h3>
                     <small>${formatRaceDate(race.date)}</small>
                     <label class="reg-toggle">
+                      <input type="checkbox" class="race-active-checkbox"
+                             data-race-id="${race.id}"
+                             ${race.is_active == 1 ? 'checked' : ''}>
+                      Активна
+                    </label>
+                    <label class="reg-toggle">
                       <input type="checkbox" class="reg-open-checkbox"
                              data-race-id="${race.id}"
                              ${race.registration_open == 1 ? 'checked' : ''}>
@@ -191,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       Гонка завершена
                     </label>
                     <button class="edit-race-btn" data-race-id="${race.id}">Редактировать гонку</button>
+                    <button class="delete-race-btn" data-race-id="${race.id}">Удалить</button>
                 </div>
                 <div class="race-info">
                     📍 ${escapeHtml(race.location)} |
@@ -385,6 +399,65 @@ document.addEventListener('DOMContentLoaded', () => {
         const raceId = parseInt(btn.dataset.raceId);
         const race = racesData.find((r) => r.id === raceId);
         if (race) openRaceEditModal(race);
+      });
+    });
+
+    // Обработчики чекбоксов «Активная гонка»
+    document.querySelectorAll('.race-active-checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('change', async () => {
+        const raceId = parseInt(checkbox.dataset.raceId);
+        const newValue = checkbox.checked ? 1 : 0;
+        checkbox.disabled = true;
+        try {
+          const response = await fetch('../api/admin/race_update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: raceId, is_active: newValue }),
+            credentials: 'same-origin',
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            checkbox.checked = !checkbox.checked;
+            alert(result.error || 'Ошибка обновления');
+          } else {
+            // Перерисовываем — у других гонок флаг мог сброситься
+            fetchAdminData();
+          }
+        } catch (err) {
+          checkbox.checked = !checkbox.checked;
+          alert('Сетевая ошибка. Проверьте подключение.');
+        } finally {
+          checkbox.disabled = false;
+        }
+      });
+    });
+
+    // Обработчики кнопок удаления гонки
+    document.querySelectorAll('.delete-race-btn').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const raceId = parseInt(btn.dataset.raceId);
+        const raceName = btn.closest('.race-card').querySelector('h3').textContent;
+        if (!confirm(`Удалить гонку "${raceName}" и все связанные данные (категории, участников)?\n\nЭто действие нельзя отменить.`)) return;
+        btn.disabled = true;
+        try {
+          const response = await fetch('../api/admin/race_delete.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ race_id: raceId }),
+            credentials: 'same-origin',
+          });
+          const result = await response.json();
+          if (response.ok && result.success) {
+            fetchAdminData();
+          } else {
+            alert(result.error || 'Ошибка удаления');
+          }
+        } catch (err) {
+          alert('Сетевая ошибка. Проверьте подключение.');
+        } finally {
+          btn.disabled = false;
+        }
       });
     });
   }
@@ -648,7 +721,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('race-iframe').value = race.iframe_html || '';
     document.getElementById('race-description').value = race.description || '';
     document.getElementById('race-payment').value = race.payment_info || '';
+
+    // Новые поля
+    document.getElementById('race-is-active').checked = race.is_active == 1;
+
+    const desktopPreview = document.getElementById('banner-desktop-preview');
+    const mobilePreview  = document.getElementById('banner-mobile-preview');
+    desktopPreview.innerHTML = race.banner_desktop
+      ? `<img src="../assets/races/${escapeHtml(race.banner_desktop)}" alt="Desktop banner">`
+      : '<span style="color:#999;font-size:0.85rem;padding:0.5rem;">Нет изображения</span>';
+    mobilePreview.innerHTML = race.banner_mobile
+      ? `<img src="../assets/races/${escapeHtml(race.banner_mobile)}" alt="Mobile banner">`
+      : '<span style="color:#999;font-size:0.85rem;padding:0.5rem;">Нет изображения</span>';
+
+    document.getElementById('race-sponsors').value = prettyJson(race.sponsors_json);
+    document.getElementById('race-contacts').value = prettyJson(race.contacts_json);
+
+    // Сбросить статусы загрузки и файл-инпуты
+    ['upload-status-desktop', 'upload-status-mobile'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = ''; el.style.color = ''; }
+    });
+    ['race-banner-desktop', 'race-banner-mobile'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
     raceModal.style.display = 'flex';
+  }
+
+  function prettyJson(val) {
+    if (!val) return '';
+    try { return JSON.stringify(JSON.parse(val), null, 2); } catch { return val; }
   }
 
   function closeRaceEditModal() {
@@ -663,9 +767,91 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Создание новой гонки
+  const createRaceBtn = document.getElementById('create-race-btn');
+  if (createRaceBtn) {
+    createRaceBtn.addEventListener('click', async () => {
+      createRaceBtn.disabled = true;
+      try {
+        const response = await fetch('../api/admin/race_create.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          await fetchAdminData();
+          const newRace = racesData.find((r) => r.id === result.id);
+          if (newRace) openRaceEditModal(newRace);
+        } else {
+          alert(result.error || 'Ошибка создания гонки');
+        }
+      } catch (err) {
+        alert('Сетевая ошибка. Проверьте подключение.');
+      } finally {
+        createRaceBtn.disabled = false;
+      }
+    });
+  }
+
+  // Загрузка баннеров
+  function setupUploadBtn(btnId, inputId, type, statusId, previewId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const raceId = parseInt(document.getElementById('race-edit-id').value);
+      const fileInput = document.getElementById(inputId);
+      const statusEl = document.getElementById(statusId);
+      if (!fileInput.files.length) {
+        statusEl.textContent = 'Выберите файл';
+        statusEl.style.color = 'var(--danger)';
+        return;
+      }
+      const fd = new FormData();
+      fd.append('race_id', raceId);
+      fd.append('type', type);
+      fd.append('file', fileInput.files[0]);
+      btn.disabled = true;
+      statusEl.textContent = 'Загрузка...';
+      statusEl.style.color = 'var(--text-secondary)';
+      try {
+        const response = await fetch('../api/admin/race_upload.php', {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          statusEl.textContent = 'Загружено!';
+          statusEl.style.color = 'green';
+          const preview = document.getElementById(previewId);
+          preview.innerHTML = `<img src="../${result.url}" alt="banner">`;
+          const race = racesData.find((r) => r.id === raceId);
+          if (race) {
+            if (type === 'desktop') race.banner_desktop = result.filename;
+            else race.banner_mobile = result.filename;
+          }
+          fileInput.value = '';
+        } else {
+          statusEl.textContent = result.error || 'Ошибка загрузки';
+          statusEl.style.color = 'var(--danger)';
+        }
+      } catch (err) {
+        statusEl.textContent = 'Сетевая ошибка';
+        statusEl.style.color = 'var(--danger)';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  setupUploadBtn('upload-banner-desktop', 'race-banner-desktop', 'desktop', 'upload-status-desktop', 'banner-desktop-preview');
+  setupUploadBtn('upload-banner-mobile',  'race-banner-mobile',  'mobile',  'upload-status-mobile',  'banner-mobile-preview');
+
   if (raceForm) {
     raceForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const sponsorsVal = document.getElementById('race-sponsors').value.trim();
+      const contactsVal = document.getElementById('race-contacts').value.trim();
       const formData = {
         id: parseInt(document.getElementById('race-edit-id').value),
         name: document.getElementById('race-name').value.trim(),
@@ -675,6 +861,9 @@ document.addEventListener('DOMContentLoaded', () => {
         iframe_html: document.getElementById('race-iframe').value.trim(),
         description: document.getElementById('race-description').value.trim(),
         payment_info: document.getElementById('race-payment').value.trim(),
+        is_active: document.getElementById('race-is-active').checked ? 1 : 0,
+        sponsors_json: sponsorsVal || null,
+        contacts_json: contactsVal || null,
       };
 
       if (!formData.name) {

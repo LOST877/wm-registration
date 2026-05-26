@@ -28,8 +28,13 @@ try {
             r.iframe_html,
             r.description,
             r.payment_info,
+            r.is_active,
             r.registration_open,
             r.is_finished,
+            r.banner_desktop,
+            r.banner_mobile,
+            r.sponsors_json,
+            r.contacts_json,
             COUNT(reg.id) AS participants_count
         FROM races r
         LEFT JOIN registrations reg ON r.id = reg.race_id

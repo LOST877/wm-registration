@@ -46,6 +46,7 @@
       >
         <div class="dashboard-header">
           <h2>Гонки</h2>
+          <button id="create-race-btn" class="btn-create-race">+ Создать гонку</button>
         </div>
         <div id="races-container"></div>
       </section>
@@ -183,6 +184,54 @@
             <div class="form-group">
               <label for="race-payment">Информация об оплате</label>
               <textarea id="race-payment" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section-title">Статус</h4>
+            <div class="form-group form-checkbox">
+              <label class="reg-toggle">
+                <input type="checkbox" id="race-is-active" />
+                <span>Активная гонка (отображается на главной странице)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section-title">Баннеры</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Десктопный баннер (jpg/png/webp, макс. 5 MB)</label>
+                <div id="banner-desktop-preview" class="banner-preview"></div>
+                <input type="file" id="race-banner-desktop" accept=".jpg,.jpeg,.png,.webp" />
+                <button type="button" id="upload-banner-desktop" class="btn-upload">Загрузить</button>
+                <span class="upload-status" id="upload-status-desktop"></span>
+              </div>
+              <div class="form-group">
+                <label>Мобильный баннер (jpg/png/webp, макс. 5 MB)</label>
+                <div id="banner-mobile-preview" class="banner-preview"></div>
+                <input type="file" id="race-banner-mobile" accept=".jpg,.jpeg,.png,.webp" />
+                <button type="button" id="upload-banner-mobile" class="btn-upload">Загрузить</button>
+                <span class="upload-status" id="upload-status-mobile"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section-title">Спонсоры</h4>
+            <div class="form-group">
+              <label for="race-sponsors">Список спонсоров (JSON)</label>
+              <textarea id="race-sponsors" rows="5" placeholder='[&#10;  {"name": "VELOKON", "url": "https://..."},&#10;  {"name": "SPORT VITAL", "url": "http://..."}&#10;]'></textarea>
+              <small class="field-hint">JSON-массив объектов с полями "name" и "url". Оставьте пустым, чтобы скрыть раздел спонсоров на сайте.</small>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section-title">Контакты</h4>
+            <div class="form-group">
+              <label for="race-contacts">Список контактов (JSON)</label>
+              <textarea id="race-contacts" rows="8" placeholder='[&#10;  {"vk": "https://vk.com/wm_xc"},&#10;  {"role": "Организаторы", "entries": [&#10;    {"name": "Антон", "phone": "+79805346277"}&#10;  ]},&#10;  {"role": "Реклама и маркетинг", "entries": [&#10;    {"name": "Дмитрий", "phone": "+79036516841"}&#10;  ]}&#10;]'></textarea>
+              <small class="field-hint">JSON-массив. Каждый элемент: {"vk": "url"} или {"role": "Название", "entries": [{"name": "Имя", "phone": "+7..."}]}. Оставьте пустым — будут показаны контакты по умолчанию.</small>
             </div>
           </div>
 

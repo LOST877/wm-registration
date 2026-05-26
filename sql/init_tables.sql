@@ -8,9 +8,13 @@ CREATE TABLE races (
   iframe_html TEXT NULL,
   description TEXT,
   payment_info TEXT NULL,
-  is_active BOOLEAN DEFAULT TRUE,
+  is_active BOOLEAN DEFAULT FALSE,
   registration_open TINYINT(1) NOT NULL DEFAULT 1,
   is_finished TINYINT(1) NOT NULL DEFAULT 0,
+  banner_desktop VARCHAR(255) NULL,
+  banner_mobile VARCHAR(255) NULL,
+  sponsors_json TEXT NULL,
+  contacts_json TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
