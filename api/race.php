@@ -10,20 +10,31 @@ try {
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
   ]);
 
-  // Получаем первую активную гонку
-  $stmt = $pdo->prepare("
-    SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open, is_finished
-    FROM races
-    WHERE is_active = 1 
-    ORDER BY date ASC 
-    LIMIT 1
-  ");
-  $stmt->execute();
+  $raceId = isset($_GET['race_id']) ? (int)$_GET['race_id'] : null;
+
+  if ($raceId) {
+    $stmt = $pdo->prepare("
+      SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open, is_finished
+      FROM races
+      WHERE id = ?
+    ");
+    $stmt->execute([$raceId]);
+  } else {
+    $stmt = $pdo->prepare("
+      SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open, is_finished
+      FROM races
+      WHERE is_active = 1
+      ORDER BY date ASC
+      LIMIT 1
+    ");
+    $stmt->execute();
+  }
+
   $race = $stmt->fetch(PDO::FETCH_ASSOC);
 
   if (!$race) {
     http_response_code(404);
-    echo json_encode(['error' => 'Нет активных гонок']);
+    echo json_encode(['error' => 'Гонка не найдена']);
     exit;
   }
 

@@ -35,7 +35,8 @@
 │   ├── banner.png                  # Десктопный баннер (Hero)
 │   └── banner-mobile.png           # Мобильный баннер (Hero)
 ├── api/
-│   ├── race.php                    # GET: активная гонка (без категорий)
+│   ├── race.php                    # GET: гонка по ?race_id=N или активная (без параметра)
+│   ├── races.php                   # GET: список всех гонок (публичный)
 │   ├── categories.php              # GET: категории по race_id
 │   ├── participants.php            # GET: список участников текущей гонки
 │   ├── register.php                # POST: регистрация (проверка дублей, форматирование)

@@ -18,12 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Подстановка race_id и загрузка информации о гонке
   const urlParams = new URLSearchParams(window.location.search);
-  const raceId = urlParams.get('race') || 1;
-  const raceInput = document.querySelector('input[name="race_id"]');
-  if (raceInput) raceInput.value = raceId;
+  const raceId = urlParams.get('race'); // null → загрузить активную гонку
 
   // Загрузка информации о гонке
-  loadRaceInfo();
+  loadRaceInfo(raceId);
 
   // 3. Отправка формы
   const regForm = document.getElementById('regForm');
@@ -138,9 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Функция загрузки данных гонки из API
-  async function loadRaceInfo() {
+  async function loadRaceInfo(raceId) {
     try {
-      const res = await fetch('api/race.php');
+      const url = raceId ? `api/race.php?race_id=${raceId}` : 'api/race.php';
+      const res = await fetch(url);
       const race = await res.json();
 
       if (!race.error) {
@@ -204,6 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const raceIdInput = document.querySelector('input[name="race_id"]');
         if (raceIdInput) raceIdInput.value = race.id;
 
+        // Переключатель гонок (вызываем здесь, чтобы знать реальный race.id)
+        loadRaceSwitcher(race.id);
+
         // Применяем состояние гонки
         applyRaceState(race);
 
@@ -216,6 +218,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.warn('Не удалось загрузить данные гонки:', err);
+    }
+  }
+
+  async function loadRaceSwitcher(currentId) {
+    const switcher = document.getElementById('race-switcher');
+    if (!switcher) return;
+    try {
+      const res = await fetch('api/races.php');
+      const races = await res.json();
+      if (!Array.isArray(races) || races.length < 2) return;
+
+      const activeId = currentId ? parseInt(currentId, 10) : null;
+      switcher.innerHTML = races
+        .map((r) => {
+          const year = r.date ? r.date.split('-')[0] : '';
+          const label = year ? `${r.name} ${year}` : r.name;
+          const isActive = r.id === activeId;
+          const href = `?race=${r.id}`;
+          return `<a href="${href}" class="race-tab${isActive ? ' active' : ''}">${label}</a>`;
+        })
+        .join('');
+      switcher.style.display = '';
+    } catch (err) {
+      console.warn('Не удалось загрузить список гонок:', err);
     }
   }
 

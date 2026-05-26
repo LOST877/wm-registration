@@ -53,6 +53,47 @@ html {
   color: #666;
 }
 
+/* --- ПЕРЕКЛЮЧАТЕЛЬ ГОНОК --- */
+.race-switcher {
+  background: var(--bg-dark);
+  border-bottom: 2px solid var(--primary-color);
+  padding: 0 20px;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.race-switcher::-webkit-scrollbar {
+  display: none;
+}
+
+.race-tab {
+  display: inline-block;
+  padding: 10px 16px;
+  min-height: 44px;
+  line-height: 24px;
+  white-space: nowrap;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.race-tab:hover {
+  color: var(--text-light);
+}
+
+.race-tab.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
 .text-white {
   color: var(--text-light);
 }
