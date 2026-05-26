@@ -12,11 +12,11 @@ try {
 
   $raceId = isset($_GET['race_id']) ? (int)$_GET['race_id'] : null;
 
-  if ($raceId) {
+  if ($raceId !== null && $raceId > 0) {
     $stmt = $pdo->prepare("
       SELECT id, name, date, location, location_link, iframe_html, description, payment_info, registration_open, is_finished
       FROM races
-      WHERE id = ?
+      WHERE id = ? AND (is_active = 1 OR is_finished = 1)
     ");
     $stmt->execute([$raceId]);
   } else {

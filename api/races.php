@@ -13,6 +13,7 @@ try {
   $stmt = $pdo->prepare("
     SELECT id, name, date, location, is_finished, registration_open
     FROM races
+    WHERE is_active = 1 OR is_finished = 1
     ORDER BY date DESC
   ");
   $stmt->execute();

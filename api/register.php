@@ -30,13 +30,19 @@ try {
     exit;
   }
 
-  $stmt = $pdo->prepare('SELECT id, name FROM races WHERE id = ?');
+  $stmt = $pdo->prepare('SELECT id, name, registration_open FROM races WHERE id = ?');
   $stmt->execute([(int)$raceId]);
   $race = $stmt->fetch(PDO::FETCH_ASSOC);
 
   if (!$race) {
     http_response_code(404);
     echo json_encode(['success' => false, 'error' => 'Race not found']);
+    exit;
+  }
+
+  if (!$race['registration_open']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Регистрация на эту гонку закрыта']);
     exit;
   }
 

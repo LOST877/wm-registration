@@ -233,9 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
       switcher.innerHTML = races
         .map((r) => {
           const year = r.date ? r.date.split('-')[0] : '';
-          const label = year ? `${r.name} ${year}` : r.name;
+          const label = year ? `${escapeHtml(r.name)} ${escapeHtml(year)}` : escapeHtml(r.name);
           const isActive = r.id === activeId;
-          const href = `?race=${r.id}`;
+          const href = `?race=${encodeURIComponent(r.id)}`;
           return `<a href="${href}" class="race-tab${isActive ? ' active' : ''}">${label}</a>`;
         })
         .join('');
@@ -526,5 +526,13 @@ document.addEventListener('DOMContentLoaded', () => {
       'input',
       (e) => (phoneInput.dataset.digits = mask.unmaskedValue)
     );
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 });
