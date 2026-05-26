@@ -17,7 +17,7 @@ try {
       SELECT id, name, date, location, location_link, iframe_html, description, payment_info,
              registration_open, is_finished, banner_desktop, banner_mobile, sponsors_json, contacts_json
       FROM races
-      WHERE id = ? AND (is_active = 1 OR is_finished = 1)
+      WHERE id = ?
     ");
     $stmt->execute([$raceId]);
   } else {
