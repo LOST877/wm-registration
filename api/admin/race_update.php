@@ -42,11 +42,23 @@ foreach (['registration_open', 'is_finished'] as $field) {
 }
 
 // Строковые поля
-foreach (['name', 'location', 'location_link', 'iframe_html', 'description', 'payment_info'] as $field) {
+foreach (['name', 'location', 'iframe_html', 'description', 'payment_info'] as $field) {
   if (array_key_exists($field, $data)) {
     $updates[] = "$field = ?";
     $params[] = $data[$field] !== null ? trim((string)$data[$field]) : null;
   }
+}
+
+// location_link — только http/https
+if (array_key_exists('location_link', $data)) {
+  $link = $data['location_link'] !== null ? trim((string)$data['location_link']) : '';
+  if ($link !== '' && !preg_match('#^https?://#i', $link)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Ссылка на карту должна начинаться с http:// или https://']);
+    exit;
+  }
+  $updates[] = "location_link = ?";
+  $params[] = $link !== '' ? $link : null;
 }
 
 // Поле даты: ожидается формат datetime-local YYYY-MM-DDTHH:MM
