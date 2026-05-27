@@ -349,11 +349,10 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .join('');
       const header = document.querySelector('.header');
-      const headerH = header ? header.offsetHeight : 60;
-      switcher.style.marginTop = headerH + 'px';
+      if (header) header.classList.add('has-switcher');
       switcher.style.display = '';
       const hero = document.querySelector('.hero');
-      if (hero) hero.style.marginTop = '0';
+      if (hero) hero.style.marginTop = (header ? header.offsetHeight : 60) + 'px';
     } catch (err) {
       console.warn('Не удалось загрузить список гонок:', err);
     }
