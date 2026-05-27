@@ -59,6 +59,7 @@ html {
 }
 
 .race-switcher {
+  border-top: 1px solid var(--bg-dark);
   border-bottom: 2px solid var(--primary-color);
   padding: 0 max(20px, calc(50% - 580px));
   display: flex;
