@@ -65,11 +65,21 @@
       <div class="container">
         <h2 class="section-title">О ГОНКЕ</h2>
         <div class="about-card">
-          <div class="info-item" id="about-date"></div>
-          <div class="info-item map-link" id="about-location"></div>
+          <div class="info-item" id="about-date" hidden>
+            <strong>Дата:</strong> <span id="about-date-value"></span>
+          </div>
+          <div class="info-item map-link" id="about-location" hidden>
+            <strong>Место:</strong> <span id="about-location-text"></span>
+          </div>
           <div class="info-item map-iframe" id="about-map"></div>
-          <div class="info-item desc" id="about-description"></div>
-          <div class="info-item desc" id="about-payment"></div>
+          <div class="info-item desc" id="about-description" hidden>
+            <strong>Описание:</strong>
+            <div class="md-content" id="about-description-content"></div>
+          </div>
+          <div class="info-item desc" id="about-payment" hidden>
+            <strong>Оплата:</strong>
+            <div class="md-content" id="about-payment-content"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -249,7 +259,43 @@
       </div>
     </div>
 
+    <!-- Шаблон строки участника -->
+    <template id="tpl-participant-row">
+      <tr>
+        <td class="td-name"></td>
+        <td class="td-team"></td>
+        <td class="td-city"></td>
+        <td class="td-category"></td>
+        <td class="td-payment" hidden></td>
+      </tr>
+    </template>
+
+    <!-- Шаблон спонсора -->
+    <template id="tpl-sponsor">
+      <div class="sponsor"></div>
+    </template>
+
+    <!-- Шаблоны контактов -->
+    <template id="tpl-contact-group">
+      <div class="socials">
+        <h3 class="contact-role" hidden></h3>
+      </div>
+    </template>
+    <template id="tpl-contact-link">
+      <a></a>
+    </template>
+
+    <!-- Шаблон вкладки гонки -->
+    <template id="tpl-race-tab">
+      <a class="race-tab" href=""></a>
+    </template>
+
+    <!-- Шаблон вкладки категории -->
+    <template id="tpl-category-tab">
+      <button class="category-tab" type="button"></button>
+    </template>
+
     <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=6"></script>
   </body>
 </html>

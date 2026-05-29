@@ -260,7 +260,89 @@
       </div>
     </div>
 
+    <!-- Шаблон карточки гонки -->
+    <template id="tpl-race-card">
+      <section class="race-card">
+        <div class="race-header">
+          <h3 class="rc-name"></h3>
+          <small class="rc-date"></small>
+          <label class="reg-toggle">
+            <input type="checkbox" class="race-active-checkbox">
+            Активна
+          </label>
+          <label class="reg-toggle">
+            <input type="checkbox" class="reg-open-checkbox">
+            Регистрация открыта
+          </label>
+          <label class="reg-toggle">
+            <input type="checkbox" class="race-finished-checkbox">
+            Гонка завершена
+          </label>
+          <button class="edit-race-btn">Редактировать гонку</button>
+          <button class="delete-race-btn">Удалить</button>
+          <button class="export-csv-btn" hidden>Выгрузить участников (.csv)</button>
+        </div>
+        <div class="race-info">
+          📍 <span class="rc-location"></span> |
+          👥 <span class="rc-count"></span> участников
+          <span class="rc-payment-block" hidden><br><strong>Оплата:</strong> <span class="rc-payment-text"></span></span>
+        </div>
+        <div class="results-import">
+          <label>Результаты (CSV):</label>
+          <input type="file" class="csv-file-input" accept=".csv">
+          <button class="import-csv-btn">Загрузить</button>
+          <span class="import-status"></span>
+        </div>
+        <div class="category-list"></div>
+        <div class="table-container">
+          <table>
+            <thead><tr class="rc-thead-row"></tr></thead>
+            <tbody class="rc-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </template>
+
+    <!-- Шаблон тега категории -->
+    <template id="tpl-category-tag">
+      <span class="category-tag"></span>
+    </template>
+
+    <!-- Шаблон строки участника (админка) -->
+    <template id="tpl-participant-row-admin">
+      <tr>
+        <td>
+          <button class="edit-participant-btn">✎</button>
+        </td>
+      </tr>
+    </template>
+
+    <!-- Шаблон заголовка колонки таблицы -->
+    <template id="tpl-table-th">
+      <th></th>
+    </template>
+
+    <!-- Шаблон строки редактирования категории -->
+    <template id="tpl-race-category-item">
+      <div class="race-category-item">
+        <span class="cat-name"></span>
+        <div class="cat-actions">
+          <button type="button" class="btn-cat-up" aria-label="Выше">▲</button>
+          <button type="button" class="btn-cat-down" aria-label="Ниже">▼</button>
+          <button type="button" class="btn-cat-remove" aria-label="Удалить">×</button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Шаблоны превью баннера -->
+    <template id="tpl-banner-img">
+      <img>
+    </template>
+    <template id="tpl-banner-empty">
+      <span class="banner-no-image">Нет изображения</span>
+    </template>
+
     <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
-    <script src="admin.js?v=6"></script>
+    <script src="admin.js?v=7"></script>
   </body>
 </html>

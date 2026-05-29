@@ -715,6 +715,35 @@ tr:hover {
   cursor: not-allowed;
 }
 
+/* Кнопка редактирования участника */
+.edit-participant-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--primary);
+  padding: 0.25rem;
+}
+
+/* Кнопка экспорта CSV */
+.export-csv-btn {
+  padding: 0.35rem 0.85rem;
+  min-height: 44px;
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--primary);
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.export-csv-btn:hover {
+  background: #ffe5e0;
+  border-color: var(--primary);
+}
+
 /* Превью баннера */
 .banner-preview {
   min-height: 50px;
@@ -731,6 +760,13 @@ tr:hover {
   max-width: 100%;
   max-height: 80px;
   object-fit: cover;
+}
+
+/* Плейсхолдер пустого баннера */
+.banner-no-image {
+  color: #999;
+  font-size: 0.85rem;
+  padding: 0.5rem;
 }
 
 /* Статус загрузки */

@@ -90,206 +90,137 @@ document.addEventListener('DOMContentLoaded', () => {
   // Отрисовка гонок
   function renderRaces(races) {
     racesData = races;
+    racesContainer.innerHTML = '';
+
     if (!races.length) {
-      racesContainer.innerHTML =
-        '<div class="empty-state">Нет запланированных гонок</div>';
+      const div = document.createElement('div');
+      div.className = 'empty-state';
+      div.textContent = 'Нет запланированных гонок';
+      racesContainer.appendChild(div);
       return;
     }
 
-    racesContainer.innerHTML = races
-      .map((race) => {
-        // Если нет участников
-        if (!race.participants.length) {
-          return `
-                <section class="race-card">
-                    <div class="race-header">
-                        <h3>${escapeHtml(race.race_name)}</h3>
-                        <small>${formatRaceDate(race.date)}</small>
-                        <label class="reg-toggle">
-                          <input type="checkbox" class="race-active-checkbox"
-                                 data-race-id="${race.id}"
-                                 ${race.is_active == 1 ? 'checked' : ''}>
-                          Активна
-                        </label>
-                        <label class="reg-toggle">
-                          <input type="checkbox" class="reg-open-checkbox"
-                                 data-race-id="${race.id}"
-                                 ${race.registration_open == 1 ? 'checked' : ''}>
-                          Регистрация открыта
-                        </label>
-                        <label class="reg-toggle">
-                          <input type="checkbox" class="race-finished-checkbox"
-                                 data-race-id="${race.id}"
-                                 ${race.is_finished == 1 ? 'checked' : ''}>
-                          Гонка завершена
-                        </label>
-                        <button class="edit-race-btn" data-race-id="${race.id}">Редактировать гонку</button>
-                        <button class="delete-race-btn" data-race-id="${race.id}">Удалить</button>
-                    </div>
-                    <div class="race-info">
-                        📍 ${escapeHtml(race.location)} |
-                        👥 ${race.participants_count} участников
-                        ${
-                          race.payment_info
-                            ? `<br><strong>Оплата:</strong> ${escapeHtml(
-                                race.payment_info
-                              )}`
-                            : ''
-                        }
-                    </div>
-                    <div class="results-import">
-                        <label>Результаты (CSV):</label>
-                        <input type="file" class="csv-file-input" accept=".csv" data-race-id="${race.id}">
-                        <button class="import-csv-btn" data-race-id="${race.id}">Загрузить</button>
-                        <span class="import-status"></span>
-                    </div>
-                    <div class="category-list">
-                        ${race.categories
-                          .map(
-                            (c) =>
-                              `<span class="category-tag">${escapeHtml(
-                                c.category_name
-                              )}</span>`
-                          )
-                          .join('')}
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <tr><td class="empty-state">Нет зарегистрированных участников</td></tr>
-                        </table>
-                    </div>
-                </section>
-            `;
-        }
+    const tplCard = document.getElementById('tpl-race-card');
+    const tplCatTag = document.getElementById('tpl-category-tag');
+    const tplTh = document.getElementById('tpl-table-th');
+    const tplRow = document.getElementById('tpl-participant-row-admin');
 
-        const firstParticipant = race.participants[0];
-        const columns = Object.keys(firstParticipant).filter(
-          (key) => key !== 'id'
-        );
+    const headers = {
+      payment_amount: 'Сумма оплаты',
+      is_paid: 'Оплата',
+      last_name: 'Фамилия',
+      first_name: 'Имя',
+      middle_name: 'Отчество',
+      birth_date: 'Дата рождения',
+      phone: 'Телефон',
+      email: 'Email',
+      city: 'Город',
+      team: 'Команда',
+      category_name: 'Категория',
+      created_at: 'Дата реги',
+    };
 
-        const headers = {
-          payment_amount: 'Сумма оплаты',
-          is_paid: 'Оплата',
-          last_name: 'Фамилия',
-          first_name: 'Имя',
-          middle_name: 'Отчество',
-          birth_date: 'Дата рождения',
-          phone: 'Телефон',
-          email: 'Email',
-          city: 'Город',
-          team: 'Команда',
-          category_name: 'Категория',
-          created_at: 'Дата реги',
-        };
+    races.forEach((race) => {
+      const frag = tplCard.content.cloneNode(true);
+      const card = frag.querySelector('.race-card');
 
-        return `
-            <section class="race-card">
-                <div class="race-header">
-                    <h3>${escapeHtml(race.race_name)}</h3>
-                    <small>${formatRaceDate(race.date)}</small>
-                    <label class="reg-toggle">
-                      <input type="checkbox" class="race-active-checkbox"
-                             data-race-id="${race.id}"
-                             ${race.is_active == 1 ? 'checked' : ''}>
-                      Активна
-                    </label>
-                    <label class="reg-toggle">
-                      <input type="checkbox" class="reg-open-checkbox"
-                             data-race-id="${race.id}"
-                             ${race.registration_open == 1 ? 'checked' : ''}>
-                      Регистрация открыта
-                    </label>
-                    <label class="reg-toggle">
-                      <input type="checkbox" class="race-finished-checkbox"
-                             data-race-id="${race.id}"
-                             ${race.is_finished == 1 ? 'checked' : ''}>
-                      Гонка завершена
-                    </label>
-                    <button class="edit-race-btn" data-race-id="${race.id}">Редактировать гонку</button>
-                    <button class="delete-race-btn" data-race-id="${race.id}">Удалить</button>
-                    <button class="export-csv-btn" data-race-id="${race.id}">Выгрузить участников (.csv)</button>
-                </div>
-                <div class="race-info">
-                    📍 ${escapeHtml(race.location)} |
-                    👥 ${race.participants_count} участников
-                    ${
-                      race.payment_info
-                        ? `<br><strong>Оплата:</strong> ${escapeHtml(
-                            race.payment_info
-                          )}`
-                        : ''
-                    }
-                </div>
-                <div class="results-import">
-                    <label>Результаты (CSV):</label>
-                    <input type="file" class="csv-file-input" accept=".csv" data-race-id="${race.id}">
-                    <button class="import-csv-btn" data-race-id="${race.id}">Загрузить</button>
-                    <span class="import-status"></span>
-                </div>
-                <div class="category-list">
-                    ${race.categories
-                      .map(
-                        (c) =>
-                          `<span class="category-tag">${escapeHtml(
-                            c.category_name
-                          )}</span>`
-                      )
-                      .join('')}
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Действия</th>
-                                ${columns
-                                  .map(
-                                    (col) =>
-                                      `<th>${escapeHtml(
-                                        headers[col] || col
-                                      )}</th>`
-                                  )
-                                  .join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${race.participants
-                              .map(
-                                (p, idx) => `
-                                <tr>
-                                    <td>
-                                        <button class="edit-participant-btn" 
-                                                data-participant-id="${p.id}"
-                                                data-race-id="${race.id}"
-                                                style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--primary);">
-                                            ✎
-                                        </button>
-                                    </td>
-                                    ${columns
-                                      .map(
-                                        (col) =>
-                                          `<td>${escapeHtml(
-                                            p[col] || '-'
-                                          )}</td>`
-                                      )
-                                      .join('')}
-                                </tr>
-                            `
-                              )
-                              .join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        `;
-      })
-      .join('');
+      card.querySelector('.rc-name').textContent = race.race_name;
+      card.querySelector('.rc-date').textContent = formatRaceDate(race.date);
+      card.querySelector('.rc-location').textContent = race.location;
+      card.querySelector('.rc-count').textContent = race.participants_count;
 
-    // Вешаем обработчики на чекбоксы «Регистрация открыта»
-    document.querySelectorAll('.reg-open-checkbox').forEach((checkbox) => {
-      checkbox.addEventListener('change', async () => {
-        const raceId = parseInt(checkbox.dataset.raceId);
-        const newValue = checkbox.checked ? 1 : 0;
-        checkbox.disabled = true;
+      if (race.payment_info) {
+        card.querySelector('.rc-payment-text').textContent = race.payment_info;
+        card.querySelector('.rc-payment-block').hidden = false;
+      }
+
+      // Чекбоксы
+      const activeChk = card.querySelector('.race-active-checkbox');
+      const openChk = card.querySelector('.reg-open-checkbox');
+      const finishedChk = card.querySelector('.race-finished-checkbox');
+      activeChk.dataset.raceId = race.id;
+      openChk.dataset.raceId = race.id;
+      finishedChk.dataset.raceId = race.id;
+      activeChk.checked = race.is_active == 1;
+      openChk.checked = race.registration_open == 1;
+      finishedChk.checked = race.is_finished == 1;
+
+      // Кнопки
+      const editBtn = card.querySelector('.edit-race-btn');
+      const deleteBtn = card.querySelector('.delete-race-btn');
+      const exportBtn = card.querySelector('.export-csv-btn');
+      const importBtn = card.querySelector('.import-csv-btn');
+      const csvInput = card.querySelector('.csv-file-input');
+      editBtn.dataset.raceId = race.id;
+      deleteBtn.dataset.raceId = race.id;
+      exportBtn.dataset.raceId = race.id;
+      importBtn.dataset.raceId = race.id;
+      csvInput.dataset.raceId = race.id;
+
+      if (race.participants.length) {
+        exportBtn.hidden = false;
+      }
+
+      // Теги категорий
+      const catList = card.querySelector('.category-list');
+      race.categories.forEach((c) => {
+        const tagFrag = tplCatTag.content.cloneNode(true);
+        tagFrag.querySelector('.category-tag').textContent = c.category_name;
+        catList.appendChild(tagFrag);
+      });
+
+      // Таблица участников
+      const theadRow = card.querySelector('.rc-thead-row');
+      const tbody = card.querySelector('.rc-tbody');
+
+      if (!race.participants.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.className = 'empty-state';
+        td.textContent = 'Нет зарегистрированных участников';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      } else {
+        const columns = Object.keys(race.participants[0]).filter((k) => k !== 'id');
+
+        const thActionFrag = tplTh.content.cloneNode(true);
+        thActionFrag.querySelector('th').textContent = 'Действия';
+        theadRow.appendChild(thActionFrag);
+
+        columns.forEach((col) => {
+          const thFrag = tplTh.content.cloneNode(true);
+          thFrag.querySelector('th').textContent = headers[col] || col;
+          theadRow.appendChild(thFrag);
+        });
+
+        race.participants.forEach((p) => {
+          const rowFrag = tplRow.content.cloneNode(true);
+          const tr = rowFrag.querySelector('tr');
+          const editPartBtn = tr.querySelector('.edit-participant-btn');
+          editPartBtn.dataset.participantId = p.id;
+          editPartBtn.dataset.raceId = race.id;
+
+          columns.forEach((col) => {
+            const td = document.createElement('td');
+            td.textContent = p[col] || '-';
+            tr.appendChild(td);
+          });
+
+          editPartBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            await openParticipantEdit(editPartBtn.dataset.participantId, editPartBtn.dataset.raceId);
+          });
+
+          tbody.appendChild(rowFrag);
+        });
+      }
+
+      // Обработчики событий карточки
+      openChk.addEventListener('change', async () => {
+        const raceId = parseInt(openChk.dataset.raceId);
+        const newValue = openChk.checked ? 1 : 0;
+        openChk.disabled = true;
         try {
           const response = await fetch('../api/admin/race_update.php', {
             method: 'POST',
@@ -299,24 +230,21 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const result = await response.json();
           if (!response.ok || !result.success) {
-            checkbox.checked = !checkbox.checked;
+            openChk.checked = !openChk.checked;
             alert(result.error || 'Ошибка обновления');
           }
         } catch (err) {
-          checkbox.checked = !checkbox.checked;
+          openChk.checked = !openChk.checked;
           alert('Сетевая ошибка. Проверьте подключение.');
         } finally {
-          checkbox.disabled = false;
+          openChk.disabled = false;
         }
       });
-    });
 
-    // Вешаем обработчики на чекбоксы «Гонка завершена»
-    document.querySelectorAll('.race-finished-checkbox').forEach((checkbox) => {
-      checkbox.addEventListener('change', async () => {
-        const raceId = parseInt(checkbox.dataset.raceId);
-        const newValue = checkbox.checked ? 1 : 0;
-        checkbox.disabled = true;
+      finishedChk.addEventListener('change', async () => {
+        const raceId = parseInt(finishedChk.dataset.raceId);
+        const newValue = finishedChk.checked ? 1 : 0;
+        finishedChk.disabled = true;
         try {
           const response = await fetch('../api/admin/race_update.php', {
             method: 'POST',
@@ -326,23 +254,20 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const result = await response.json();
           if (!response.ok || !result.success) {
-            checkbox.checked = !checkbox.checked;
+            finishedChk.checked = !finishedChk.checked;
             alert(result.error || 'Ошибка обновления');
           }
         } catch (err) {
-          checkbox.checked = !checkbox.checked;
+          finishedChk.checked = !finishedChk.checked;
           alert('Сетевая ошибка. Проверьте подключение.');
         } finally {
-          checkbox.disabled = false;
+          finishedChk.disabled = false;
         }
       });
-    });
 
-    // Вешаем обработчики на кнопки импорта CSV
-    document.querySelectorAll('.import-csv-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const raceId = parseInt(btn.dataset.raceId);
-        const container = btn.closest('.results-import');
+      importBtn.addEventListener('click', async () => {
+        const raceId = parseInt(importBtn.dataset.raceId);
+        const container = importBtn.closest('.results-import');
         const fileInput = container.querySelector('.csv-file-input');
         const statusEl = container.querySelector('.import-status');
 
@@ -356,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('race_id', raceId);
         formData.append('file', fileInput.files[0]);
 
-        btn.disabled = true;
+        importBtn.disabled = true;
         statusEl.textContent = 'Загрузка...';
         statusEl.style.color = 'var(--text-secondary)';
 
@@ -379,46 +304,25 @@ document.addEventListener('DOMContentLoaded', () => {
           statusEl.textContent = 'Сетевая ошибка';
           statusEl.style.color = 'var(--danger)';
         } finally {
-          btn.disabled = false;
+          importBtn.disabled = false;
         }
       });
-    });
 
-    // Вешаем обработчики на кнопки экспорта CSV
-    document.querySelectorAll('.export-csv-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const raceId = parseInt(btn.dataset.raceId);
-        window.location.href = `../api/admin/export_csv.php?race_id=${raceId}`;
+      exportBtn.addEventListener('click', () => {
+        window.location.href = `../api/admin/export_csv.php?race_id=${parseInt(exportBtn.dataset.raceId)}`;
       });
-    });
 
-    // Вешаем обработчики на кнопки редактирования участника
-    document.querySelectorAll('.edit-participant-btn').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
+      editBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        const participantId = btn.dataset.participantId;
-        const raceId = btn.dataset.raceId;
-        await openParticipantEdit(participantId, raceId);
-      });
-    });
-
-    // Вешаем обработчики на кнопки редактирования гонки
-    document.querySelectorAll('.edit-race-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const raceId = parseInt(btn.dataset.raceId);
+        const raceId = parseInt(editBtn.dataset.raceId);
         const race = racesData.find((r) => r.id === raceId);
         if (race) openRaceEditModal(race);
       });
-    });
 
-    // Обработчики чекбоксов «Активная гонка»
-    document.querySelectorAll('.race-active-checkbox').forEach((checkbox) => {
-      checkbox.addEventListener('change', async () => {
-        const raceId = parseInt(checkbox.dataset.raceId);
-        const newValue = checkbox.checked ? 1 : 0;
-        checkbox.disabled = true;
+      activeChk.addEventListener('change', async () => {
+        const raceId = parseInt(activeChk.dataset.raceId);
+        const newValue = activeChk.checked ? 1 : 0;
+        activeChk.disabled = true;
         try {
           const response = await fetch('../api/admin/race_update.php', {
             method: 'POST',
@@ -428,29 +332,25 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const result = await response.json();
           if (!response.ok || !result.success) {
-            checkbox.checked = !checkbox.checked;
+            activeChk.checked = !activeChk.checked;
             alert(result.error || 'Ошибка обновления');
           } else {
-            // Перерисовываем — у других гонок флаг мог сброситься
             fetchAdminData();
           }
         } catch (err) {
-          checkbox.checked = !checkbox.checked;
+          activeChk.checked = !activeChk.checked;
           alert('Сетевая ошибка. Проверьте подключение.');
         } finally {
-          checkbox.disabled = false;
+          activeChk.disabled = false;
         }
       });
-    });
 
-    // Обработчики кнопок удаления гонки
-    document.querySelectorAll('.delete-race-btn').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
+      deleteBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        const raceId = parseInt(btn.dataset.raceId);
-        const raceName = btn.closest('.race-card').querySelector('h3').textContent;
+        const raceId = parseInt(deleteBtn.dataset.raceId);
+        const raceName = deleteBtn.closest('.race-card').querySelector('.rc-name').textContent;
         if (!confirm(`Удалить гонку "${raceName}" и все связанные данные (категории, участников)?\n\nЭто действие нельзя отменить.`)) return;
-        btn.disabled = true;
+        deleteBtn.disabled = true;
         try {
           const response = await fetch('../api/admin/race_delete.php', {
             method: 'POST',
@@ -467,9 +367,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
           alert('Сетевая ошибка. Проверьте подключение.');
         } finally {
-          btn.disabled = false;
+          deleteBtn.disabled = false;
         }
       });
+
+      racesContainer.appendChild(frag);
     });
   }
 
@@ -511,8 +413,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Заполняем select категорий
         const categorySelect = document.getElementById('category-id');
-        categorySelect.innerHTML =
-          '<option value="">Выберите категорию</option>';
+        categorySelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'Выберите категорию';
+        categorySelect.appendChild(defaultOpt);
         result.categories.forEach((cat) => {
           const option = document.createElement('option');
           option.value = cat.id;
@@ -717,24 +622,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!race) return;
     const list = document.getElementById('race-category-edit-list');
     if (!list) return;
+    const tpl = document.getElementById('tpl-race-category-item');
 
-    list.innerHTML = race.categories
-      .map(
-        (cat, idx) => `
-        <div class="race-category-item" data-rc-id="${cat.race_category_id}">
-          <span class="cat-name">${escapeHtml(cat.category_name)}</span>
-          <div class="cat-actions">
-            <button type="button" class="btn-cat-up" ${idx === 0 ? 'disabled' : ''}
-                    data-rc-id="${cat.race_category_id}" aria-label="Выше">▲</button>
-            <button type="button" class="btn-cat-down" ${idx === race.categories.length - 1 ? 'disabled' : ''}
-                    data-rc-id="${cat.race_category_id}" aria-label="Ниже">▼</button>
-            <button type="button" class="btn-cat-remove"
-                    data-rc-id="${cat.race_category_id}"
-                    aria-label="Удалить">×</button>
-          </div>
-        </div>`
-      )
-      .join('');
+    list.innerHTML = '';
+    race.categories.forEach((cat, idx) => {
+      const frag = tpl.content.cloneNode(true);
+      const item = frag.querySelector('.race-category-item');
+      item.dataset.rcId = cat.race_category_id;
+      item.querySelector('.cat-name').textContent = cat.category_name;
+      const upBtn = item.querySelector('.btn-cat-up');
+      const downBtn = item.querySelector('.btn-cat-down');
+      const removeBtn = item.querySelector('.btn-cat-remove');
+      upBtn.dataset.rcId = cat.race_category_id;
+      downBtn.dataset.rcId = cat.race_category_id;
+      removeBtn.dataset.rcId = cat.race_category_id;
+      if (idx === 0) upBtn.disabled = true;
+      if (idx === race.categories.length - 1) downBtn.disabled = true;
+      list.appendChild(frag);
+    });
 
     bindCategoryListHandlers(raceId);
   }
@@ -743,11 +648,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const race = racesData.find((r) => r.id === raceId);
     if (!race) return;
     const editBtn = document.querySelector(`.edit-race-btn[data-race-id="${raceId}"]`);
-    const card = editBtn?.closest('.race-card')?.querySelector('.category-list');
-    if (!card) return;
-    card.innerHTML = race.categories
-      .map((c) => `<span class="category-tag">${escapeHtml(c.category_name)}</span>`)
-      .join('');
+    const catList = editBtn?.closest('.race-card')?.querySelector('.category-list');
+    if (!catList) return;
+
+    const tpl = document.getElementById('tpl-category-tag');
+    catList.innerHTML = '';
+    race.categories.forEach((c) => {
+      const frag = tpl.content.cloneNode(true);
+      frag.querySelector('.category-tag').textContent = c.category_name;
+      catList.appendChild(frag);
+    });
   }
 
   function bindCategoryListHandlers(raceId) {
@@ -908,6 +818,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const raceCancelBtn = document.getElementById('race-cancel-btn');
   const raceForm = document.getElementById('race-form');
 
+  const tplBannerImg   = document.getElementById('tpl-banner-img');
+  const tplBannerEmpty = document.getElementById('tpl-banner-empty');
+
+  function setBannerPreview(previewEl, filename, altText) {
+    previewEl.innerHTML = '';
+    if (filename) {
+      const frag = tplBannerImg.content.cloneNode(true);
+      const img = frag.querySelector('img');
+      img.src = `../assets/races/${filename}`;
+      img.alt = altText;
+      previewEl.appendChild(frag);
+    } else {
+      previewEl.appendChild(tplBannerEmpty.content.cloneNode(true));
+    }
+  }
+
   function openRaceEditModal(race) {
     // Сбросить предпросмотры
     document.querySelectorAll('#race-form .md-preview').forEach((p) => { p.style.display = 'none'; });
@@ -925,17 +851,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('race-description').value = race.description || '';
     document.getElementById('race-payment').value = race.payment_info || '';
 
-    // Новые поля
     document.getElementById('race-is-active').checked = race.is_active == 1;
 
-    const desktopPreview = document.getElementById('banner-desktop-preview');
-    const mobilePreview  = document.getElementById('banner-mobile-preview');
-    desktopPreview.innerHTML = race.banner_desktop
-      ? `<img src="../assets/races/${escapeHtml(race.banner_desktop)}" alt="Desktop banner">`
-      : '<span style="color:#999;font-size:0.85rem;padding:0.5rem;">Нет изображения</span>';
-    mobilePreview.innerHTML = race.banner_mobile
-      ? `<img src="../assets/races/${escapeHtml(race.banner_mobile)}" alt="Mobile banner">`
-      : '<span style="color:#999;font-size:0.85rem;padding:0.5rem;">Нет изображения</span>';
+    setBannerPreview(document.getElementById('banner-desktop-preview'), race.banner_desktop, 'Desktop banner');
+    setBannerPreview(document.getElementById('banner-mobile-preview'), race.banner_mobile, 'Mobile banner');
 
     document.getElementById('race-sponsors').value = prettyJson(race.sponsors_json);
     document.getElementById('race-contacts').value = prettyJson(race.contacts_json);
@@ -1048,7 +967,12 @@ document.addEventListener('DOMContentLoaded', () => {
           statusEl.textContent = 'Загружено!';
           statusEl.style.color = 'green';
           const preview = document.getElementById(previewId);
-          preview.innerHTML = `<img src="../${result.url}" alt="banner">`;
+          preview.innerHTML = '';
+          const frag = tplBannerImg.content.cloneNode(true);
+          const img = frag.querySelector('img');
+          img.src = `../${result.url}`;
+          img.alt = 'banner';
+          preview.appendChild(frag);
           const race = racesData.find((r) => r.id === raceId);
           if (race) {
             if (type === 'desktop') race.banner_desktop = result.filename;
@@ -1116,15 +1040,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-// Добавляем CSS-анимацию динамически
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-`;
-document.head.appendChild(style);
-
-

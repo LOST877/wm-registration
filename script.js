@@ -138,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let current = '';
     sections.forEach((section) => {
       const sectionTop = section.offsetTop;
-      const sectionHeight = section.clientHeight;
       if (pageYOffset >= sectionTop - 100) {
         current = section.getAttribute('id');
       }
@@ -168,18 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Дата
         const months = [
-          'января',
-          'февраля',
-          'марта',
-          'апреля',
-          'мая',
-          'июня',
-          'июля',
-          'августа',
-          'сентября',
-          'октября',
-          'ноября',
-          'декабря',
+          'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+          'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
         ];
         const datePart = race.date.split(' ')[0];
         const timePart = race.date.split(' ')[1];
@@ -187,14 +176,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const month = months[monthIndex - 1];
         const hm = timePart ? timePart.slice(0, 5) : '00:00';
         const timeStr = hm !== '00:00' ? `, начало в ${hm}` : '';
-        document.getElementById(
-          'about-date'
-        ).innerHTML = `<strong>Дата:</strong> ${day} ${month} ${year}г.${timeStr}`;
+        document.getElementById('about-date-value').textContent =
+          `${day} ${month} ${year}г.${timeStr}`;
+        document.getElementById('about-date').hidden = false;
 
         // Локация
         if (race.location) {
           const locationEl = document.getElementById('about-location');
-          locationEl.innerHTML = `<strong>Место:</strong> ${escapeHtml(race.location)}`;
+          document.getElementById('about-location-text').textContent = race.location;
           if (race.location_link) {
             const a = document.createElement('a');
             a.href = race.location_link;
@@ -207,24 +196,26 @@ document.addEventListener('DOMContentLoaded', () => {
               locationEl.appendChild(a);
             }
           }
+          locationEl.hidden = false;
         }
 
-        // Карта
+        // Карта (iframe — внешний контент)
         if (race.iframe_html) {
-          const mapContainer = document.getElementById('about-map');
-          mapContainer.innerHTML = race.iframe_html;
+          document.getElementById('about-map').innerHTML = race.iframe_html;
         }
 
-        // Описание
+        // Описание (markdown — внешний контент)
         if (race.description) {
-          document.getElementById('about-description').innerHTML =
-            `<strong>Описание:</strong><div class="md-content">${marked.parse(race.description)}</div>`;
+          document.getElementById('about-description-content').innerHTML =
+            marked.parse(race.description);
+          document.getElementById('about-description').hidden = false;
         }
 
-        // Оплата
+        // Оплата (markdown — внешний контент)
         if (race.payment_info) {
-          document.getElementById('about-payment').innerHTML =
-            `<strong>Оплата:</strong><div class="md-content">${marked.parse(race.payment_info)}</div>`;
+          document.getElementById('about-payment-content').innerHTML =
+            marked.parse(race.payment_info);
+          document.getElementById('about-payment').hidden = false;
         }
 
         // Обновляем race_id
@@ -285,18 +276,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const section = document.getElementById('sponsors');
     const container = document.getElementById('sponsor-logos');
     const navItem = document.getElementById('nav-sponsors-item');
-    const hide = () => { if (section) section.style.display = 'none'; if (navItem) navItem.style.display = 'none'; };
+    const hide = () => {
+      if (section) section.style.display = 'none';
+      if (navItem) navItem.style.display = 'none';
+    };
     if (!section || !container) return;
     if (!race.sponsors_json) { hide(); return; }
     let sponsors;
     try { sponsors = JSON.parse(race.sponsors_json); } catch { hide(); return; }
     if (!Array.isArray(sponsors) || sponsors.length === 0) { hide(); return; }
-    container.innerHTML = sponsors.map((s) => {
-      const name = escapeHtml(s.name || '');
-      return isSafeUrl(s.url)
-        ? `<div class="sponsor"><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${name}</a></div>`
-        : `<div class="sponsor">${name}</div>`;
-    }).join('');
+
+    const tpl = document.getElementById('tpl-sponsor');
+    container.innerHTML = '';
+    sponsors.forEach((s) => {
+      const frag = tpl.content.cloneNode(true);
+      const div = frag.querySelector('.sponsor');
+      if (isSafeUrl(s.url)) {
+        const a = document.createElement('a');
+        a.href = s.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = s.name || '';
+        div.appendChild(a);
+      } else {
+        div.textContent = s.name || '';
+      }
+      container.appendChild(frag);
+    });
     section.style.display = '';
     if (navItem) navItem.style.display = '';
   }
@@ -309,26 +315,50 @@ document.addEventListener('DOMContentLoaded', () => {
     let contacts;
     try { contacts = JSON.parse(race.contacts_json); } catch { return; }
     if (!Array.isArray(contacts) || contacts.length === 0) return;
-    const html = contacts.map((item) => {
+
+    const tplGroup = document.getElementById('tpl-contact-group');
+    const tplLink  = document.getElementById('tpl-contact-link');
+
+    dynamic.innerHTML = '';
+    contacts.forEach((item) => {
       if (item.role && Array.isArray(item.entries)) {
-        const links = item.entries.map((entry) => {
+        const groupFrag = tplGroup.content.cloneNode(true);
+        const div = groupFrag.querySelector('.socials');
+        const h3 = div.querySelector('.contact-role');
+        h3.textContent = item.role;
+        h3.hidden = false;
+        item.entries.forEach((entry) => {
           const label = [entry.name, entry.phone].filter(Boolean).join(' ');
           if (entry.phone) {
-            const tel = entry.phone.replace(/\s/g, '');
-            return `<a href="tel:${escapeHtml(tel)}">${escapeHtml(label)}</a>`;
+            const linkFrag = tplLink.content.cloneNode(true);
+            const a = linkFrag.querySelector('a');
+            a.href = `tel:${entry.phone.replace(/\s/g, '')}`;
+            a.textContent = label;
+            div.appendChild(a);
+          } else {
+            const span = document.createElement('span');
+            span.textContent = label;
+            div.appendChild(span);
           }
-          return `<span>${escapeHtml(label)}</span>`;
-        }).join('');
-        return `<div class="socials"><h3>${escapeHtml(item.role)}</h3>${links}</div>`;
+        });
+        dynamic.appendChild(groupFrag);
+      } else {
+        const linkKey = Object.keys(item).find((k) => k !== 'role' && k !== 'entries');
+        if (linkKey && typeof item[linkKey] === 'string') {
+          const groupFrag = tplGroup.content.cloneNode(true);
+          const div = groupFrag.querySelector('.socials');
+          div.querySelector('.contact-role').remove();
+          const linkFrag = tplLink.content.cloneNode(true);
+          const a = linkFrag.querySelector('a');
+          a.href = isSafeUrl(item[linkKey]) ? item[linkKey] : '#';
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = linkKey;
+          div.appendChild(a);
+          dynamic.appendChild(groupFrag);
+        }
       }
-      const linkKey = Object.keys(item).find((k) => k !== 'role' && k !== 'entries');
-      if (linkKey && typeof item[linkKey] === 'string') {
-        const href = isSafeUrl(item[linkKey]) ? escapeHtml(item[linkKey]) : '#';
-        return `<div class="socials"><a href="${href}" target="_blank" rel="noopener noreferrer">${escapeHtml(linkKey)}</a></div>`;
-      }
-      return '';
-    }).join('');
-    dynamic.innerHTML = html;
+    });
     if (fallback) fallback.style.display = 'none';
   }
 
@@ -341,13 +371,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!Array.isArray(races) || races.length < 2) return;
 
       const activeId = currentId ? parseInt(currentId, 10) : null;
-      switcher.innerHTML = races
-        .map((r) => {
-          const isActive = r.id === activeId;
-          const href = `?race=${encodeURIComponent(r.id)}`;
-          return `<a href="${href}" class="race-tab${isActive ? ' active' : ''}">${escapeHtml(r.name)}</a>`;
-        })
-        .join('');
+      const tpl = document.getElementById('tpl-race-tab');
+      switcher.innerHTML = '';
+      races.forEach((r) => {
+        const frag = tpl.content.cloneNode(true);
+        const a = frag.querySelector('.race-tab');
+        a.href = `?race=${encodeURIComponent(r.id)}`;
+        a.textContent = r.name;
+        if (r.id === activeId) a.classList.add('active');
+        switcher.appendChild(frag);
+      });
+
       const header = document.querySelector('.header');
       if (header) header.classList.add('has-switcher');
       switcher.style.display = '';
@@ -363,21 +397,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const select = document.querySelector('select[name="race_category_id"]');
     if (!select) return;
 
-    select.innerHTML =
-      '<option value="" disabled>Загрузка категорий...</option>';
+    select.innerHTML = '';
+    const loadingOpt = document.createElement('option');
+    loadingOpt.disabled = true;
+    loadingOpt.textContent = 'Загрузка категорий...';
+    select.appendChild(loadingOpt);
 
     try {
       const res = await fetch(`api/categories.php?race_id=${raceId}`);
       const categories = await res.json();
 
+      select.innerHTML = '';
       if (!categories.length) {
-        select.innerHTML =
-          '<option value="" disabled>Нет доступных категорий</option>';
+        const opt = document.createElement('option');
+        opt.disabled = true;
+        opt.textContent = 'Нет доступных категорий';
+        select.appendChild(opt);
         return;
       }
 
-      select.innerHTML =
-        '<option value="" disabled selected>Выберите категорию...</option>';
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      defaultOpt.textContent = 'Выберите категорию...';
+      select.appendChild(defaultOpt);
+
       categories.forEach((cat) => {
         const opt = document.createElement('option');
         opt.value = cat.id;
@@ -386,9 +431,23 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (err) {
       console.error(err);
-      select.innerHTML =
-        '<option value="" disabled>Ошибка загрузки категорий</option>';
+      select.innerHTML = '';
+      const opt = document.createElement('option');
+      opt.disabled = true;
+      opt.textContent = 'Ошибка загрузки категорий';
+      select.appendChild(opt);
     }
+  }
+
+  // Вспомогательная функция создания строки-статуса в таблице
+  function makeStatusRow(colSpan, className, text) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = colSpan;
+    td.className = className;
+    td.textContent = text;
+    tr.appendChild(td);
+    return tr;
   }
 
   // Вспомогательная функция загрузки участников
@@ -400,35 +459,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const cols = showPayment ? 5 : 4;
     if (thPayment) thPayment.style.display = showPayment ? '' : 'none';
 
-    tbody.innerHTML =
-      `<tr><td colspan="${cols}" class="loading">Загрузка участников...</td></tr>`;
+    tbody.innerHTML = '';
+    tbody.appendChild(makeStatusRow(cols, 'loading', 'Загрузка участников...'));
 
     try {
       const res = await fetch(`api/participants.php?race_id=${raceId}`);
       const participants = await res.json();
 
+      tbody.innerHTML = '';
       if (!participants || !participants.length) {
-        tbody.innerHTML =
-          `<tr><td colspan="${cols}" class="no-data">Список участников пока пуст</td></tr>`;
+        tbody.appendChild(makeStatusRow(cols, 'no-data', 'Список участников пока пуст'));
         return;
       }
 
-      tbody.innerHTML = '';
+      const tpl = document.getElementById('tpl-participant-row');
       participants.forEach((part) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${escapeHtml(part.last_name)} ${escapeHtml(part.first_name)}</td>
-          <td>${escapeHtml(part.team || '-')}</td>
-          <td>${escapeHtml(part.city || '-')}</td>
-          <td>${escapeHtml(part.category || '-')}</td>
-          ${showPayment ? `<td>${part.is_paid ? '🟢' : '🔴'}</td>` : ''}
-        `;
-        tbody.appendChild(tr);
+        const frag = tpl.content.cloneNode(true);
+        const row = frag.querySelector('tr');
+        row.querySelector('.td-name').textContent =
+          `${part.last_name} ${part.first_name}`;
+        row.querySelector('.td-team').textContent = part.team || '-';
+        row.querySelector('.td-city').textContent = part.city || '-';
+        row.querySelector('.td-category').textContent = part.category || '-';
+        const tdPayment = row.querySelector('.td-payment');
+        if (showPayment) {
+          tdPayment.textContent = part.is_paid ? '🟢' : '🔴';
+          tdPayment.hidden = false;
+        }
+        tbody.appendChild(frag);
       });
     } catch (err) {
       console.error('Ошибка загрузки участников:', err);
-      tbody.innerHTML =
-        `<tr><td colspan="${cols}" class="error">Ошибка загрузки списка участников</td></tr>`;
+      tbody.innerHTML = '';
+      tbody.appendChild(makeStatusRow(cols, 'error', 'Ошибка загрузки списка участников'));
     }
   }
 
@@ -474,7 +537,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       if (!data.success || !data.results.length) {
-        tbody.innerHTML = '<tr><td colspan="10" class="no-data">Результаты пока не опубликованы</td></tr>';
+        tbody.innerHTML = '';
+        tbody.appendChild(makeStatusRow(10, 'no-data', 'Результаты пока не опубликованы'));
         return;
       }
 
@@ -505,15 +569,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const lapCount = getLapCount(rows);
 
-        let ths = '<th>Место</th><th>Номер</th><th>Участник</th><th>Год</th><th>Город</th>';
-        if (isAbsolut) ths += '<th>Категория</th>';
-        for (let i = 1; i <= lapCount; i++) ths += `<th>Круг ${i}</th>`;
-        theadRow.innerHTML = ths;
+        // Заголовки
+        theadRow.innerHTML = '';
+        const headerTexts = ['Место', 'Номер', 'Участник', 'Год', 'Город'];
+        if (isAbsolut) headerTexts.push('Категория');
+        for (let i = 1; i <= lapCount; i++) headerTexts.push(`Круг ${i}`);
+        headerTexts.forEach((text) => {
+          const th = document.createElement('th');
+          th.textContent = text;
+          theadRow.appendChild(th);
+        });
 
         tbody.innerHTML = '';
         if (!rows.length) {
           const colspan = (isAbsolut ? 6 : 5) + lapCount;
-          tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">Нет данных для этой категории</td></tr>`;
+          tbody.appendChild(makeStatusRow(colspan, 'no-data', 'Нет данных для этой категории'));
           return;
         }
 
@@ -522,37 +592,39 @@ document.addEventListener('DOMContentLoaded', () => {
           const name = [r.last_name, r.first_name].filter(Boolean).join(' ');
           const tr = document.createElement('tr');
 
-          let cells = `<td>${place}</td><td>${r.bib_number ?? '-'}</td>`;
-          cells += `<td>${name}</td>`;
-          cells += `<td>${r.birth_year ?? '-'}</td>`;
-          cells += `<td>${r.city ?? '-'}</td>`;
-          if (isAbsolut) cells += `<td>${r.category ?? '-'}</td>`;
-          for (let i = 0; i < lapCount; i++) {
-            cells += `<td>${r.laps[i] ?? '-'}</td>`;
-          }
-          tr.innerHTML = cells;
+          const cellValues = [place, r.bib_number ?? '-', name, r.birth_year ?? '-', r.city ?? '-'];
+          if (isAbsolut) cellValues.push(r.category ?? '-');
+          for (let i = 0; i < lapCount; i++) cellValues.push(r.laps[i] ?? '-');
+
+          cellValues.forEach((val) => {
+            const td = document.createElement('td');
+            td.textContent = val;
+            tr.appendChild(td);
+          });
           tbody.appendChild(tr);
           tr.addEventListener('click', () => {
             const already = tr.classList.contains('selected');
-            tbody.querySelectorAll('tr.selected').forEach(el => el.classList.remove('selected'));
+            tbody.querySelectorAll('tr.selected').forEach((el) => el.classList.remove('selected'));
             if (!already) tr.classList.add('selected');
           });
         });
       }
 
       function buildTabs() {
-        tabsContainer.innerHTML = tabs
-          .map(
-            (t) =>
-              `<button class="category-tab${t === activeFilter ? ' active' : ''}" data-cat="${t}">${t}</button>`
-          )
-          .join('');
-        tabsContainer.querySelectorAll('.category-tab').forEach((btn) => {
+        const tpl = document.getElementById('tpl-category-tab');
+        tabsContainer.innerHTML = '';
+        tabs.forEach((t) => {
+          const frag = tpl.content.cloneNode(true);
+          const btn = frag.querySelector('.category-tab');
+          btn.textContent = t;
+          btn.dataset.cat = t;
+          if (t === activeFilter) btn.classList.add('active');
           btn.addEventListener('click', () => {
             activeFilter = btn.dataset.cat;
             buildTabs();
             renderTable();
           });
+          tabsContainer.appendChild(frag);
         });
       }
 
@@ -560,7 +632,8 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTable();
     } catch (err) {
       console.error('Ошибка загрузки результатов:', err);
-      tbody.innerHTML = '<tr><td colspan="10" class="error">Ошибка загрузки результатов</td></tr>';
+      tbody.innerHTML = '';
+      tbody.appendChild(makeStatusRow(10, 'error', 'Ошибка загрузки результатов'));
     }
   }
 
@@ -573,24 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== ПОПАПЫ (MODALS) ===== //
-  // Создаем попап один раз
-  if (!document.getElementById('popup-overlay')) {
-    const popupHTML = `
-      <div id="popup-overlay" class="popup-overlay">
-        <div class="popup-container">
-          <button id="popup-close" class="popup-close" aria-label="Закрыть">&times;</button>
-          <span id="popup-icon" class="popup-icon">☁️</span>
-          <h3 id="popup-title" class="popup-title"></h3>
-          <p id="popup-text" class="popup-text"></p>
-          <div id="popup-actions" class="popup-actions">
-            <button id="popup-confirm-btn" class="btn btn-primary">OK</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', popupHTML);
-  }
-
   const popupOverlay = document.getElementById('popup-overlay');
   const popupTitle = document.getElementById('popup-title');
   const popupText = document.getElementById('popup-text');
@@ -612,19 +667,15 @@ document.addEventListener('DOMContentLoaded', () => {
   window.showPopup = function (type, title, text) {
     popupOverlay.classList.add('active', `popup-${type}`);
 
-    // Установка контента
     popupTitle.textContent = title;
     popupText.textContent = text;
 
-    // Иконки
     const icons = { success: '✅', error: '❌', warning: '⚠️' };
     popupIcon.textContent = icons[type] || '☁️';
 
-    // Кнопка OK
     popupConfirmBtn.onclick = closePopup;
     popupCloseBtn.onclick = closePopup;
 
-    // Закрытие по клику вне окна
     popupOverlay.onclick = (e) => {
       if (e.target === popupOverlay) closePopup();
     };
