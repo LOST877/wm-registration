@@ -15,7 +15,7 @@ if (($data['ref'] ?? '') !== 'refs/heads/develop') {
 }
 
 $dir = escapeshellarg(__DIR__);
-$cmd = "git -C $dir pull origin develop 2>&1";
+$cmd = "git -C $dir fetch origin develop 2>&1 && git -C $dir reset --hard origin/develop 2>&1";
 
 exec($cmd, $lines, $code);
 $output = implode("\n", $lines) . "\nexit: $code";
