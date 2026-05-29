@@ -345,9 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         const linkKey = Object.keys(item).find((k) => k !== 'role' && k !== 'entries');
         if (linkKey && typeof item[linkKey] === 'string') {
-          const groupFrag = tplGroup.content.cloneNode(true);
-          const div = groupFrag.querySelector('.socials');
-          div.querySelector('.contact-role').remove();
+          const div = document.createElement('div');
+          div.className = 'socials';
           const linkFrag = tplLink.content.cloneNode(true);
           const a = linkFrag.querySelector('a');
           a.href = isSafeUrl(item[linkKey]) ? item[linkKey] : '#';
@@ -355,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
           a.rel = 'noopener noreferrer';
           a.textContent = linkKey;
           div.appendChild(a);
-          dynamic.appendChild(groupFrag);
+          dynamic.appendChild(div);
         }
       }
     });
@@ -484,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tdPayment = row.querySelector('.td-payment');
         if (showPayment) {
           tdPayment.textContent = part.is_paid ? '🟢' : '🔴';
-          tdPayment.hidden = false;
+          tdPayment.style.display = '';
         }
         tbody.appendChild(frag);
       });
@@ -621,7 +620,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (t === activeFilter) btn.classList.add('active');
           btn.addEventListener('click', () => {
             activeFilter = btn.dataset.cat;
-            buildTabs();
+            tabsContainer.querySelectorAll('.category-tab').forEach((b) => {
+              b.classList.toggle('active', b.dataset.cat === activeFilter);
+            });
             renderTable();
           });
           tabsContainer.appendChild(frag);
@@ -696,11 +697,4 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
 });

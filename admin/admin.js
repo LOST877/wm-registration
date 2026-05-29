@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           columns.forEach((col) => {
             const td = document.createElement('td');
-            td.textContent = p[col] || '-';
+            td.textContent = p[col] ?? '-';
             tr.appendChild(td);
           });
 
@@ -966,13 +966,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok && result.success) {
           statusEl.textContent = 'Загружено!';
           statusEl.style.color = 'green';
-          const preview = document.getElementById(previewId);
-          preview.innerHTML = '';
-          const frag = tplBannerImg.content.cloneNode(true);
-          const img = frag.querySelector('img');
-          img.src = `../${result.url}`;
-          img.alt = 'banner';
-          preview.appendChild(frag);
+          setBannerPreview(document.getElementById(previewId), result.filename, 'banner');
           const race = racesData.find((r) => r.id === raceId);
           if (race) {
             if (type === 'desktop') race.banner_desktop = result.filename;
