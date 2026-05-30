@@ -62,7 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Logout
   document.getElementById('logout-btn')?.addEventListener('click', async () => {
     try {
-      await fetch('../api/admin/_auth.php', { method: 'DELETE', credentials: 'same-origin' });
+      await fetch('../api/admin/_auth.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=logout',
+      });
     } catch {}
     location.reload();
   });

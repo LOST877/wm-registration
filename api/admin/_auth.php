@@ -12,6 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
+// Выход
+if (($_POST['action'] ?? '') === 'logout') {
+  $_SESSION = [];
+  session_destroy();
+  echo json_encode(['success' => true]);
+  exit;
+}
+
 // Обязательные поля
 $user = $_POST['username'] ?? '';
 $pwd = $_POST['password'] ?? '';
