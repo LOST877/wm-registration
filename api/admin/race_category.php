@@ -240,7 +240,7 @@ try {
   exit;
 
 } catch (PDOException $e) {
-  if ($pdo->inTransaction()) $pdo->rollBack();
+  if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
   error_log('race_category error: ' . $e->getMessage());
   http_response_code(500);
   echo json_encode(['error' => 'Ошибка базы данных']);

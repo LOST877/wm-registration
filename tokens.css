@@ -4,7 +4,7 @@
    Import this before all other stylesheets.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap');
+/* Шрифты подключаются через <link> в HTML для параллельной загрузки */
 
 :root {
   /* ---- BRAND ---- */

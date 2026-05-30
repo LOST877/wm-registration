@@ -44,6 +44,7 @@ try {
   $race['payment_tiers'] = $race['payment_tiers'] ? json_decode($race['payment_tiers'], true) : [];
 
   echo json_encode($race);
+  exit;
 } catch (Exception $e) {
   http_response_code(500);
   echo json_encode(['error' => 'Ошибка сервера: ' . $e->getMessage()]);

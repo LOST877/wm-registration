@@ -257,6 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="rd-actions">
           <a class="rd-action" href="/?race_id=${race.id}" target="_blank" rel="noopener">На сайт</a>
           <button class="rd-action" data-export="${race.id}">Экспорт CSV</button>
+          ${race.is_active != 1 && race.is_finished != 1
+            ? `<button class="rd-action rd-action-danger" data-delete="${race.id}">Удалить</button>`
+            : ''}
           <button class="rd-action rd-action-primary" data-edit="${race.id}">Редактировать</button>
         </div>
       </div>
@@ -342,6 +345,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.querySelector(`[data-edit="${race.id}"]`)?.addEventListener('click', () => {
       openRaceEditModal(race);
+    });
+
+    container.querySelector(`[data-delete="${race.id}"]`)?.addEventListener('click', async () => {
+      const ok = confirm(
+        `Удалить гонку «${race.race_name}»?\n\n` +
+        `Все данные о гонке и её участниках будут безвозвратно удалены.\n\n` +
+        `Это действие нельзя отменить.`
+      );
+      if (!ok) return;
+      try {
+        const res = await fetch('../api/admin/race_delete.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ race_id: race.id }),
+          credentials: 'same-origin',
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+          await fetchAdminData();
+        } else {
+          alert(result.error || 'Ошибка удаления');
+        }
+      } catch { alert('Сетевая ошибка'); }
     });
 
     // Тогглы
@@ -440,9 +466,9 @@ document.addEventListener('DOMContentLoaded', () => {
         sel.innerHTML = '<option value="">Выберите категорию</option>';
         result.categories.forEach(cat => {
           const opt = document.createElement('option');
-          opt.value = cat.id;
+          opt.value = cat.race_category_id;
           opt.textContent = cat.name;
-          if (cat.id === p.category_id) opt.selected = true;
+          if (cat.race_category_id === p.race_category_id) opt.selected = true;
           sel.appendChild(opt);
         });
 
@@ -535,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
       row.className = 'tier-row';
       row.innerHTML = `
         <input type="date" class="tier-date" value="${tier.date || ''}" />
-        <input type="number" class="tier-amount" value="${tier.amount || ''}" min="0" step="1" placeholder="Сумма, руб." />
+        <input type="number" class="tier-amount" value="${tier.amount ?? ''}" min="0" step="1" placeholder="Сумма, руб." />
         <button type="button" class="btn-tier-remove" data-idx="${idx}">×</button>
       `;
       container.appendChild(row);
@@ -710,9 +736,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const result = await res.json();
       if (res.ok && result.success) {
+        const savedRaceId = formData.id;
         closeRaceEditModal();
         await fetchAdminData(true);
-        if (currentRaceId) renderRaceDetail(currentRaceId);
+        renderRaceDetail(savedRaceId);
       } else {
         alert(result.error || 'Ошибка сохранения');
       }

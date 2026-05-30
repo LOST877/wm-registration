@@ -342,11 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const lapsEl = document.createElement('span');
         lapsEl.className = 'meta';
-        lapsEl.textContent = c.laps ? `${c.laps} кр.` : '';
+        lapsEl.textContent = c.laps != null ? `${c.laps} кр.` : '';
 
         const elevEl = document.createElement('span');
         elevEl.className = 'meta';
-        elevEl.textContent = c.elevation_m ? `↑${c.elevation_m} м` : '';
+        elevEl.textContent = c.elevation_m != null ? `↑${c.elevation_m} м` : '';
 
         row.appendChild(whoEl);
         row.appendChild(kmEl);

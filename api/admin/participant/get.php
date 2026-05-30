@@ -65,7 +65,7 @@ try {
 
     // Получить список всех категорий для текущей гонки
     $stmt = $pdo->prepare('
-        SELECT c.id, c.name 
+        SELECT rc.id AS race_category_id, c.id, c.name
         FROM race_categories rc
         JOIN categories c ON rc.category_id = c.id
         WHERE rc.race_id = ?

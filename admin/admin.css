@@ -236,6 +236,8 @@ body {
 .rd-action:hover { background: #1f1f1f; }
 .rd-action.rd-action-primary { background: var(--wm-primary); border-color: var(--wm-primary); }
 .rd-action.rd-action-primary:hover { background: var(--wm-primary-hover); }
+.rd-action.rd-action-danger { border-color: var(--wm-danger); color: var(--wm-danger); }
+.rd-action.rd-action-danger:hover { background: var(--wm-danger); color: #fff; border-color: var(--wm-danger); }
 .rd-status { font-family: var(--wm-font-display); text-transform: uppercase; letter-spacing: var(--wm-tracking); font-size: 0.82rem; font-weight: 700; padding: 5px 12px; border-radius: var(--wm-radius-sm); }
 .rd-status.open { background: var(--wm-primary); color: #fff; }
 .rd-status.closed { background: #fde8e2; color: var(--wm-primary); }
