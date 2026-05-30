@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wheel Masters</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <!-- Подключаем шрифты Oswald (заголовки) и Roboto (основной текст) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css?v=3" />
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="style.css?v=4" />
     <!-- imask -->
     <script src="https://unpkg.com/imask@7.6.0/dist/imask.min.js"></script>
   </head>
@@ -23,7 +19,7 @@
       <div class="container header-container">
         <div class="logo">
           <img
-            src="assets/wm_logo.png"
+            src="assets/wm_logo_notext.png"
             alt="Wheel Masters Logo"
             class="logo-img"
           />
@@ -34,6 +30,7 @@
             <li><a href="#hero" class="nav-link active">Главная</a></li>
             <li><a href="#about" class="nav-link">О гонке</a></li>
             <li><a href="#registration" class="nav-link" id="nav-reg-link">Регистрация</a></li>
+            <li><a href="#participants" class="nav-link">Участники</a></li>
             <li id="nav-sponsors-item"><a href="#sponsors" class="nav-link">Спонсоры</a></li>
             <li id="nav-contacts-item"><a href="#footer" class="nav-link">Контакты</a></li>
           </ul>
@@ -64,22 +61,62 @@
     <section id="about" class="about section">
       <div class="container">
         <h2 class="section-title">О ГОНКЕ</h2>
-        <div class="about-card">
-          <div class="info-item" id="about-date" hidden>
-            <strong>Дата:</strong> <span id="about-date-value"></span>
+        <div class="about-section">
+
+          <!-- Блок фактов: дата / место / регистрация -->
+          <div class="facts">
+            <div class="fact" id="fact-date">
+              <p class="k">Дата</p>
+              <span class="v" id="fact-date-v"></span>
+              <span class="sub" id="fact-date-sub"></span>
+            </div>
+            <div class="fact" id="fact-location">
+              <p class="k">Место</p>
+              <span class="v" id="fact-location-v"></span>
+              <span class="sub" id="fact-location-sub"></span>
+              <a class="link" id="fact-location-link" target="_blank" rel="noreferrer" hidden>Смотреть на карте →</a>
+            </div>
+            <div class="fact" id="fact-reg">
+              <p class="k">Регистрация</p>
+              <span class="v" id="fact-reg-v"></span>
+              <span class="sub" id="fact-reg-sub"></span>
+            </div>
           </div>
-          <div class="info-item map-link" id="about-location" hidden>
-            <strong>Место:</strong> <span id="about-location-text"></span>
+
+          <!-- Основной контент -->
+          <div class="about-content" id="about-content">
+
+            <!-- Панель оплаты (float right) -->
+            <aside class="pay" id="about-pay" hidden>
+              <h3 class="col-h">Стоимость участия</h3>
+              <div class="price">
+                <span class="amount" id="pay-amount"></span>
+                <span class="unit">руб.</span>
+              </div>
+              <a href="#registration" class="btn btn-primary pay-btn" id="pay-reg-btn">Зарегистрироваться</a>
+              <div class="pay-meta" id="pay-meta"></div>
+            </aside>
+
+            <!-- Описание -->
+            <div class="about-desc" id="about-desc" hidden>
+              <h3 class="col-h">Описание</h3>
+              <div class="md-content" id="about-description-content"></div>
+            </div>
+
+            <!-- Категории -->
+            <div class="about-cats" id="about-cats" hidden>
+              <h3 class="col-h">Категории</h3>
+              <div class="cat-list" id="cat-list-items"></div>
+            </div>
+
+            <!-- Дистанции -->
+            <div class="about-dist" id="about-dist" hidden>
+              <h3 class="col-h">Дистанции</h3>
+              <div class="dist-list" id="dist-list-items"></div>
+            </div>
+
           </div>
-          <div class="info-item map-iframe" id="about-map"></div>
-          <div class="info-item desc" id="about-description" hidden>
-            <strong>Описание:</strong>
-            <div class="md-content" id="about-description-content"></div>
-          </div>
-          <div class="info-item desc" id="about-payment" hidden>
-            <strong>Оплата:</strong>
-            <div class="md-content" id="about-payment-content"></div>
-          </div>
+
         </div>
       </div>
     </section>

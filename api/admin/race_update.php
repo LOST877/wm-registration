@@ -73,8 +73,8 @@ if (array_key_exists('date', $data) && $data['date'] !== null && $data['date'] !
   $params[] = $dt->format('Y-m-d H:i:s');
 }
 
-// JSON-поля (sponsors_json, contacts_json)
-foreach (['sponsors_json', 'contacts_json'] as $field) {
+// JSON-поля (sponsors_json, contacts_json, payment_tiers)
+foreach (['sponsors_json', 'contacts_json', 'payment_tiers'] as $field) {
   if (array_key_exists($field, $data)) {
     $val = $data[$field];
     if ($val !== null && $val !== '') {

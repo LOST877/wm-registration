@@ -173,6 +173,68 @@ try {
     exit;
   }
 
+  // ─── UPDATE ──────────────────────────────────────────────────────────
+  // Обновляет данные race_category (дистанция, круги, набор) и категории (возраст, описание)
+  if ($action === 'update') {
+    $rcId = isset($data['race_category_id']) ? (int)$data['race_category_id'] : 0;
+    if ($rcId <= 0) {
+      http_response_code(400);
+      echo json_encode(['error' => 'Некорректный идентификатор']);
+      exit;
+    }
+
+    // Проверить что запись существует и получить category_id
+    $stmt = $pdo->prepare('SELECT category_id FROM race_categories WHERE id = ?');
+    $stmt->execute([$rcId]);
+    $rc = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$rc) {
+      http_response_code(404);
+      echo json_encode(['error' => 'Запись не найдена']);
+      exit;
+    }
+    $categoryId = (int)$rc['category_id'];
+
+    $pdo->beginTransaction();
+
+    // Обновляем race_categories: distance_km, laps, elevation_m
+    $rcUpdates = [];
+    $rcParams  = [];
+    foreach (['distance_km', 'laps', 'elevation_m'] as $f) {
+      if (array_key_exists($f, $data)) {
+        $rcUpdates[] = "$f = ?";
+        $rcParams[]  = $data[$f] !== null && $data[$f] !== '' ? $data[$f] : null;
+      }
+    }
+    if ($rcUpdates) {
+      $rcParams[] = $rcId;
+      $pdo->prepare('UPDATE race_categories SET ' . implode(', ', $rcUpdates) . ' WHERE id = ?')
+          ->execute($rcParams);
+    }
+
+    // Обновляем categories: age_from, age_to, description
+    $catUpdates = [];
+    $catParams  = [];
+    foreach (['age_from', 'age_to'] as $f) {
+      if (array_key_exists($f, $data)) {
+        $catUpdates[] = "$f = ?";
+        $catParams[]  = $data[$f] !== null && $data[$f] !== '' ? (int)$data[$f] : null;
+      }
+    }
+    if (array_key_exists('description', $data)) {
+      $catUpdates[] = "description = ?";
+      $catParams[]  = $data['description'] !== null ? trim((string)$data['description']) : null;
+    }
+    if ($catUpdates) {
+      $catParams[] = $categoryId;
+      $pdo->prepare('UPDATE categories SET ' . implode(', ', $catUpdates) . ' WHERE id = ?')
+          ->execute($catParams);
+    }
+
+    $pdo->commit();
+    echo json_encode(['success' => true]);
+    exit;
+  }
+
   http_response_code(400);
   echo json_encode(['error' => 'Неизвестное действие']);
   exit;

@@ -1,0 +1,102 @@
+/* ============================================================
+   WHEEL MASTERS — DESIGN TOKENS
+   Source of truth for colours, type, shadows, spacing, motion.
+   Import this before all other stylesheets.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+  /* ---- BRAND ---- */
+  --wm-primary:       #d3401b;
+  --wm-primary-hover: #b33516;
+  --wm-primary-tint:  #fde8e2;
+  --wm-primary-glow:  rgba(211, 64, 27, 0.20);
+
+  /* ---- NEUTRALS ---- */
+  --wm-bg-dark:       #0a0a0a;
+  --wm-bg-page:       #ffffff;
+  --wm-bg-light:      #f7f7f7;
+  --wm-bg-row-alt:    #f9f9f9;
+  --wm-bg-th:         #e9e9e9;
+
+  --wm-border:        #e9e9e9;
+  --wm-border-muted:  #cccccc;
+  --wm-border-strong: #333333;
+
+  --wm-text-strong:   #0a0a0a;
+  --wm-text-main:     #333333;
+  --wm-text-muted:    #666666;
+  --wm-text-faint:    #999999;
+  --wm-text-light:    #ffffff;
+
+  --wm-overlay:       rgba(0, 0, 0, 0.6);
+
+  /* ---- STATUS ---- */
+  --wm-success:       #27ae60;
+  --wm-warning:       #d35400;
+  --wm-danger:        #c0392b;
+  --wm-danger-hover:  #a93226;
+  --wm-paid-dot:      #27ae60;
+  --wm-unpaid-dot:    #c0392b;
+
+  /* ---- TYPOGRAPHY ---- */
+  --wm-font-display:  'Oswald', 'Arial Narrow', sans-serif;
+  --wm-font-body:     'Roboto', 'Segoe UI', Arial, sans-serif;
+  --wm-font-system:   'Segoe UI', Arial, sans-serif;
+
+  --wm-text-hero:     5rem;
+  --wm-text-hero-sub: 2.5rem;
+  --wm-text-section:  2.5rem;
+  --wm-text-h3:       1.5rem;
+  --wm-text-lg:       1.2rem;
+  --wm-text-md:       1.1rem;
+  --wm-text-base:     1rem;
+  --wm-text-sm:       0.9rem;
+  --wm-text-xs:       0.85rem;
+
+  --wm-leading-tight: 1.1;
+  --wm-leading-body:  1.6;
+  --wm-tracking:      1px;
+
+  /* ---- SHAPE ---- */
+  --wm-radius-sm:     4px;
+  --wm-radius-md:     8px;
+
+  /* ---- ELEVATION ---- */
+  --wm-shadow-card:       0 2px 6px rgba(0, 0, 0, 0.06);
+  --wm-shadow-auth:       0 2px 12px rgba(0, 0, 0, 0.10);
+  --wm-shadow-popup:      0 10px 30px rgba(0, 0, 0, 0.20);
+  --wm-shadow-modal:      0 4px 20px rgba(0, 0, 0, 0.30);
+  --wm-shadow-mobile-nav: 0 5px 10px rgba(0, 0, 0, 0.50);
+
+  /* ---- SPACING ---- */
+  --wm-space-1: 5px;
+  --wm-space-2: 10px;
+  --wm-space-3: 15px;
+  --wm-space-4: 20px;
+  --wm-space-5: 30px;
+  --wm-space-6: 40px;
+  --wm-space-7: 60px;
+  --wm-space-8: 80px;
+
+  --wm-container-max: 1200px;
+  --wm-touch-min:     44px;
+
+  /* ---- MOTION ---- */
+  --wm-ease:          ease;
+  --wm-duration-fast: 0.2s;
+  --wm-duration:      0.3s;
+}
+
+/* ---- Base resets (applied globally when tokens.css is loaded) ---- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--wm-font-body);
+  color: var(--wm-text-main);
+  background: var(--wm-bg-page);
+  line-height: var(--wm-leading-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

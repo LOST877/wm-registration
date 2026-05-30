@@ -14,7 +14,7 @@ try {
 
   if ($raceId !== null && $raceId > 0) {
     $stmt = $pdo->prepare("
-      SELECT id, name, date, location, location_link, iframe_html, description, payment_info,
+      SELECT id, name, date, location, location_link, iframe_html, description, payment_info, payment_tiers,
              registration_open, is_finished, banner_desktop, banner_mobile, sponsors_json, contacts_json
       FROM races
       WHERE id = ?
@@ -22,7 +22,7 @@ try {
     $stmt->execute([$raceId]);
   } else {
     $stmt = $pdo->prepare("
-      SELECT id, name, date, location, location_link, iframe_html, description, payment_info,
+      SELECT id, name, date, location, location_link, iframe_html, description, payment_info, payment_tiers,
              registration_open, is_finished, banner_desktop, banner_mobile, sponsors_json, contacts_json
       FROM races
       WHERE is_active = 1
@@ -39,6 +39,9 @@ try {
     echo json_encode(['error' => 'Гонка не найдена']);
     exit;
   }
+
+  // Декодируем JSON-поля
+  $race['payment_tiers'] = $race['payment_tiers'] ? json_decode($race['payment_tiers'], true) : [];
 
   echo json_encode($race);
 } catch (Exception $e) {

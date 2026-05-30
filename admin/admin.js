@@ -5,28 +5,25 @@ marked.use({
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  const loginForm = document.getElementById('login-form');
-  const authSection = document.getElementById('auth-section');
-  const dashboardSection = document.getElementById('dashboard-section');
-  const authError = document.getElementById('auth-error');
-  const racesContainer = document.getElementById('races-container');
+  // ── DOM refs ───────────────────────────────────────────────────────────
+  const authSection     = document.getElementById('auth-section');
+  const viewRaces       = document.getElementById('view-races');
+  const viewDetail      = document.getElementById('view-detail');
+  const loginForm       = document.getElementById('login-form');
+  const authError       = document.getElementById('auth-error');
 
-  // Элементы модального окна
-  const modal = document.getElementById('participant-modal');
-  const modalTitle = document.getElementById('modal-title');
-  const closeBtn = document.querySelector('.close-btn');
-  const cancelBtn = document.querySelector('.btn-cancel');
-  const saveBtn = document.querySelector('.btn-save');
+  const modal       = document.getElementById('participant-modal');
+  const modalTitle  = document.getElementById('modal-title');
+  const raceModal   = document.getElementById('race-modal');
 
+  let racesData           = [];
+  let allCategoriesData   = [];
   let currentParticipantId = null;
-  let currentRaceId = null;
-  let racesData = [];
-  let allCategoriesData = [];
+  let currentRaceId       = null;
+  let activeFilter        = 'all';
+  let searchQuery         = '';
 
-  // Проверка авторизации при загрузке
-  fetchAdminData();
-
-  // Форма авторизации
+  // ── Auth ───────────────────────────────────────────────────────────────
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     authError.style.display = 'none';
@@ -34,591 +31,697 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-
     if (!username || !password) {
       authError.textContent = 'Заполните все поля';
       authError.style.display = 'block';
       return;
     }
 
-    const formData = new URLSearchParams({ username, password });
-
     try {
-      const response = await fetch('../api/admin/_auth.php', {
+      const res = await fetch('../api/admin/_auth.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData,
+        body: new URLSearchParams({ username, password }),
       });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
+      const result = await res.json();
+      if (res.ok && result.success) {
         authSection.style.display = 'none';
-        dashboardSection.style.display = 'block';
-        fetchAdminData();
+        const whoEl = document.getElementById('admin-who');
+        if (whoEl) whoEl.textContent = username;
+        await fetchAdminData();
       } else {
         authError.textContent = result.error || 'Ошибка авторизации';
         authError.style.display = 'block';
       }
-    } catch (err) {
+    } catch {
       authError.textContent = 'Сетевая ошибка. Проверьте подключение.';
       authError.style.display = 'block';
     }
   });
 
-  // Получение данных админа
-  async function fetchAdminData() {
+  // Logout
+  document.getElementById('logout-btn')?.addEventListener('click', async () => {
     try {
-      const response = await fetch('../api/admin/dashboard.php');
-      const result = await response.json();
+      await fetch('../api/admin/_auth.php', { method: 'DELETE', credentials: 'same-origin' });
+    } catch {}
+    location.reload();
+  });
 
-      if (response.ok && result.success) {
+  // ── Data loading ───────────────────────────────────────────────────────
+  async function fetchAdminData(keepView) {
+    try {
+      const res = await fetch('../api/admin/dashboard.php');
+      const result = await res.json();
+      if (res.ok && result.success) {
         allCategoriesData = result.all_categories || [];
-        renderRaces(result.races);
-      } else if (response.status === 401) {
-        dashboardSection.style.display = 'none';
-        authSection.style.display = 'flex';
+        racesData = result.races;
+        updateRaceGrid();
+        if (!keepView) navigateFromHash();
+      } else if (res.status === 401) {
+        showAuthForm();
       }
     } catch (err) {
       console.error('Data fetch error:', err);
-      if (dashboardSection.style.display !== 'none') {
-        alert('Ошибка загрузки данных. Обновите страницу.');
-      }
     }
   }
 
-  // Отрисовка гонок
-  function renderRaces(races) {
-    racesData = races;
-    racesContainer.innerHTML = '';
+  function showAuthForm() {
+    authSection.style.display = 'flex';
+    viewRaces.style.display = 'none';
+    viewDetail.style.display = 'none';
+  }
 
-    if (!races.length) {
-      const div = document.createElement('div');
-      div.className = 'empty-state';
-      div.textContent = 'Нет запланированных гонок';
-      racesContainer.appendChild(div);
+  // ── View routing ───────────────────────────────────────────────────────
+  function showView(name, raceId) {
+    viewRaces.style.display   = name === 'races'  ? '' : 'none';
+    viewDetail.style.display  = name === 'detail' ? '' : 'none';
+    authSection.style.display = 'none';
+
+    if (name === 'races') {
+      history.pushState(null, '', '#races');
+    } else if (name === 'detail' && raceId) {
+      history.pushState(null, '', `#race-${raceId}`);
+      renderRaceDetail(raceId);
+    }
+  }
+
+  function navigateFromHash() {
+    const hash = location.hash;
+    if (hash.startsWith('#race-')) {
+      const id = parseInt(hash.slice(6), 10);
+      if (racesData.find(r => r.id === id)) {
+        showView('detail', id);
+        return;
+      }
+    }
+    showView('races');
+  }
+
+  window.addEventListener('popstate', () => navigateFromHash());
+
+  // ── Race Grid ──────────────────────────────────────────────────────────
+  function getRaceStatus(race) {
+    if (race.is_finished == 1) return 'done';
+    if (race.is_active == 1 && race.registration_open == 1) return 'open';
+    if (race.is_active == 1 && race.registration_open == 0) return 'closed';
+    return 'draft';
+  }
+
+  const STATUS_LABELS = {
+    open:   'Открыта регистрация',
+    closed: 'Регистрация закрыта',
+    done:   'Завершена',
+    draft:  'Не активна',
+  };
+
+  function matchesFilter(race) {
+    const status = getRaceStatus(race);
+    if (activeFilter === 'all')    return true;
+    if (activeFilter === 'open')   return status === 'open';
+    if (activeFilter === 'closed') return status === 'closed';
+    if (activeFilter === 'done')   return status === 'done';
+    return true;
+  }
+
+  function matchesSearch(race) {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (race.race_name || '').toLowerCase().includes(q) ||
+           (race.location  || '').toLowerCase().includes(q);
+  }
+
+  function updateRaceGrid() {
+    const grid = document.getElementById('race-grid');
+    if (!grid) return;
+    const filtered = racesData.filter(r => matchesFilter(r) && matchesSearch(r));
+    grid.innerHTML = '';
+
+    if (!filtered.length) {
+      const msg = document.createElement('div');
+      msg.className = 'empty-state';
+      msg.textContent = 'Нет гонок по выбранным критериям';
+      grid.appendChild(msg);
       return;
     }
 
-    const tplCard = document.getElementById('tpl-race-card');
-    const tplCatTag = document.getElementById('tpl-category-tag');
-    const tplTh = document.getElementById('tpl-table-th');
-    const tplRow = document.getElementById('tpl-participant-row-admin');
+    filtered.forEach(race => {
+      const tile = buildTile(race);
+      grid.appendChild(tile);
+    });
 
-    const headers = {
-      payment_amount: 'Сумма оплаты',
-      is_paid: 'Оплата',
-      last_name: 'Фамилия',
-      first_name: 'Имя',
-      middle_name: 'Отчество',
-      birth_date: 'Дата рождения',
-      phone: 'Телефон',
-      email: 'Email',
-      city: 'Город',
-      team: 'Команда',
-      category_name: 'Категория',
-      created_at: 'Дата реги',
-    };
+    // Обновляем счётчик
+    const titleEl = document.getElementById('races-page-title');
+    if (titleEl) titleEl.textContent = `Гонки · ${racesData.length}`;
+  }
 
-    races.forEach((race) => {
-      const frag = tplCard.content.cloneNode(true);
-      const card = frag.querySelector('.race-card');
+  function buildTile(race) {
+    const status = getRaceStatus(race);
+    const tile = document.createElement('div');
+    tile.className = `tile ${status === 'done' ? 'is-done' : ''} ${status === 'draft' ? 'is-draft' : ''}`.trim();
+    tile.dataset.raceId = race.id;
 
-      card.querySelector('.rc-name').textContent = race.race_name;
-      card.querySelector('.rc-date').textContent = formatRaceDate(race.date);
-      card.querySelector('.rc-location').textContent = race.location;
-      card.querySelector('.rc-count').textContent = race.participants_count;
+    const dateText = formatShortDate(race.date);
+    const paid  = race.participants.filter(p => p.is_paid == 1).length;
+    const total = parseInt(race.participants_count, 10);
 
-      if (race.payment_info) {
-        card.querySelector('.rc-payment-text').textContent = race.payment_info;
-        card.querySelector('.rc-payment-block').hidden = false;
-      }
+    tile.innerHTML = `
+      <div class="tile-top">
+        <span class="status ${status}">${STATUS_LABELS[status]}</span>
+        <span class="when">${dateText}</span>
+      </div>
+      <h3 class="tile-name">${escapeHtml(race.race_name)}</h3>
+      <p class="tile-where">${escapeHtml(race.location || '—')}</p>
+      <div class="tile-reg">
+        <span class="tile-num">${total}</span>
+        <span class="tile-lbl">регистраций · ${paid} оплачено</span>
+      </div>
+      <div class="tile-cats">
+        ${race.categories.map(c => `<span class="cat">${escapeHtml(c.category_name)}</span>`).join('')}
+      </div>
+    `;
 
-      // Чекбоксы
-      const activeChk = card.querySelector('.race-active-checkbox');
-      const openChk = card.querySelector('.reg-open-checkbox');
-      const finishedChk = card.querySelector('.race-finished-checkbox');
-      activeChk.dataset.raceId = race.id;
-      openChk.dataset.raceId = race.id;
-      finishedChk.dataset.raceId = race.id;
-      activeChk.checked = race.is_active == 1;
-      openChk.checked = race.registration_open == 1;
-      finishedChk.checked = race.is_finished == 1;
+    tile.addEventListener('click', () => showView('detail', race.id));
+    return tile;
+  }
 
-      // Кнопки
-      const editBtn = card.querySelector('.edit-race-btn');
-      const deleteBtn = card.querySelector('.delete-race-btn');
-      const exportBtn = card.querySelector('.export-csv-btn');
-      const importBtn = card.querySelector('.import-csv-btn');
-      const csvInput = card.querySelector('.csv-file-input');
-      editBtn.dataset.raceId = race.id;
-      deleteBtn.dataset.raceId = race.id;
-      exportBtn.dataset.raceId = race.id;
-      importBtn.dataset.raceId = race.id;
-      csvInput.dataset.raceId = race.id;
+  // Фильтры
+  document.getElementById('race-filters')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter');
+    if (!btn) return;
+    activeFilter = btn.dataset.f;
+    document.querySelectorAll('#race-filters .filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateRaceGrid();
+  });
 
-      if (race.participants.length) {
-        exportBtn.hidden = false;
-      }
+  // Поиск
+  document.getElementById('race-search')?.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    updateRaceGrid();
+  });
 
-      // Теги категорий
-      const catList = card.querySelector('.category-list');
-      race.categories.forEach((c) => {
-        const tagFrag = tplCatTag.content.cloneNode(true);
-        tagFrag.querySelector('.category-tag').textContent = c.category_name;
-        catList.appendChild(tagFrag);
-      });
+  // ── Race Detail ────────────────────────────────────────────────────────
+  function renderRaceDetail(raceId) {
+    currentRaceId = raceId;
+    const race = racesData.find(r => r.id === raceId);
+    if (!race) { showView('races'); return; }
 
-      // Таблица участников
-      const theadRow = card.querySelector('.rc-thead-row');
-      const tbody = card.querySelector('.rc-tbody');
+    const container = document.getElementById('race-detail-content');
+    container.innerHTML = '';
 
-      if (!race.participants.length) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.className = 'empty-state';
-        td.textContent = 'Нет зарегистрированных участников';
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-      } else {
-        const columns = Object.keys(race.participants[0]).filter((k) => k !== 'id');
+    const status = getRaceStatus(race);
+    const total  = race.participants.length;
+    const paid   = race.participants.filter(p => p.is_paid == 1).length;
+    const revenue = race.participants
+      .filter(p => p.is_paid == 1)
+      .reduce((s, p) => s + (parseFloat(p.payment_amount) || 0), 0);
+    const daysTo = daysUntil(race.date);
 
-        const thActionFrag = tplTh.content.cloneNode(true);
-        thActionFrag.querySelector('th').textContent = 'Действия';
-        theadRow.appendChild(thActionFrag);
+    // Подсчёт по категориям
+    const catCounts = {};
+    race.participants.forEach(p => {
+      const cn = p.category_name || '—';
+      catCounts[cn] = (catCounts[cn] || 0) + 1;
+    });
 
-        columns.forEach((col) => {
-          const thFrag = tplTh.content.cloneNode(true);
-          thFrag.querySelector('th').textContent = headers[col] || col;
-          theadRow.appendChild(thFrag);
-        });
+    container.innerHTML = `
+      <!-- Action bar -->
+      <div class="rd-bar">
+        <nav class="rd-crumbs">
+          <a class="rd-back" href="#races">Гонки</a>
+          <span class="rd-sep"> / </span>
+          <b>${escapeHtml(race.race_name)}</b>
+        </nav>
+        <span class="rd-status ${status}">${STATUS_LABELS[status]}</span>
+        <div class="rd-spacer"></div>
+        <div class="rd-actions">
+          <a class="rd-action" href="/?race_id=${race.id}" target="_blank" rel="noopener">На сайт</a>
+          <button class="rd-action" data-export="${race.id}">Экспорт CSV</button>
+          <button class="rd-action rd-action-primary" data-edit="${race.id}">Редактировать</button>
+        </div>
+      </div>
 
-        race.participants.forEach((p) => {
-          const rowFrag = tplRow.content.cloneNode(true);
-          const tr = rowFrag.querySelector('tr');
-          const editPartBtn = tr.querySelector('.edit-participant-btn');
-          editPartBtn.dataset.participantId = p.id;
-          editPartBtn.dataset.raceId = race.id;
+      <!-- Hero: title + KPI -->
+      <div class="rd-hero">
+        <div class="rd-title">
+          <h2>${escapeHtml(race.race_name)}</h2>
+          <div class="rd-meta">
+            <span><b>Дата</b> ${formatShortDate(race.date)}</span>
+            ${race.location ? `<span class="rd-sep">·</span><span><b>Место</b> ${escapeHtml(race.location)}</span>` : ''}
+          </div>
+          <div class="rd-toggles">
+            <label class="reg-toggle">
+              <input type="checkbox" class="toggle-open" data-race-id="${race.id}" ${race.registration_open == 1 ? 'checked' : ''} />
+              <span>Регистрация открыта</span>
+            </label>
+            <label class="reg-toggle">
+              <input type="checkbox" class="toggle-active" data-race-id="${race.id}" ${race.is_active == 1 ? 'checked' : ''} />
+              <span>Активная</span>
+            </label>
+            <label class="reg-toggle">
+              <input type="checkbox" class="toggle-finished" data-race-id="${race.id}" ${race.is_finished == 1 ? 'checked' : ''} />
+              <span>Завершена</span>
+            </label>
+          </div>
+        </div>
+        <div class="rd-kpis">
+          <div class="kpi"><p class="kpi-label">Зарегистрировано</p><span class="kpi-val">${total}</span></div>
+          <div class="kpi"><p class="kpi-label">Оплачено</p><span class="kpi-val">${paid}</span><span class="kpi-sub">${total > 0 ? Math.round(paid / total * 100) : 0}%</span></div>
+          <div class="kpi"><p class="kpi-label">Сбор</p><span class="kpi-val kpi-accent">${Math.round(revenue)}</span><span class="kpi-sub">руб.</span></div>
+          <div class="kpi"><p class="kpi-label">До старта</p><span class="kpi-val">${daysTo !== null ? daysTo : '—'}</span><span class="kpi-sub">${daysTo !== null ? 'дней' : ''}</span></div>
+        </div>
+      </div>
 
-          columns.forEach((col) => {
-            const td = document.createElement('td');
-            td.textContent = p[col] ?? '-';
-            tr.appendChild(td);
-          });
+      <!-- Categories -->
+      <div class="rd-cats">
+        <h3 class="rd-h">Категории · ${race.categories.length}</h3>
+        <div class="rd-cat-grid">
+          ${race.categories.map(c => {
+            const cnt = catCounts[c.category_name] || 0;
+            return `<div class="rd-cat"><span class="rd-cat-name">${escapeHtml(c.category_name)}</span><span class="rd-cat-count">${cnt}<small>чел.</small></span></div>`;
+          }).join('')}
+        </div>
+      </div>
 
-          editPartBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            await openParticipantEdit(editPartBtn.dataset.participantId, editPartBtn.dataset.raceId);
-          });
+      <!-- Participants table -->
+      <div class="rd-participants">
+        <h3 class="rd-h">Участники · ${total}</h3>
+        <div class="admin-table-container">
+          <table class="admin-table" id="detail-participants-table">
+            <thead>
+              <tr>
+                <th>Действия</th>
+                <th>Фамилия Имя</th>
+                <th>Телефон</th>
+                <th>Email</th>
+                <th>Город</th>
+                <th>Категория</th>
+                <th>Оплата</th>
+                <th>Сумма</th>
+                <th>Дата рег.</th>
+              </tr>
+            </thead>
+            <tbody id="detail-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    `;
 
-          tbody.appendChild(rowFrag);
-        });
-      }
+    // Рендер таблицы участников
+    renderDetailParticipants(race);
 
-      // Обработчики событий карточки
-      openChk.addEventListener('change', async () => {
-        const raceId = parseInt(openChk.dataset.raceId);
-        const newValue = openChk.checked ? 1 : 0;
-        openChk.disabled = true;
-        try {
-          const response = await fetch('../api/admin/race_update.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: raceId, registration_open: newValue }),
-            credentials: 'same-origin',
-          });
-          const result = await response.json();
-          if (!response.ok || !result.success) {
-            openChk.checked = !openChk.checked;
-            alert(result.error || 'Ошибка обновления');
-          }
-        } catch (err) {
-          openChk.checked = !openChk.checked;
-          alert('Сетевая ошибка. Проверьте подключение.');
-        } finally {
-          openChk.disabled = false;
-        }
-      });
+    // Биндинг действий
+    container.querySelector('[data-back]')?.addEventListener('click', () => showView('races'));
+    container.querySelector('.rd-back')?.addEventListener('click', (e) => {
+      e.preventDefault(); showView('races');
+    });
 
-      finishedChk.addEventListener('change', async () => {
-        const raceId = parseInt(finishedChk.dataset.raceId);
-        const newValue = finishedChk.checked ? 1 : 0;
-        finishedChk.disabled = true;
-        try {
-          const response = await fetch('../api/admin/race_update.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: raceId, is_finished: newValue }),
-            credentials: 'same-origin',
-          });
-          const result = await response.json();
-          if (!response.ok || !result.success) {
-            finishedChk.checked = !finishedChk.checked;
-            alert(result.error || 'Ошибка обновления');
-          }
-        } catch (err) {
-          finishedChk.checked = !finishedChk.checked;
-          alert('Сетевая ошибка. Проверьте подключение.');
-        } finally {
-          finishedChk.disabled = false;
-        }
-      });
+    container.querySelector(`[data-export="${race.id}"]`)?.addEventListener('click', () => {
+      window.location.href = `../api/admin/export_csv.php?race_id=${race.id}`;
+    });
 
-      importBtn.addEventListener('click', async () => {
-        const raceId = parseInt(importBtn.dataset.raceId);
-        const container = importBtn.closest('.results-import');
-        const fileInput = container.querySelector('.csv-file-input');
-        const statusEl = container.querySelector('.import-status');
+    container.querySelector(`[data-edit="${race.id}"]`)?.addEventListener('click', () => {
+      openRaceEditModal(race);
+    });
 
-        if (!fileInput.files.length) {
-          statusEl.textContent = 'Выберите файл';
-          statusEl.style.color = 'var(--danger)';
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('race_id', raceId);
-        formData.append('file', fileInput.files[0]);
-
-        importBtn.disabled = true;
-        statusEl.textContent = 'Загрузка...';
-        statusEl.style.color = 'var(--text-secondary)';
-
-        try {
-          const response = await fetch('../api/admin/results_import.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin',
-          });
-          const result = await response.json();
-          if (response.ok && result.success) {
-            statusEl.textContent = `Импортировано: ${result.imported} строк`;
-            statusEl.style.color = 'green';
-            fileInput.value = '';
-          } else {
-            statusEl.textContent = result.error || 'Ошибка импорта';
-            statusEl.style.color = 'var(--danger)';
-          }
-        } catch (err) {
-          statusEl.textContent = 'Сетевая ошибка';
-          statusEl.style.color = 'var(--danger)';
-        } finally {
-          importBtn.disabled = false;
-        }
-      });
-
-      exportBtn.addEventListener('click', () => {
-        window.location.href = `../api/admin/export_csv.php?race_id=${parseInt(exportBtn.dataset.raceId)}`;
-      });
-
-      editBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const raceId = parseInt(editBtn.dataset.raceId);
-        const race = racesData.find((r) => r.id === raceId);
-        if (race) openRaceEditModal(race);
-      });
-
-      activeChk.addEventListener('change', async () => {
-        const raceId = parseInt(activeChk.dataset.raceId);
-        const newValue = activeChk.checked ? 1 : 0;
-        activeChk.disabled = true;
-        try {
-          const response = await fetch('../api/admin/race_update.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: raceId, is_active: newValue }),
-            credentials: 'same-origin',
-          });
-          const result = await response.json();
-          if (!response.ok || !result.success) {
-            activeChk.checked = !activeChk.checked;
-            alert(result.error || 'Ошибка обновления');
-          } else {
-            fetchAdminData();
-          }
-        } catch (err) {
-          activeChk.checked = !activeChk.checked;
-          alert('Сетевая ошибка. Проверьте подключение.');
-        } finally {
-          activeChk.disabled = false;
-        }
-      });
-
-      deleteBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const raceId = parseInt(deleteBtn.dataset.raceId);
-        const raceName = deleteBtn.closest('.race-card').querySelector('.rc-name').textContent;
-        if (!confirm(`Удалить гонку "${raceName}" и все связанные данные (категории, участников)?\n\nЭто действие нельзя отменить.`)) return;
-        deleteBtn.disabled = true;
-        try {
-          const response = await fetch('../api/admin/race_delete.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ race_id: raceId }),
-            credentials: 'same-origin',
-          });
-          const result = await response.json();
-          if (response.ok && result.success) {
-            fetchAdminData();
-          } else {
-            alert(result.error || 'Ошибка удаления');
-          }
-        } catch (err) {
-          alert('Сетевая ошибка. Проверьте подключение.');
-        } finally {
-          deleteBtn.disabled = false;
-        }
-      });
-
-      racesContainer.appendChild(frag);
+    // Тогглы
+    container.querySelector('.toggle-open')?.addEventListener('change', async (e) => {
+      await updateRaceField(race.id, 'registration_open', e.target.checked ? 1 : 0);
+    });
+    container.querySelector('.toggle-active')?.addEventListener('change', async (e) => {
+      await updateRaceField(race.id, 'is_active', e.target.checked ? 1 : 0);
+    });
+    container.querySelector('.toggle-finished')?.addEventListener('change', async (e) => {
+      await updateRaceField(race.id, 'is_finished', e.target.checked ? 1 : 0);
     });
   }
 
-  // Открытие модального окна редактирования
+  function renderDetailParticipants(race) {
+    const tbody = document.getElementById('detail-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!race.participants.length) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="9" class="no-data">Участников пока нет</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    race.participants.forEach(p => {
+      const tr = document.createElement('tr');
+      const dateStr = p.created_at ? p.created_at.slice(0, 10) : '—';
+      tr.innerHTML = `
+        <td><button class="edit-btn" data-pid="${p.id}" data-rid="${race.id}">Изм.</button></td>
+        <td>${escapeHtml(p.last_name)} ${escapeHtml(p.first_name)}</td>
+        <td>${escapeHtml(p.phone || '—')}</td>
+        <td>${escapeHtml(p.email || '—')}</td>
+        <td>${escapeHtml(p.city || '—')}</td>
+        <td>${escapeHtml(p.category_name || '—')}</td>
+        <td><span class="paid-dot ${p.is_paid == 1 ? '' : 'unpaid'}"></span></td>
+        <td>${p.payment_amount != null ? parseFloat(p.payment_amount).toFixed(0) + ' ₽' : '—'}</td>
+        <td>${dateStr}</td>
+      `;
+      tr.querySelector('.edit-btn').addEventListener('click', () => {
+        openParticipantEdit(p.id, race.id);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function updateRaceField(raceId, field, value) {
+    try {
+      const res = await fetch('../api/admin/race_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: raceId, [field]: value }),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        const race = racesData.find(r => r.id === raceId);
+        if (race) race[field] = value;
+        updateRaceGrid();
+      } else {
+        alert(result.error || 'Ошибка обновления');
+      }
+    } catch {
+      alert('Сетевая ошибка');
+    }
+  }
+
+  // ── Participant Edit Modal ─────────────────────────────────────────────
   async function openParticipantEdit(participantId, raceId) {
     currentParticipantId = parseInt(participantId);
     currentRaceId = parseInt(raceId);
 
     try {
-      const response = await fetch(
-        `../api/admin/participant/get.php?id=${participantId}`,
-        {
-          credentials: 'same-origin',
-        }
-      );
-
-      if (!response.ok) {
-        alert(`Ошибка сервера: ${response.status} ${response.statusText}`);
-        return;
-      }
-
-      const result = await response.json();
+      const res = await fetch(`../api/admin/participant/get.php?id=${participantId}`, {
+        credentials: 'same-origin',
+      });
+      if (!res.ok) { alert(`Ошибка сервера: ${res.status}`); return; }
+      const result = await res.json();
 
       if (result.success) {
         const p = result.participant;
-
-        // Заполняем форму
         document.getElementById('participant-id').value = p.id;
-        document.getElementById('last-name').value = p.last_name;
-        document.getElementById('first-name').value = p.first_name;
+        document.getElementById('last-name').value   = p.last_name;
+        document.getElementById('first-name').value  = p.first_name;
         document.getElementById('middle-name').value = p.middle_name || '';
-        document.getElementById('birth-date').value = p.birth_date || '';
-        document.getElementById('phone').value = p.phone || '';
-        document.getElementById('email').value = p.email || '';
-        document.getElementById('city').value = p.city || '';
-        document.getElementById('team').value = p.team || '';
-        document.getElementById('is-paid').checked = !!p.is_paid;
+        document.getElementById('birth-date').value  = p.birth_date || '';
+        document.getElementById('phone').value        = p.phone || '';
+        document.getElementById('email').value        = p.email || '';
+        document.getElementById('city').value         = p.city || '';
+        document.getElementById('team').value         = p.team || '';
+        document.getElementById('is-paid').checked    = !!p.is_paid;
         document.getElementById('payment-amount').value = p.payment_amount || '';
 
-        // Заполняем select категорий
-        const categorySelect = document.getElementById('category-id');
-        categorySelect.innerHTML = '';
-        const defaultOpt = document.createElement('option');
-        defaultOpt.value = '';
-        defaultOpt.textContent = 'Выберите категорию';
-        categorySelect.appendChild(defaultOpt);
-        result.categories.forEach((cat) => {
-          const option = document.createElement('option');
-          option.value = cat.id;
-          option.textContent = cat.name;
-          if (cat.id === p.category_id) {
-            option.selected = true;
-          }
-          categorySelect.appendChild(option);
+        const sel = document.getElementById('category-id');
+        sel.innerHTML = '<option value="">Выберите категорию</option>';
+        result.categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat.id;
+          opt.textContent = cat.name;
+          if (cat.id === p.category_id) opt.selected = true;
+          sel.appendChild(opt);
         });
 
-        // Показываем попап
-        modalTitle.textContent = `Редактирование: ${p.last_name} ${p.first_name}`;
+        modalTitle.textContent = `${p.last_name} ${p.first_name}`;
         modal.style.display = 'flex';
-        modal.style.animation = 'slideIn 0.3s ease';
       } else {
-        alert(result.error || 'Ошибка загрузки данных участника');
+        alert(result.error || 'Ошибка загрузки');
       }
-    } catch (err) {
-      console.error('Get participant error:', err);
-      alert('Сетевая ошибка. Проверьте подключение.');
+    } catch {
+      alert('Сетевая ошибка');
     }
   }
 
-  // Закрытие модального окна
   function closeParticipantEdit() {
     modal.style.display = 'none';
-    modal.style.animation = 'none';
     currentParticipantId = null;
   }
 
-  // Обработчики закрытия
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeParticipantEdit);
-  }
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', closeParticipantEdit);
-  }
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeParticipantEdit();
+  document.querySelector('#participant-modal .close-btn')?.addEventListener('click', closeParticipantEdit);
+  document.querySelector('#participant-modal .btn-cancel')?.addEventListener('click', closeParticipantEdit);
+  modal?.addEventListener('click', e => { if (e.target === modal) closeParticipantEdit(); });
+
+  document.getElementById('participant-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = {
+      id:               parseInt(document.getElementById('participant-id').value),
+      last_name:        document.getElementById('last-name').value.trim(),
+      first_name:       document.getElementById('first-name').value.trim(),
+      middle_name:      document.getElementById('middle-name').value.trim(),
+      birth_date:       document.getElementById('birth-date').value || null,
+      phone:            document.getElementById('phone').value.trim(),
+      email:            document.getElementById('email').value.trim(),
+      city:             document.getElementById('city').value.trim(),
+      team:             document.getElementById('team').value.trim(),
+      race_category_id: document.getElementById('category-id').value
+        ? parseInt(document.getElementById('category-id').value) : null,
+      is_paid:          document.getElementById('is-paid').checked ? '1' : '0',
+      payment_amount:   document.getElementById('payment-amount').value,
+      race_id:          currentRaceId,
+    };
+
+    if (!formData.race_category_id) { alert('Выберите категорию'); return; }
+
+    try {
+      const res = await fetch('../api/admin/participant/update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        closeParticipantEdit();
+        await fetchAdminData(true);
+        if (currentRaceId) renderRaceDetail(currentRaceId);
+      } else {
+        alert(result.error || 'Ошибка обновления данных');
+      }
+    } catch {
+      alert('Сетевая ошибка');
+    }
   });
 
-  // Сохранение
-  if (saveBtn && document.getElementById('participant-form')) {
-    document
-      .getElementById('participant-form')
-      .addEventListener('submit', async (e) => {
-        e.preventDefault();
+  // ── Race Edit Modal ────────────────────────────────────────────────────
+  const raceCloseBtn  = document.getElementById('race-close-btn');
+  const raceCancelBtn = document.getElementById('race-cancel-btn');
+  const raceForm      = document.getElementById('race-form');
+  const tplBannerImg  = document.getElementById('tpl-banner-img');
+  const tplBannerEmpty = document.getElementById('tpl-banner-empty');
 
-        const formData = {
-          id: parseInt(document.getElementById('participant-id').value),
-          last_name: document.getElementById('last-name').value.trim(),
-          first_name: document.getElementById('first-name').value.trim(),
-          middle_name: document.getElementById('middle-name').value.trim(),
-          birth_date: document.getElementById('birth-date').value || null,
-          phone: document.getElementById('phone').value.trim(),
-          email: document.getElementById('email').value.trim(),
-          city: document.getElementById('city').value.trim(),
-          team: document.getElementById('team').value.trim(),
-          race_category_id: document.getElementById('category-id').value
-            ? parseInt(document.getElementById('category-id').value)
-            : null,
-          is_paid: document.getElementById('is-paid').checked ? '1' : '0',
-          payment_amount: document.getElementById('payment-amount').value,
-          race_id: currentRaceId,
-        };
-
-        if (!formData.race_category_id) {
-          alert('Выберите категорию');
-          return;
-        }
-
-        try {
-          const response = await fetch('../api/admin/participant/update.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
-            credentials: 'same-origin',
-          });
-
-          const result = await response.json();
-
-          if (response.ok && result.success) {
-            alert('Данные успешно обновлены');
-            closeParticipantEdit();
-            fetchAdminData();
-          } else {
-            alert(result.error || 'Ошибка обновления данных');
-          }
-        } catch (err) {
-          console.error('Update participant error:', err);
-          alert('Сетевая ошибка. Проверьте подключение.');
-        }
-      });
-  }
-
-  // HTML-экранирование
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  // Markdown-редактор
-  function initMarkdownEditor(id) {
-    const textarea = document.getElementById(id);
-    if (!textarea) return;
-
-    const toolbar = document.createElement('div');
-    toolbar.className = 'md-toolbar';
-
-    const actions = [
-      { label: 'Ж',        title: 'Жирный',                fn: () => wrapSelection(textarea, '**', '**') },
-      { label: 'К',        title: 'Курсив',                 fn: () => wrapSelection(textarea, '*', '*') },
-      { label: 'H2',       title: 'Заголовок',              fn: () => prefixLines(textarea, '## ') },
-      { label: '•',        title: 'Маркированный список',   fn: () => prefixLines(textarea, '- ') },
-      { label: '1.',       title: 'Нумерованный список',    fn: () => prefixLines(textarea, '1. ') },
-    ];
-
-    actions.forEach(({ label, title, fn }) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'md-btn';
-      btn.textContent = label;
-      btn.title = title;
-      btn.addEventListener('click', () => { fn(); textarea.focus(); });
-      toolbar.appendChild(btn);
-    });
-
-    const previewBtn = document.createElement('button');
-    previewBtn.type = 'button';
-    previewBtn.className = 'md-btn md-preview-toggle';
-    previewBtn.textContent = 'Предпросмотр';
-    toolbar.appendChild(previewBtn);
-
-    const preview = document.createElement('div');
-    preview.className = 'md-preview';
-    preview.style.display = 'none';
-
-    previewBtn.addEventListener('click', () => {
-      const showingPreview = preview.style.display !== 'none';
-      if (showingPreview) {
-        preview.style.display = 'none';
-        textarea.style.display = '';
-        previewBtn.textContent = 'Предпросмотр';
-      } else {
-        preview.innerHTML = marked.parse(textarea.value || '');
-        preview.style.display = 'block';
-        textarea.style.display = 'none';
-        previewBtn.textContent = 'Редактировать';
-      }
-    });
-
-    textarea.parentNode.insertBefore(toolbar, textarea);
-    textarea.insertAdjacentElement('afterend', preview);
-  }
-
-  function wrapSelection(textarea, before, after) {
-    const s = textarea.selectionStart;
-    const e = textarea.selectionEnd;
-    const selected = textarea.value.substring(s, e) || 'текст';
-    textarea.value =
-      textarea.value.substring(0, s) + before + selected + after + textarea.value.substring(e);
-    textarea.selectionStart = s + before.length;
-    textarea.selectionEnd = s + before.length + selected.length;
-  }
-
-  function prefixLines(textarea, prefix) {
-    const s = textarea.selectionStart;
-    const e = textarea.selectionEnd;
-    const val = textarea.value;
-    const lineStart = val.lastIndexOf('\n', s - 1) + 1;
-    const chunk = val.substring(lineStart, e);
-    const prefixed = chunk.split('\n').map((l) => prefix + l).join('\n');
-    textarea.value = val.substring(0, lineStart) + prefixed + val.substring(e);
-    textarea.selectionStart = lineStart + prefix.length;
-    textarea.selectionEnd = lineStart + prefixed.length;
-  }
-
-  initMarkdownEditor('race-description');
-  initMarkdownEditor('race-payment');
-
-  function formatRaceDate(dateStr) {
-    const d = new Date(dateStr.replace(' ', 'T'));
-    const datePart = d.toLocaleDateString('ru-RU', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    const h = d.getHours();
-    const m = d.getMinutes();
-    if (h !== 0 || m !== 0) {
-      return `${datePart}, ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  function setBannerPreview(previewEl, filename, alt) {
+    previewEl.innerHTML = '';
+    if (filename) {
+      const frag = tplBannerImg.content.cloneNode(true);
+      const img = frag.querySelector('img');
+      img.src = `../assets/races/${filename}`;
+      img.alt = alt;
+      previewEl.appendChild(frag);
+    } else {
+      previewEl.appendChild(tplBannerEmpty.content.cloneNode(true));
     }
-    return datePart;
   }
 
-  // ── Управление категориями гонки ──────────────────────────────────────
+  function renderPaymentTiersList(tiers) {
+    const container = document.getElementById('payment-tiers-list');
+    if (!container) return;
+    container.innerHTML = '';
+    (tiers || []).forEach((tier, idx) => {
+      const row = document.createElement('div');
+      row.className = 'tier-row';
+      row.innerHTML = `
+        <input type="date" class="tier-date" value="${tier.date || ''}" />
+        <input type="number" class="tier-amount" value="${tier.amount || ''}" min="0" step="1" placeholder="Сумма, руб." />
+        <button type="button" class="btn-tier-remove" data-idx="${idx}">×</button>
+      `;
+      container.appendChild(row);
+    });
 
+    container.querySelectorAll('.btn-tier-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.closest('.tier-row').remove();
+      });
+    });
+  }
+
+  document.getElementById('add-tier-btn')?.addEventListener('click', () => {
+    const container = document.getElementById('payment-tiers-list');
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'tier-row';
+    row.innerHTML = `
+      <input type="date" class="tier-date" />
+      <input type="number" class="tier-amount" min="0" step="1" placeholder="Сумма, руб." />
+      <button type="button" class="btn-tier-remove">×</button>
+    `;
+    row.querySelector('.btn-tier-remove').addEventListener('click', () => row.remove());
+    container.appendChild(row);
+  });
+
+  function collectPaymentTiers() {
+    const rows = document.querySelectorAll('#payment-tiers-list .tier-row');
+    const tiers = [];
+    rows.forEach(row => {
+      const date   = row.querySelector('.tier-date')?.value.trim();
+      const amount = parseFloat(row.querySelector('.tier-amount')?.value);
+      if (date && !isNaN(amount)) tiers.push({ date, amount });
+    });
+    tiers.sort((a, b) => a.date.localeCompare(b.date));
+    return tiers;
+  }
+
+  function openRaceEditModal(race) {
+    document.querySelectorAll('#race-form .md-preview').forEach(p => { p.style.display = 'none'; });
+    document.querySelectorAll('#race-form textarea').forEach(t => { t.style.display = ''; });
+    document.querySelectorAll('#race-form .md-preview-toggle').forEach(b => { b.textContent = 'Предпросмотр'; });
+
+    document.getElementById('race-edit-id').value       = race.id;
+    document.getElementById('race-name').value          = race.race_name || '';
+    document.getElementById('race-date').value          = race.date ? race.date.replace(' ', 'T').slice(0, 16) : '';
+    document.getElementById('race-location').value      = race.location || '';
+    document.getElementById('race-location-link').value = race.location_link || '';
+    document.getElementById('race-iframe').value        = race.iframe_html || '';
+    document.getElementById('race-description').value   = race.description || '';
+    document.getElementById('race-payment').value       = race.payment_info || '';
+    document.getElementById('race-is-active').checked   = race.is_active == 1;
+
+    renderPaymentTiersList(race.payment_tiers || []);
+
+    setBannerPreview(document.getElementById('banner-desktop-preview'), race.banner_desktop, 'Desktop');
+    setBannerPreview(document.getElementById('banner-mobile-preview'), race.banner_mobile, 'Mobile');
+
+    document.getElementById('race-sponsors').value = prettyJson(race.sponsors_json);
+    document.getElementById('race-contacts').value = prettyJson(race.contacts_json);
+
+    ['upload-status-desktop', 'upload-status-mobile'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = ''; el.style.color = ''; }
+    });
+    ['race-banner-desktop', 'race-banner-mobile'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    renderRaceCategoryList(race.id);
+
+    const addInput = document.getElementById('race-category-add-input');
+    const addBtnEl = document.getElementById('race-category-add-btn');
+    const statusEl = document.getElementById('race-category-status');
+    if (addInput) addInput.value = '';
+    if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+
+    if (addBtnEl) {
+      const newBtn = addBtnEl.cloneNode(true);
+      addBtnEl.parentNode.replaceChild(newBtn, addBtnEl);
+      newBtn.addEventListener('click', () => handleCatAdd(race.id));
+    }
+    if (addInput) {
+      addInput.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); handleCatAdd(race.id); } };
+    }
+
+    raceModal.style.display = 'flex';
+  }
+
+  function closeRaceEditModal() { raceModal.style.display = 'none'; }
+
+  raceCloseBtn?.addEventListener('click', closeRaceEditModal);
+  raceCancelBtn?.addEventListener('click', closeRaceEditModal);
+  raceModal?.addEventListener('click', e => { if (e.target === raceModal) closeRaceEditModal(); });
+
+  // Создание гонки
+  document.getElementById('create-race-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('create-race-btn');
+    btn.disabled = true;
+    try {
+      const res = await fetch('../api/admin/race_create.php', { method: 'POST', credentials: 'same-origin' });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        await fetchAdminData(true);
+        const newRace = racesData.find(r => r.id === result.id);
+        if (newRace) openRaceEditModal(newRace);
+      } else {
+        alert(result.error || 'Ошибка создания гонки');
+      }
+    } catch { alert('Сетевая ошибка'); }
+    finally { btn.disabled = false; }
+  });
+
+  // Баннеры
+  function setupUploadBtn(btnId, inputId, type, statusId, previewId) {
+    document.getElementById(btnId)?.addEventListener('click', async () => {
+      const raceId  = parseInt(document.getElementById('race-edit-id').value);
+      const fileEl  = document.getElementById(inputId);
+      const statusEl = document.getElementById(statusId);
+      if (!fileEl.files.length) { statusEl.textContent = 'Выберите файл'; statusEl.style.color = 'var(--wm-danger)'; return; }
+      const fd = new FormData();
+      fd.append('race_id', raceId); fd.append('type', type); fd.append('file', fileEl.files[0]);
+      document.getElementById(btnId).disabled = true;
+      statusEl.textContent = 'Загрузка...'; statusEl.style.color = 'var(--wm-text-muted)';
+      try {
+        const res = await fetch('../api/admin/race_upload.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const result = await res.json();
+        if (res.ok && result.success) {
+          statusEl.textContent = 'Загружено!'; statusEl.style.color = 'var(--wm-success)';
+          setBannerPreview(document.getElementById(previewId), result.filename, 'banner');
+          const race = racesData.find(r => r.id === raceId);
+          if (race) { if (type === 'desktop') race.banner_desktop = result.filename; else race.banner_mobile = result.filename; }
+          fileEl.value = '';
+        } else {
+          statusEl.textContent = result.error || 'Ошибка'; statusEl.style.color = 'var(--wm-danger)';
+        }
+      } catch { statusEl.textContent = 'Сетевая ошибка'; statusEl.style.color = 'var(--wm-danger)'; }
+      finally { document.getElementById(btnId).disabled = false; }
+    });
+  }
+  setupUploadBtn('upload-banner-desktop', 'race-banner-desktop', 'desktop', 'upload-status-desktop', 'banner-desktop-preview');
+  setupUploadBtn('upload-banner-mobile',  'race-banner-mobile',  'mobile',  'upload-status-mobile',  'banner-mobile-preview');
+
+  // Сохранение гонки
+  raceForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const tiersArr = collectPaymentTiers();
+    const formData = {
+      id:            parseInt(document.getElementById('race-edit-id').value),
+      name:          document.getElementById('race-name').value.trim(),
+      date:          document.getElementById('race-date').value || null,
+      location:      document.getElementById('race-location').value.trim(),
+      location_link: document.getElementById('race-location-link').value.trim(),
+      iframe_html:   document.getElementById('race-iframe').value.trim(),
+      description:   document.getElementById('race-description').value.trim(),
+      payment_info:  document.getElementById('race-payment').value.trim(),
+      payment_tiers: tiersArr.length ? JSON.stringify(tiersArr) : null,
+      is_active:     document.getElementById('race-is-active').checked ? 1 : 0,
+      sponsors_json: document.getElementById('race-sponsors').value.trim() || null,
+      contacts_json: document.getElementById('race-contacts').value.trim() || null,
+    };
+
+    if (!formData.name) { alert('Название гонки не может быть пустым'); return; }
+
+    try {
+      const res = await fetch('../api/admin/race_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        closeRaceEditModal();
+        await fetchAdminData(true);
+        if (currentRaceId) renderRaceDetail(currentRaceId);
+      } else {
+        alert(result.error || 'Ошибка сохранения');
+      }
+    } catch { alert('Сетевая ошибка'); }
+  });
+
+  // ── Category Management ────────────────────────────────────────────────
   function renderRaceCategoryList(raceId) {
-    const race = racesData.find((r) => r.id === raceId);
+    const race = racesData.find(r => r.id === raceId);
     if (!race) return;
     const list = document.getElementById('race-category-edit-list');
     if (!list) return;
@@ -630,49 +733,109 @@ document.addEventListener('DOMContentLoaded', () => {
       const item = frag.querySelector('.race-category-item');
       item.dataset.rcId = cat.race_category_id;
       item.querySelector('.cat-name').textContent = cat.category_name;
-      const upBtn = item.querySelector('.btn-cat-up');
-      const downBtn = item.querySelector('.btn-cat-down');
+
+      const upBtn     = item.querySelector('.btn-cat-up');
+      const downBtn   = item.querySelector('.btn-cat-down');
       const removeBtn = item.querySelector('.btn-cat-remove');
-      upBtn.dataset.rcId = cat.race_category_id;
-      downBtn.dataset.rcId = cat.race_category_id;
+      upBtn.dataset.rcId    = cat.race_category_id;
+      downBtn.dataset.rcId  = cat.race_category_id;
       removeBtn.dataset.rcId = cat.race_category_id;
       if (idx === 0) upBtn.disabled = true;
       if (idx === race.categories.length - 1) downBtn.disabled = true;
+
+      // Заполняем поля деталей
+      item.querySelector('.cat-age-from').value   = cat.age_from != null ? cat.age_from : '';
+      item.querySelector('.cat-age-to').value     = cat.age_to   != null ? cat.age_to   : '';
+      item.querySelector('.cat-distance').value   = cat.distance_km != null ? cat.distance_km : '';
+      item.querySelector('.cat-laps').value        = cat.laps       != null ? cat.laps       : '';
+      item.querySelector('.cat-elevation').value   = cat.elevation_m != null ? cat.elevation_m : '';
+      item.querySelector('.cat-description').value = cat.description || '';
+
+      // Кнопка сохранения деталей
+      item.querySelector('.btn-cat-save-details').dataset.rcId = cat.race_category_id;
+      item.querySelector('.btn-cat-save-details').addEventListener('click', async (e) => {
+        await handleCatSaveDetails(raceId, cat.race_category_id, item);
+      });
+
       list.appendChild(frag);
     });
 
     bindCategoryListHandlers(raceId);
   }
 
-  function renderRaceCardCategories(raceId) {
-    const race = racesData.find((r) => r.id === raceId);
-    if (!race) return;
-    const editBtn = document.querySelector(`.edit-race-btn[data-race-id="${raceId}"]`);
-    const catList = editBtn?.closest('.race-card')?.querySelector('.category-list');
-    if (!catList) return;
+  async function handleCatSaveDetails(raceId, rcId, item) {
+    const age_from    = item.querySelector('.cat-age-from').value;
+    const age_to      = item.querySelector('.cat-age-to').value;
+    const distance_km = item.querySelector('.cat-distance').value;
+    const laps        = item.querySelector('.cat-laps').value;
+    const elevation_m = item.querySelector('.cat-elevation').value;
+    const description = item.querySelector('.cat-description').value.trim();
+    const statusEl    = item.querySelector('.cat-save-status');
+    statusEl.textContent = '';
 
-    const tpl = document.getElementById('tpl-category-tag');
-    catList.innerHTML = '';
-    race.categories.forEach((c) => {
-      const frag = tpl.content.cloneNode(true);
-      frag.querySelector('.category-tag').textContent = c.category_name;
-      catList.appendChild(frag);
-    });
+    const payload = {
+      action: 'update',
+      race_category_id: rcId,
+      age_from:    age_from    !== '' ? parseInt(age_from)       : null,
+      age_to:      age_to      !== '' ? parseInt(age_to)         : null,
+      distance_km: distance_km !== '' ? parseFloat(distance_km) : null,
+      laps:        laps        !== '' ? parseInt(laps)           : null,
+      elevation_m: elevation_m !== '' ? parseInt(elevation_m)   : null,
+      description: description || null,
+    };
+
+    try {
+      const res = await fetch('../api/admin/race_category.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        // Обновляем локальные данные
+        const race = racesData.find(r => r.id === raceId);
+        const cat = race?.categories.find(c => c.race_category_id === rcId);
+        if (cat) {
+          cat.age_from    = payload.age_from;
+          cat.age_to      = payload.age_to;
+          cat.distance_km = payload.distance_km;
+          cat.laps        = payload.laps;
+          cat.elevation_m = payload.elevation_m;
+          cat.description = payload.description;
+        }
+        statusEl.textContent = '✓ Сохранено';
+        statusEl.style.color = 'var(--wm-success)';
+        setTimeout(() => { statusEl.textContent = ''; }, 2000);
+      } else {
+        statusEl.textContent = result.error || 'Ошибка';
+        statusEl.style.color = 'var(--wm-danger)';
+      }
+    } catch {
+      statusEl.textContent = 'Сетевая ошибка';
+      statusEl.style.color = 'var(--wm-danger)';
+    }
   }
 
   function bindCategoryListHandlers(raceId) {
     const list = document.getElementById('race-category-edit-list');
     if (!list) return;
     const newList = list.cloneNode(true);
+    // Re-wire save-details buttons
+    newList.querySelectorAll('.btn-cat-save-details').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await handleCatSaveDetails(raceId, parseInt(btn.dataset.rcId), btn.closest('.race-category-item'));
+      });
+    });
     list.parentNode.replaceChild(newList, list);
 
     newList.addEventListener('click', async (e) => {
       const btn = e.target.closest('button');
-      if (!btn) return;
+      if (!btn || btn.classList.contains('btn-cat-save-details')) return;
       const rcId = parseInt(btn.dataset.rcId, 10);
       if (btn.classList.contains('btn-cat-remove')) {
-        const race = racesData.find((r) => r.id === raceId);
-        const catName = race?.categories.find((c) => c.race_category_id === rcId)?.category_name || '';
+        const race = racesData.find(r => r.id === raceId);
+        const catName = race?.categories.find(c => c.race_category_id === rcId)?.category_name || '';
         await handleCatRemove(raceId, rcId, catName);
       } else if (btn.classList.contains('btn-cat-up')) {
         await handleCatReorder(raceId, 'up', rcId);
@@ -690,8 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return;
 
     addBtn.disabled = true;
-    status.textContent = '';
-    status.style.color = '';
+    status.textContent = ''; status.style.color = '';
 
     try {
       const res = await fetch('../api/admin/race_category.php', {
@@ -701,196 +863,77 @@ document.addEventListener('DOMContentLoaded', () => {
         credentials: 'same-origin',
       });
       const result = await res.json();
-
       if (res.ok && result.success) {
-        const race = racesData.find((r) => r.id === raceId);
-        if (race) {
-          race.categories.push({
-            id:                result.category_id,
-            category_name:     result.category_name,
-            race_category_id:  result.race_category_id,
-            sort_order:        result.sort_order,
-          });
-        }
+        const race = racesData.find(r => r.id === raceId);
+        if (race) race.categories.push({
+          id: result.category_id, category_name: result.category_name,
+          race_category_id: result.race_category_id, sort_order: result.sort_order,
+        });
         input.value = '';
         renderRaceCategoryList(raceId);
-        renderRaceCardCategories(raceId);
       } else {
-        status.textContent = result.error || 'Ошибка';
-        status.style.color = 'var(--danger)';
+        status.textContent = result.error || 'Ошибка'; status.style.color = 'var(--wm-danger)';
       }
-    } catch (err) {
-      status.textContent = 'Сетевая ошибка';
-      status.style.color = 'var(--danger)';
-    } finally {
-      addBtn.disabled = false;
-    }
+    } catch { status.textContent = 'Сетевая ошибка'; status.style.color = 'var(--wm-danger)'; }
+    finally { addBtn.disabled = false; }
   }
 
   async function handleCatRemove(raceId, rcId, catName) {
     const status = document.getElementById('race-category-status');
-
     async function doRemove(confirmed) {
-      try {
-        const res = await fetch('../api/admin/race_category.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'remove', race_category_id: rcId, confirmed }),
-          credentials: 'same-origin',
-        });
-        const result = await res.json();
-
-        if (!res.ok) {
-          status.textContent = result.error || 'Ошибка удаления';
-          status.style.color = 'var(--danger)';
-          return;
-        }
-
-        if (result.warn) {
-          const ok = confirm(
-            `Удалить категорию «${catName}»?\n\n` +
-            `${result.affected_count} участник(ов) потеряют привязку к категории ` +
-            `(их регистрации сохранятся).\n\nПродолжить?`
-          );
-          if (ok) await doRemove(true);
-          return;
-        }
-
-        if (result.success) {
-          const race = racesData.find((r) => r.id === raceId);
-          if (race) {
-            race.categories = race.categories.filter((c) => c.race_category_id !== rcId);
-          }
-          renderRaceCategoryList(raceId);
-          renderRaceCardCategories(raceId);
-        } else {
-          status.textContent = result.error || 'Ошибка удаления';
-          status.style.color = 'var(--danger)';
-        }
-      } catch (err) {
-        status.textContent = 'Сетевая ошибка';
-        status.style.color = 'var(--danger)';
+      const res = await fetch('../api/admin/race_category.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'remove', race_category_id: rcId, confirmed }),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (!res.ok) { status.textContent = result.error || 'Ошибка'; status.style.color = 'var(--wm-danger)'; return; }
+      if (result.warn) {
+        if (confirm(`Удалить «${catName}»?\n${result.affected_count} участников потеряют привязку.\nПродолжить?`))
+          await doRemove(true);
+        return;
       }
+      if (result.success) {
+        const race = racesData.find(r => r.id === raceId);
+        if (race) race.categories = race.categories.filter(c => c.race_category_id !== rcId);
+        renderRaceCategoryList(raceId);
+      } else { status.textContent = result.error || 'Ошибка'; status.style.color = 'var(--wm-danger)'; }
     }
-
-    await doRemove(false);
+    try { await doRemove(false); } catch { status.textContent = 'Сетевая ошибка'; status.style.color = 'var(--wm-danger)'; }
   }
 
   async function handleCatReorder(raceId, direction, rcId) {
-    const race = racesData.find((r) => r.id === raceId);
+    const race = racesData.find(r => r.id === raceId);
     if (!race) return;
-
     const cats = race.categories;
-    const idx  = cats.findIndex((c) => c.race_category_id === rcId);
+    const idx  = cats.findIndex(c => c.race_category_id === rcId);
     if (idx < 0) return;
-
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= cats.length) return;
-
     [cats[idx], cats[swapIdx]] = [cats[swapIdx], cats[idx]];
     renderRaceCategoryList(raceId);
-    renderRaceCardCategories(raceId);
-
-    const orderedIds = cats.map((c) => c.race_category_id);
     try {
       const res = await fetch('../api/admin/race_category.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reorder', race_id: raceId, ordered_ids: orderedIds }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reorder', race_id: raceId, ordered_ids: cats.map(c => c.race_category_id) }),
         credentials: 'same-origin',
       });
       const result = await res.json();
       if (!res.ok || !result.success) {
         [cats[idx], cats[swapIdx]] = [cats[swapIdx], cats[idx]];
         renderRaceCategoryList(raceId);
-        renderRaceCardCategories(raceId);
       }
-    } catch (err) {
+    } catch {
       [cats[idx], cats[swapIdx]] = [cats[swapIdx], cats[idx]];
       renderRaceCategoryList(raceId);
-      renderRaceCardCategories(raceId);
     }
   }
 
-  // ── Редактирование гонки ───────────────────────────────────────────────
-  const raceModal = document.getElementById('race-modal');
-  const raceCloseBtn = document.getElementById('race-close-btn');
-  const raceCancelBtn = document.getElementById('race-cancel-btn');
-  const raceForm = document.getElementById('race-form');
-
-  const tplBannerImg   = document.getElementById('tpl-banner-img');
-  const tplBannerEmpty = document.getElementById('tpl-banner-empty');
-
-  function setBannerPreview(previewEl, filename, altText) {
-    previewEl.innerHTML = '';
-    if (filename) {
-      const frag = tplBannerImg.content.cloneNode(true);
-      const img = frag.querySelector('img');
-      img.src = `../assets/races/${filename}`;
-      img.alt = altText;
-      previewEl.appendChild(frag);
-    } else {
-      previewEl.appendChild(tplBannerEmpty.content.cloneNode(true));
-    }
-  }
-
-  function openRaceEditModal(race) {
-    // Сбросить предпросмотры
-    document.querySelectorAll('#race-form .md-preview').forEach((p) => { p.style.display = 'none'; });
-    document.querySelectorAll('#race-form textarea').forEach((t) => { t.style.display = ''; });
-    document.querySelectorAll('#race-form .md-preview-toggle').forEach((b) => { b.textContent = 'Предпросмотр'; });
-
-    document.getElementById('race-edit-id').value = race.id;
-    document.getElementById('race-name').value = race.race_name || '';
-    document.getElementById('race-date').value = race.date
-      ? race.date.replace(' ', 'T').slice(0, 16)
-      : '';
-    document.getElementById('race-location').value = race.location || '';
-    document.getElementById('race-location-link').value = race.location_link || '';
-    document.getElementById('race-iframe').value = race.iframe_html || '';
-    document.getElementById('race-description').value = race.description || '';
-    document.getElementById('race-payment').value = race.payment_info || '';
-
-    document.getElementById('race-is-active').checked = race.is_active == 1;
-
-    setBannerPreview(document.getElementById('banner-desktop-preview'), race.banner_desktop, 'Desktop banner');
-    setBannerPreview(document.getElementById('banner-mobile-preview'), race.banner_mobile, 'Mobile banner');
-
-    document.getElementById('race-sponsors').value = prettyJson(race.sponsors_json);
-    document.getElementById('race-contacts').value = prettyJson(race.contacts_json);
-
-    // Сбросить статусы загрузки и файл-инпуты
-    ['upload-status-desktop', 'upload-status-mobile'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) { el.textContent = ''; el.style.color = ''; }
-    });
-    ['race-banner-desktop', 'race-banner-mobile'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-
-    // Секция категорий
-    renderRaceCategoryList(race.id);
-
-    const addInput  = document.getElementById('race-category-add-input');
-    const addBtnEl  = document.getElementById('race-category-add-btn');
-    const statusEl  = document.getElementById('race-category-status');
-    if (addInput)  { addInput.value = ''; }
-    if (statusEl)  { statusEl.textContent = ''; statusEl.style.color = ''; }
-
-    // Клонируем кнопку чтобы снять обработчики предыдущего открытия
-    if (addBtnEl) {
-      const newBtn = addBtnEl.cloneNode(true);
-      addBtnEl.parentNode.replaceChild(newBtn, addBtnEl);
-      newBtn.addEventListener('click', () => handleCatAdd(race.id));
-    }
-    if (addInput) {
-      addInput.onkeydown = (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); handleCatAdd(race.id); }
-      };
-    }
-
-    raceModal.style.display = 'flex';
+  // ── Helpers ────────────────────────────────────────────────────────────
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
   }
 
   function prettyJson(val) {
@@ -898,139 +941,77 @@ document.addEventListener('DOMContentLoaded', () => {
     try { return JSON.stringify(JSON.parse(val), null, 2); } catch { return val; }
   }
 
-  function closeRaceEditModal() {
-    raceModal.style.display = 'none';
+  function formatShortDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr.replace(' ', 'T'));
+      return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch { return dateStr; }
   }
 
-  if (raceCloseBtn) raceCloseBtn.addEventListener('click', closeRaceEditModal);
-  if (raceCancelBtn) raceCancelBtn.addEventListener('click', closeRaceEditModal);
-  if (raceModal) {
-    raceModal.addEventListener('click', (e) => {
-      if (e.target === raceModal) closeRaceEditModal();
+  function daysUntil(dateStr) {
+    if (!dateStr) return null;
+    try {
+      const race = new Date(dateStr.replace(' ', 'T'));
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const diff = Math.round((race - today) / 86400000);
+      return diff;
+    } catch { return null; }
+  }
+
+  initMarkdownEditor('race-description');
+  initMarkdownEditor('race-payment');
+
+  function initMarkdownEditor(id) {
+    const textarea = document.getElementById(id);
+    if (!textarea) return;
+    const toolbar = document.createElement('div');
+    toolbar.className = 'md-toolbar';
+    const actions = [
+      { label: 'Ж', title: 'Жирный', fn: () => wrapSelection(textarea, '**', '**') },
+      { label: 'К', title: 'Курсив', fn: () => wrapSelection(textarea, '*', '*') },
+      { label: 'H2', title: 'Заголовок', fn: () => prefixLines(textarea, '## ') },
+      { label: '•', title: 'Список', fn: () => prefixLines(textarea, '- ') },
+    ];
+    actions.forEach(({ label, title, fn }) => {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.textContent = label; btn.title = title;
+      btn.className = 'md-toolbar-btn';
+      btn.addEventListener('click', () => { fn(); textarea.focus(); });
+      toolbar.appendChild(btn);
     });
-  }
-
-  // Создание новой гонки
-  const createRaceBtn = document.getElementById('create-race-btn');
-  if (createRaceBtn) {
-    createRaceBtn.addEventListener('click', async () => {
-      createRaceBtn.disabled = true;
-      try {
-        const response = await fetch('../api/admin/race_create.php', {
-          method: 'POST',
-          credentials: 'same-origin',
-        });
-        const result = await response.json();
-        if (response.ok && result.success) {
-          await fetchAdminData();
-          const newRace = racesData.find((r) => r.id === result.id);
-          if (newRace) openRaceEditModal(newRace);
-        } else {
-          alert(result.error || 'Ошибка создания гонки');
-        }
-      } catch (err) {
-        alert('Сетевая ошибка. Проверьте подключение.');
-      } finally {
-        createRaceBtn.disabled = false;
-      }
-    });
-  }
-
-  // Загрузка баннеров
-  function setupUploadBtn(btnId, inputId, type, statusId, previewId) {
-    const btn = document.getElementById(btnId);
-    if (!btn) return;
-    btn.addEventListener('click', async () => {
-      const raceId = parseInt(document.getElementById('race-edit-id').value);
-      const fileInput = document.getElementById(inputId);
-      const statusEl = document.getElementById(statusId);
-      if (!fileInput.files.length) {
-        statusEl.textContent = 'Выберите файл';
-        statusEl.style.color = 'var(--danger)';
-        return;
-      }
-      const fd = new FormData();
-      fd.append('race_id', raceId);
-      fd.append('type', type);
-      fd.append('file', fileInput.files[0]);
-      btn.disabled = true;
-      statusEl.textContent = 'Загрузка...';
-      statusEl.style.color = 'var(--text-secondary)';
-      try {
-        const response = await fetch('../api/admin/race_upload.php', {
-          method: 'POST',
-          body: fd,
-          credentials: 'same-origin',
-        });
-        const result = await response.json();
-        if (response.ok && result.success) {
-          statusEl.textContent = 'Загружено!';
-          statusEl.style.color = 'green';
-          setBannerPreview(document.getElementById(previewId), result.filename, 'banner');
-          const race = racesData.find((r) => r.id === raceId);
-          if (race) {
-            if (type === 'desktop') race.banner_desktop = result.filename;
-            else race.banner_mobile = result.filename;
-          }
-          fileInput.value = '';
-        } else {
-          statusEl.textContent = result.error || 'Ошибка загрузки';
-          statusEl.style.color = 'var(--danger)';
-        }
-      } catch (err) {
-        statusEl.textContent = 'Сетевая ошибка';
-        statusEl.style.color = 'var(--danger)';
-      } finally {
-        btn.disabled = false;
+    const previewBtn = document.createElement('button');
+    previewBtn.type = 'button'; previewBtn.className = 'md-preview-toggle'; previewBtn.textContent = 'Предпросмотр';
+    toolbar.appendChild(previewBtn);
+    const preview = document.createElement('div');
+    preview.className = 'md-preview'; preview.style.display = 'none';
+    previewBtn.addEventListener('click', () => {
+      if (preview.style.display === 'none') {
+        preview.innerHTML = marked.parse(textarea.value || '');
+        preview.style.display = ''; textarea.style.display = 'none'; previewBtn.textContent = 'Редактировать';
+      } else {
+        preview.style.display = 'none'; textarea.style.display = ''; previewBtn.textContent = 'Предпросмотр';
       }
     });
+    textarea.parentNode.insertBefore(toolbar, textarea);
+    textarea.parentNode.insertBefore(preview, textarea.nextSibling);
   }
 
-  setupUploadBtn('upload-banner-desktop', 'race-banner-desktop', 'desktop', 'upload-status-desktop', 'banner-desktop-preview');
-  setupUploadBtn('upload-banner-mobile',  'race-banner-mobile',  'mobile',  'upload-status-mobile',  'banner-mobile-preview');
-
-  if (raceForm) {
-    raceForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const sponsorsVal = document.getElementById('race-sponsors').value.trim();
-      const contactsVal = document.getElementById('race-contacts').value.trim();
-      const formData = {
-        id: parseInt(document.getElementById('race-edit-id').value),
-        name: document.getElementById('race-name').value.trim(),
-        date: document.getElementById('race-date').value || null,
-        location: document.getElementById('race-location').value.trim(),
-        location_link: document.getElementById('race-location-link').value.trim(),
-        iframe_html: document.getElementById('race-iframe').value.trim(),
-        description: document.getElementById('race-description').value.trim(),
-        payment_info: document.getElementById('race-payment').value.trim(),
-        is_active: document.getElementById('race-is-active').checked ? 1 : 0,
-        sponsors_json: sponsorsVal || null,
-        contacts_json: contactsVal || null,
-      };
-
-      if (!formData.name) {
-        alert('Название гонки не может быть пустым');
-        return;
-      }
-
-      try {
-        const response = await fetch('../api/admin/race_update.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-          credentials: 'same-origin',
-        });
-        const result = await response.json();
-        if (response.ok && result.success) {
-          closeRaceEditModal();
-          fetchAdminData();
-        } else {
-          alert(result.error || 'Ошибка сохранения');
-        }
-      } catch (err) {
-        console.error('Race update error:', err);
-        alert('Сетевая ошибка. Проверьте подключение.');
-      }
-    });
+  function wrapSelection(textarea, before, after) {
+    const s = textarea.selectionStart, e = textarea.selectionEnd;
+    const val = textarea.value;
+    textarea.value = val.slice(0, s) + before + val.slice(s, e) + after + val.slice(e);
+    textarea.setSelectionRange(s + before.length, e + before.length);
   }
+
+  function prefixLines(textarea, prefix) {
+    const s = textarea.selectionStart, e = textarea.selectionEnd;
+    const chunk = textarea.value.slice(s, e);
+    const prefixed = chunk.split('\n').map(l => prefix + l).join('\n');
+    textarea.value = textarea.value.slice(0, s) + prefixed + textarea.value.slice(e);
+    textarea.setSelectionRange(s, s + prefixed.length);
+  }
+
+  // ── Boot ───────────────────────────────────────────────────────────────
+  fetchAdminData();
 });

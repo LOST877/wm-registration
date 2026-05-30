@@ -4,51 +4,56 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Админ-панель — Wheel Masters</title>
+    <link rel="stylesheet" href="../tokens.css" />
     <link rel="stylesheet" href="admin.css" />
   </head>
 
   <body>
-    <header>
-      <h1>Админ-панель</h1>
+    <header class="admin-header">
+      <h1>Админ‑панель — Wheel Masters</h1>
+      <div class="admin-header-right">
+        <span class="admin-who" id="admin-who"></span>
+        <button id="logout-btn" class="logout-btn">Выйти</button>
+      </div>
     </header>
 
-    <main>
+    <main id="admin-main">
       <!-- Форма авторизации -->
       <section id="auth-section" class="auth-section">
         <div class="auth-box">
           <h2>Вход</h2>
           <form id="login-form">
-            <input
-              type="text"
-              id="username"
-              name="username"
-              placeholder="Логин"
-              required
-            />
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Пароль"
-              required
-            />
+            <input type="text" id="username" name="username" placeholder="Логин" required />
+            <input type="password" id="password" name="password" placeholder="Пароль" required />
             <button type="submit">Вход</button>
           </form>
           <div id="auth-error" class="auth-error"></div>
         </div>
       </section>
 
-      <!-- Дашборд (скрыт по умолчанию) -->
-      <section
-        id="dashboard-section"
-        class="dashboard-section"
-        style="display: none"
-      >
-        <div class="dashboard-header">
-          <h2>Гонки</h2>
-          <button id="create-race-btn" class="btn-create-race">+ Создать гонку</button>
+      <!-- Список гонок -->
+      <section id="view-races" class="page" style="display:none">
+        <div class="page-head">
+          <h2 id="races-page-title">Гонки</h2>
+          <button id="create-race-btn" class="btn-create">Создать гонку</button>
         </div>
-        <div id="races-container"></div>
+        <div class="toolbar">
+          <div class="filters" id="race-filters">
+            <button class="filter active" data-f="all">Все</button>
+            <button class="filter" data-f="open">Открыта регистрация</button>
+            <button class="filter" data-f="closed">Регистрация закрыта</button>
+            <button class="filter" data-f="done">Завершены</button>
+          </div>
+          <div class="search">
+            <input type="text" id="race-search" placeholder="Найти гонку…" />
+          </div>
+        </div>
+        <div class="race-grid" id="race-grid"></div>
+      </section>
+
+      <!-- Детальный вид гонки -->
+      <section id="view-detail" class="page" style="display:none">
+        <div id="race-detail-content"></div>
       </section>
     </main>
 
@@ -182,8 +187,14 @@
           <div class="form-section">
             <h4 class="form-section-title">Оплата</h4>
             <div class="form-group">
-              <label for="race-payment">Информация об оплате</label>
+              <label for="race-payment">Информация об оплате (markdown)</label>
               <textarea id="race-payment" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Тарифная сетка</label>
+              <small class="field-hint">Каждая строка: <code>ГГГГ-ММ-ДД сумма</code> (напр. <code>2026-04-01 800</code>). Текущая цена определяется последней наступившей датой.</small>
+              <div id="payment-tiers-list" class="payment-tiers-list"></div>
+              <button type="button" id="add-tier-btn" class="btn-add-tier">+ Добавить тариф</button>
             </div>
           </div>
 
@@ -230,8 +241,8 @@
             <h4 class="form-section-title">Контакты</h4>
             <div class="form-group">
               <label for="race-contacts">Список контактов (JSON)</label>
-              <textarea id="race-contacts" rows="8" placeholder='[&#10;  {"Группа VK": "https://vk.com/wm_xc"},&#10;  {"role": "Организаторы", "entries": [&#10;    {"name": "Антон", "phone": "+79805346277"}&#10;  ]},&#10;  {"role": "Реклама и маркетинг", "entries": [&#10;    {"name": "Дмитрий", "phone": "+79036516841"}&#10;  ]}&#10;]'></textarea>
-              <small class="field-hint">JSON-массив. Каждый элемент: {"Текст ссылки": "url"} или {"role": "Название", "entries": [{"name": "Имя", "phone": "+7..."}]}. Оставьте пустым — будут показаны контакты по умолчанию.</small>
+              <textarea id="race-contacts" rows="8" placeholder='[&#10;  {"Группа VK": "https://vk.com/wm_xc"},&#10;  {"role": "Организаторы", "entries": [&#10;    {"name": "Антон", "phone": "+79805346277"}&#10;  ]}&#10;]'></textarea>
+              <small class="field-hint">JSON-массив. Каждый элемент: {"Текст ссылки": "url"} или {"role": "Название", "entries": [{"name": "Имя", "phone": "+7..."}]}.</small>
             </div>
           </div>
 
@@ -260,76 +271,51 @@
       </div>
     </div>
 
-    <!-- Шаблон карточки гонки -->
-    <template id="tpl-race-card">
-      <section class="race-card">
-        <div class="race-header">
-          <h3 class="rc-name"></h3>
-          <small class="rc-date"></small>
-          <label class="reg-toggle">
-            <input type="checkbox" class="race-active-checkbox">
-            Активна
-          </label>
-          <label class="reg-toggle">
-            <input type="checkbox" class="reg-open-checkbox">
-            Регистрация открыта
-          </label>
-          <label class="reg-toggle">
-            <input type="checkbox" class="race-finished-checkbox">
-            Гонка завершена
-          </label>
-          <button class="edit-race-btn">Редактировать гонку</button>
-          <button class="delete-race-btn">Удалить</button>
-          <button class="export-csv-btn" hidden>Выгрузить участников (.csv)</button>
-        </div>
-        <div class="race-info">
-          📍 <span class="rc-location"></span> |
-          👥 <span class="rc-count"></span> участников
-          <span class="rc-payment-block" hidden><br><strong>Оплата:</strong> <span class="rc-payment-text"></span></span>
-        </div>
-        <div class="results-import">
-          <label>Результаты (CSV):</label>
-          <input type="file" class="csv-file-input" accept=".csv">
-          <button class="import-csv-btn">Загрузить</button>
-          <span class="import-status"></span>
-        </div>
-        <div class="category-list"></div>
-        <div class="table-container">
-          <table>
-            <thead><tr class="rc-thead-row"></tr></thead>
-            <tbody class="rc-tbody"></tbody>
-          </table>
-        </div>
-      </section>
-    </template>
-
     <!-- Шаблон тега категории -->
     <template id="tpl-category-tag">
       <span class="category-tag"></span>
     </template>
 
-    <!-- Шаблон строки участника (админка) -->
-    <template id="tpl-participant-row-admin">
-      <tr>
-        <td>
-          <button class="edit-participant-btn">✎</button>
-        </td>
-      </tr>
-    </template>
-
-    <!-- Шаблон заголовка колонки таблицы -->
-    <template id="tpl-table-th">
-      <th></th>
-    </template>
-
-    <!-- Шаблон строки редактирования категории -->
+    <!-- Шаблон строки редактирования категории (расширенный) -->
     <template id="tpl-race-category-item">
       <div class="race-category-item">
-        <span class="cat-name"></span>
-        <div class="cat-actions">
-          <button type="button" class="btn-cat-up" aria-label="Выше">▲</button>
-          <button type="button" class="btn-cat-down" aria-label="Ниже">▼</button>
-          <button type="button" class="btn-cat-remove" aria-label="Удалить">×</button>
+        <div class="cat-main-row">
+          <span class="cat-name"></span>
+          <div class="cat-actions">
+            <button type="button" class="btn-cat-up" aria-label="Выше">▲</button>
+            <button type="button" class="btn-cat-down" aria-label="Ниже">▼</button>
+            <button type="button" class="btn-cat-remove" aria-label="Удалить">×</button>
+          </div>
+        </div>
+        <div class="cat-details">
+          <div class="cat-detail-row">
+            <div class="form-group">
+              <label>Возраст от</label>
+              <input type="number" class="cat-age-from" min="0" max="99" placeholder="—" />
+            </div>
+            <div class="form-group">
+              <label>Возраст до</label>
+              <input type="number" class="cat-age-to" min="0" max="99" placeholder="без огр." />
+            </div>
+            <div class="form-group">
+              <label>Дистанция, км</label>
+              <input type="number" class="cat-distance" step="0.1" min="0" placeholder="—" />
+            </div>
+            <div class="form-group">
+              <label>Кругов</label>
+              <input type="number" class="cat-laps" min="1" placeholder="—" />
+            </div>
+            <div class="form-group">
+              <label>Набор высоты, м</label>
+              <input type="number" class="cat-elevation" min="0" placeholder="—" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Описание категории</label>
+            <input type="text" class="cat-description" placeholder="напр. Общий старт в 11:00, призовые в абсолюте" />
+          </div>
+          <button type="button" class="btn-cat-save-details">Сохранить детали</button>
+          <span class="cat-save-status"></span>
         </div>
       </div>
     </template>
@@ -343,6 +329,6 @@
     </template>
 
     <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
-    <script src="admin.js?v=7"></script>
+    <script src="admin.js?v=8"></script>
   </body>
 </html>

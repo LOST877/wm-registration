@@ -165,58 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('hero-title').textContent =
           race.name.toUpperCase();
 
-        // Дата
-        const months = [
-          'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-          'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
-        ];
-        const datePart = race.date.split(' ')[0];
-        const timePart = race.date.split(' ')[1];
-        const [year, monthIndex, day] = datePart.split('-').map(Number);
-        const month = months[monthIndex - 1];
-        const hm = timePart ? timePart.slice(0, 5) : '00:00';
-        const timeStr = hm !== '00:00' ? `, начало в ${hm}` : '';
-        document.getElementById('about-date-value').textContent =
-          `${day} ${month} ${year}г.${timeStr}`;
-        document.getElementById('about-date').hidden = false;
-
-        // Локация
-        if (race.location) {
-          const locationEl = document.getElementById('about-location');
-          document.getElementById('about-location-text').textContent = race.location;
-          if (race.location_link) {
-            const a = document.createElement('a');
-            a.href = race.location_link;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.className = 'link';
-            a.textContent = 'Смотреть координаты на карте';
-            if (a.protocol === 'https:' || a.protocol === 'http:') {
-              locationEl.appendChild(document.createElement('br'));
-              locationEl.appendChild(a);
-            }
-          }
-          locationEl.hidden = false;
-        }
-
-        // Карта (iframe — внешний контент)
-        if (race.iframe_html) {
-          document.getElementById('about-map').innerHTML = race.iframe_html;
-        }
-
-        // Описание (markdown — внешний контент)
-        if (race.description) {
-          document.getElementById('about-description-content').innerHTML =
-            marked.parse(race.description);
-          document.getElementById('about-description').hidden = false;
-        }
-
-        // Оплата (markdown — внешний контент)
-        if (race.payment_info) {
-          document.getElementById('about-payment-content').innerHTML =
-            marked.parse(race.payment_info);
-          document.getElementById('about-payment').hidden = false;
-        }
+        renderAbout(race);
 
         // Обновляем race_id
         const raceIdInput = document.querySelector('input[name="race_id"]');
@@ -237,11 +186,175 @@ document.addEventListener('DOMContentLoaded', () => {
           loadResults(race.id);
         } else {
           loadCategories(race.id);
-          loadParticipants(race.id, !!race.payment_info);
+          loadParticipants(race.id, !!(race.payment_info || (race.payment_tiers && race.payment_tiers.length)));
         }
       }
     } catch (err) {
       console.warn('Не удалось загрузить данные гонки:', err);
+    }
+  }
+
+  const MONTHS = [
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+  ];
+
+  function formatDate(dateStr) {
+    const datePart = dateStr.split(' ')[0];
+    const timePart = dateStr.split(' ')[1];
+    const [year, monthIndex, day] = datePart.split('-').map(Number);
+    const hm = timePart ? timePart.slice(0, 5) : '00:00';
+    const timeStr = hm !== '00:00' ? `. Старт в ${hm}` : '';
+    return { text: `${day} ${MONTHS[monthIndex - 1]} ${year} г.`, sub: timeStr };
+  }
+
+  function getTodayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function getCurrentTier(tiers) {
+    if (!Array.isArray(tiers) || !tiers.length) return null;
+    const today = getTodayStr();
+    return [...tiers].reverse().find(t => t.date <= today) ?? null;
+  }
+
+  function getUpcomingTiers(tiers) {
+    if (!Array.isArray(tiers) || !tiers.length) return [];
+    const today = getTodayStr();
+    return tiers.filter(t => t.date > today);
+  }
+
+  function renderAbout(race) {
+    // --- Факт: Дата ---
+    if (race.date) {
+      const { text, sub } = formatDate(race.date);
+      document.getElementById('fact-date-v').textContent = text;
+      document.getElementById('fact-date-sub').textContent = sub;
+    }
+
+    // --- Факт: Место ---
+    if (race.location) {
+      // Попробуем разбить «г. Воронеж, лес за СОК Олимпик» → город + детали
+      const parts = race.location.split(',');
+      document.getElementById('fact-location-v').textContent = parts[0].trim();
+      document.getElementById('fact-location-sub').textContent =
+        parts.slice(1).join(',').trim();
+      const linkEl = document.getElementById('fact-location-link');
+      if (race.location_link && /^https?:\/\//i.test(race.location_link)) {
+        linkEl.href = race.location_link;
+        linkEl.hidden = false;
+      }
+    }
+
+    // --- Факт: Регистрация ---
+    const regV = document.getElementById('fact-reg-v');
+    if (race.registration_open == 1) {
+      regV.textContent = 'Открыта';
+      regV.style.color = 'var(--wm-success)';
+    } else {
+      regV.textContent = 'Закрыта';
+      regV.style.color = 'var(--wm-danger)';
+    }
+
+    // --- Панель оплаты (payment_tiers) ---
+    const tiers = race.payment_tiers || [];
+    const currentTier = getCurrentTier(tiers);
+    const upcoming = getUpcomingTiers(tiers);
+    const payEl = document.getElementById('about-pay');
+    if (currentTier) {
+      document.getElementById('pay-amount').textContent = currentTier.amount;
+      if (upcoming.length) {
+        const metaEl = document.getElementById('pay-meta');
+        metaEl.innerHTML = upcoming.map(t => {
+          const [y, m, d] = t.date.split('-').map(Number);
+          return `<span>С ${d} ${MONTHS[m - 1]}: <strong>${t.amount} руб.</strong></span>`;
+        }).join('<br>');
+      }
+      payEl.hidden = false;
+    } else if (tiers.length && upcoming.length) {
+      // Тиры есть, но ни один ещё не наступил — показываем первый как «скоро»
+      const first = upcoming[0];
+      const [y, m, d] = first.date.split('-').map(Number);
+      document.getElementById('pay-amount').textContent = first.amount;
+      const metaEl = document.getElementById('pay-meta');
+      metaEl.innerHTML = `С ${d} ${MONTHS[m - 1]} ${y} г.`;
+      payEl.hidden = false;
+    }
+
+    // --- Описание ---
+    if (race.description && typeof marked !== 'undefined') {
+      document.getElementById('about-description-content').innerHTML =
+        marked.parse(race.description);
+      document.getElementById('about-desc').hidden = false;
+    }
+  }
+
+  function renderAboutCategories(categories) {
+    const hasCatDetails = categories.some(c => c.age_from != null || c.description);
+    const hasDistDetails = categories.some(c => c.distance_km != null);
+
+    // --- Категории ---
+    if (hasCatDetails) {
+      const listEl = document.getElementById('cat-list-items');
+      listEl.innerHTML = '';
+      categories.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'cat-row';
+
+        const whoEl = document.createElement('span');
+        whoEl.className = 'who';
+        whoEl.textContent = c.name;
+        if (c.age_from != null || c.age_to != null) {
+          const ageEl = document.createElement('small');
+          ageEl.textContent = c.age_to != null
+            ? `${c.age_from}–${c.age_to} лет`
+            : `${c.age_from}+ лет`;
+          whoEl.appendChild(ageEl);
+        }
+
+        const whatEl = document.createElement('span');
+        whatEl.className = 'what';
+        whatEl.textContent = c.description || '';
+
+        row.appendChild(whoEl);
+        row.appendChild(whatEl);
+        listEl.appendChild(row);
+      });
+      document.getElementById('about-cats').hidden = false;
+    }
+
+    // --- Дистанции ---
+    if (hasDistDetails) {
+      const listEl = document.getElementById('dist-list-items');
+      listEl.innerHTML = '';
+      categories.forEach(c => {
+        if (c.distance_km == null) return;
+        const row = document.createElement('div');
+        row.className = 'dist-row';
+
+        const whoEl = document.createElement('span');
+        whoEl.className = 'who';
+        whoEl.textContent = c.name;
+
+        const kmEl = document.createElement('span');
+        kmEl.className = 'km';
+        kmEl.innerHTML = `${c.distance_km}<small>км</small>`;
+
+        const lapsEl = document.createElement('span');
+        lapsEl.className = 'meta';
+        lapsEl.textContent = c.laps ? `${c.laps} кр.` : '';
+
+        const elevEl = document.createElement('span');
+        elevEl.className = 'meta';
+        elevEl.textContent = c.elevation_m ? `↑${c.elevation_m} м` : '';
+
+        row.appendChild(whoEl);
+        row.appendChild(kmEl);
+        row.appendChild(lapsEl);
+        row.appendChild(elevEl);
+        listEl.appendChild(row);
+      });
+      document.getElementById('about-dist').hidden = false;
     }
   }
 
@@ -428,6 +541,8 @@ document.addEventListener('DOMContentLoaded', () => {
         opt.textContent = cat.name;
         select.appendChild(opt);
       });
+
+      renderAboutCategories(categories);
     } catch (err) {
       console.error(err);
       select.innerHTML = '';

@@ -66,11 +66,13 @@
 ### Таблицы:
 | Таблица | Описание |
 |---------|----------|
-| `races` | Гонки (id, name, date, location, location_link, iframe_html, description, payment_info, is_active, created_at) |
-| `categories` | Абстрактные категории (id, name, description, created_at) |
-| `race_categories` | Связь N:M (id, race_id, category_id, sort_order) — уникальность `(race_id, category_id)` |
+| `races` | Гонки (id, name, date, location, location_link, iframe_html, description, payment_info, **payment_tiers JSON**, is_active, created_at) |
+| `categories` | Категории (id, name, **age_from INT**, **age_to INT**, **description TEXT**, created_at) |
+| `race_categories` | Связь N:M (id, race_id, category_id, sort_order, **distance_km DECIMAL**, **laps INT**, **elevation_m INT**) |
 | `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, is_paid, payment_amount, created_at) |
 | `admin_users` | Администраторы (id, username, password (hash), full_name, created_at) |
+
+> Миграция v2: `sql/migrate_v2.sql`
 
 ### Важные правила:
 - Активной может быть **только одна гонка** (`is_active = 1`)
@@ -79,7 +81,10 @@
 - Сортировка категорий: по `sort_order` в `race_categories` (по умолчанию `0`)
 - `is_paid` (TINYINT) — флаг оплаты: `0` или `1`
 - `payment_amount` (DECIMAL(10,2), NULL) — сумма оплаты (в админке)
-- `payment_info` (TEXT) — описание способа оплаты в гонке
+- `payment_info` (TEXT) — описание способа оплаты в формате markdown
+- `payment_tiers` (JSON, NULL) — тарифная сетка: `[{"date":"YYYY-MM-DD","amount":1000},...]`; текущая цена = последний тир где `date <= today`
+- `age_from`/`age_to` (INT, NULL) — возрастной диапазон категории; `age_to = NULL` означает «без верхней границы»
+- `distance_km` (DECIMAL(5,1), NULL), `laps` (INT, NULL), `elevation_m` (INT, NULL) — параметры дистанции per race_category
 - Поле `email` — **обязательное** (`NOT NULL`)
 
 ---

@@ -28,6 +28,7 @@ try {
             r.iframe_html,
             r.description,
             r.payment_info,
+            r.payment_tiers,
             r.is_active,
             r.registration_open,
             r.is_finished,
@@ -49,7 +50,9 @@ try {
   foreach ($races as $race) {
     // 2.1. Категории гонки
     $stmt = $pdo->prepare('
-            SELECT c.id, c.name AS category_name, rc.id AS race_category_id, rc.sort_order
+            SELECT c.id, c.name AS category_name, c.age_from, c.age_to, c.description,
+                   rc.id AS race_category_id, rc.sort_order,
+                   rc.distance_km, rc.laps, rc.elevation_m
             FROM race_categories rc
             JOIN categories c ON rc.category_id = c.id
             WHERE rc.race_id = ?
@@ -85,6 +88,7 @@ try {
 
     $race['categories'] = $categories;
     $race['participants'] = $participants;
+    $race['payment_tiers'] = $race['payment_tiers'] ? json_decode($race['payment_tiers'], true) : [];
 
     $races_with_categories[] = $race;
   }

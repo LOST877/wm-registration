@@ -13,14 +13,31 @@ try {
   $raceId = (int)($_GET['race_id'] ?? 1);
 
   $stmt = $pdo->prepare("
-    SELECT c.id, c.name, COALESCE(rc.sort_order, 0) AS sort_order
+    SELECT c.id, c.name, c.age_from, c.age_to, c.description,
+           COALESCE(rc.sort_order, 0) AS sort_order,
+           rc.distance_km, rc.laps, rc.elevation_m
     FROM categories c
     JOIN race_categories rc ON c.id = rc.category_id
     WHERE rc.race_id = ?
     ORDER BY rc.sort_order ASC, c.id ASC
   ");
   $stmt->execute([$raceId]);
-  $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  // Приводим числовые поля к правильным типам
+  $categories = array_map(function ($r) {
+    return [
+      'id'          => (int)$r['id'],
+      'name'        => $r['name'],
+      'age_from'    => $r['age_from'] !== null ? (int)$r['age_from'] : null,
+      'age_to'      => $r['age_to']   !== null ? (int)$r['age_to']   : null,
+      'description' => $r['description'],
+      'sort_order'  => (int)$r['sort_order'],
+      'distance_km' => $r['distance_km'] !== null ? (float)$r['distance_km'] : null,
+      'laps'        => $r['laps']        !== null ? (int)$r['laps']           : null,
+      'elevation_m' => $r['elevation_m'] !== null ? (int)$r['elevation_m']   : null,
+    ];
+  }, $rows);
 
   echo json_encode($categories);
 
