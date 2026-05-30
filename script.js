@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timePart = dateStr.split(' ')[1];
     const [year, monthIndex, day] = datePart.split('-').map(Number);
     const hm = timePart ? timePart.slice(0, 5) : '00:00';
-    const timeStr = hm !== '00:00' ? `. Старт в ${hm}` : '';
+    const timeStr = hm !== '00:00' ? `Старт в ${hm}` : '';
     return { text: `${day} ${MONTHS[monthIndex - 1]} ${year} г.`, sub: timeStr };
   }
 
