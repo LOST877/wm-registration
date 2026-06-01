@@ -618,6 +618,7 @@ html {
   border-radius: 4px;
   font-family: var(--wm-font-body);
   font-size: 1rem;
+  min-height: 44px;
 }
 
 .input-group input:focus,
@@ -759,11 +760,13 @@ html {
   }
 
   .hero-content {
-    margin-left: auto;
+    margin: 0;
   }
 
   .hero-subtitle {
     font-size: 1.5rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .hero-buttons {
@@ -780,7 +783,7 @@ html {
     max-width: 140px;
   }
 
-  .btn {
+  .hero-buttons .btn {
     text-align: center;
     width: 100%;
     padding: 12px 10px;
@@ -810,6 +813,8 @@ html {
 
   .mobile-menu-btn {
     display: block;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .section-title {
@@ -831,6 +836,10 @@ html {
   }
 
   /* О гонке: мобильный вид */
+  .about-section {
+    padding: 16px;
+  }
+
   .facts {
     grid-template-columns: 1fr;
     gap: 1px;

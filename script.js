@@ -28,6 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Закрытие меню по тапу вне него
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav') && !e.target.closest('.mobile-menu-btn')) {
+      navList.classList.remove('active');
+    }
+  });
+
   // 2. Подстановка race_id и загрузка информации о гонке
   const urlParams = new URLSearchParams(window.location.search);
   const raceId = urlParams.get('race') || urlParams.get('race_id'); // null → загрузить активную гонку
@@ -220,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getCurrentTier(tiers) {
     if (!Array.isArray(tiers) || !tiers.length) return null;
     const today = getTodayStr();
-    return [...tiers].reverse().find(t => t.date <= today) ?? null;
+    return [...tiers].sort((a, b) => a.date.localeCompare(b.date)).reverse().find(t => t.date <= today) ?? null;
   }
 
   function getUpcomingTiers(tiers) {
@@ -293,7 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Оплата: пояснительный текст ---
     if (race.payment_info) {
       const infoEl = document.getElementById('pay-info');
-      infoEl.innerHTML = `<strong>Оплата:</strong> ${race.payment_info}`;
+      infoEl.textContent = '';
+      const strong = document.createElement('strong');
+      strong.textContent = 'Оплата: ';
+      infoEl.appendChild(strong);
+      infoEl.appendChild(document.createTextNode(race.payment_info));
       infoEl.hidden = false;
     }
 
@@ -354,7 +365,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const kmEl = document.createElement('span');
         kmEl.className = 'km';
-        kmEl.innerHTML = `${c.distance_km}<small>км</small>`;
+        kmEl.textContent = c.distance_km;
+        const kmSmall = document.createElement('small');
+        kmSmall.textContent = 'км';
+        kmEl.appendChild(kmSmall);
 
         const lapsEl = document.createElement('span');
         lapsEl.className = 'meta';
@@ -450,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dynamic.innerHTML = '';
     contacts.forEach((item) => {
-      if (item.role && Array.isArray(item.entries)) {
+      if ('role' in item && Array.isArray(item.entries)) {
         const groupFrag = tplGroup.content.cloneNode(true);
         const div = groupFrag.querySelector('.socials');
         const h3 = div.querySelector('.contact-role');
@@ -461,7 +475,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if (entry.phone) {
             const linkFrag = tplLink.content.cloneNode(true);
             const a = linkFrag.querySelector('a');
-            a.href = `tel:${entry.phone.replace(/\s/g, '')}`;
+            const rawPhone = (entry.phone || '').trim();
+            a.href = /^\+?[\d()\-\s]+$/.test(rawPhone) ? `tel:${rawPhone.replace(/\s/g, '')}` : '#';
             a.textContent = label;
             div.appendChild(a);
           } else {
@@ -519,15 +534,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'sc-item' + (r.id === activeId ? ' active' : '');
-        btn.innerHTML = `
-          <span class="sc-stage">${r.stage || ''}</span>
-          <span class="sc-name">${r.name}</span>
-          <span class="sc-foot">
-            <span class="sc-date">${r.date_label || ''}</span>
-            <span class="sc-status st-${r.status}">
-              <span class="sb-dot dot-${r.status}"></span>${r.status_label || ''}
-            </span>
-          </span>`;
+
+        const stageEl = document.createElement('span');
+        stageEl.className = 'sc-stage';
+        stageEl.textContent = r.stage || '';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'sc-name';
+        nameEl.textContent = r.name;
+
+        const dotEl = document.createElement('span');
+        dotEl.className = `sb-dot dot-${r.status}`;
+
+        const statusEl = document.createElement('span');
+        statusEl.className = `sc-status st-${r.status}`;
+        statusEl.appendChild(dotEl);
+        statusEl.appendChild(document.createTextNode(r.status_label || ''));
+
+        const dateEl = document.createElement('span');
+        dateEl.className = 'sc-date';
+        dateEl.textContent = r.date_label || '';
+
+        const footEl = document.createElement('span');
+        footEl.className = 'sc-foot';
+        footEl.appendChild(dateEl);
+        footEl.appendChild(statusEl);
+
+        btn.appendChild(stageEl);
+        btn.appendChild(nameEl);
+        btn.appendChild(footEl);
         btn.addEventListener('click', () => {
           location.href = `?race=${encodeURIComponent(r.id)}`;
         });
