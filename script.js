@@ -264,6 +264,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentTier) {
       document.getElementById('pay-amount').textContent = currentTier.amount;
       if (upcoming.length) {
+        const untilEl = document.getElementById('pay-until');
+        const [uy, um, ud] = upcoming[0].date.split('-').map(Number);
+        untilEl.textContent = `до ${ud} ${MONTHS[um - 1]}`;
+        untilEl.hidden = false;
         const metaEl = document.getElementById('pay-meta');
         metaEl.innerHTML = upcoming.map(t => {
           const [y, m, d] = t.date.split('-').map(Number);
@@ -279,6 +283,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const metaEl = document.getElementById('pay-meta');
       metaEl.innerHTML = `С ${d} ${MONTHS[m - 1]} ${y} г.`;
       payEl.hidden = false;
+    }
+
+    // --- Оплата: пояснительный текст ---
+    if (race.payment_info) {
+      const infoEl = document.getElementById('pay-info');
+      infoEl.innerHTML = `<strong>Оплата:</strong> ${race.payment_info}`;
+      infoEl.hidden = false;
     }
 
     // --- Описание ---

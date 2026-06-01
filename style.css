@@ -371,6 +371,12 @@ html {
   margin-bottom: 0;
 }
 
+.pay-until {
+  color: #bdbdbd;
+  font-size: 0.82rem;
+  margin: -10px 0 14px;
+}
+
 .pay-meta {
   color: #bdbdbd;
   font-size: 0.85rem;
@@ -378,6 +384,16 @@ html {
   margin-top: 14px;
 }
 .pay-meta strong { color: #fff; font-weight: 500; }
+
+.pay-info {
+  color: #bdbdbd;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.pay-info strong { color: #fff; font-weight: 500; }
 
 /* Описание */
 .about-desc { margin-bottom: 24px; }
