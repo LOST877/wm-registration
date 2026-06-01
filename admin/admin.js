@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let status;
     if (isFinished == 1) status = 'done';
     else if (registrationOpen == 1) status = 'open';
-    else status = 'closed';
+    else status = 'closed'; // includes 'soon' — no separate UI state
     document.querySelectorAll('#race-reg-status button').forEach(b => {
       b.classList.toggle('on', b.dataset.status === status);
     });
