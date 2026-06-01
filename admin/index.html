@@ -155,8 +155,7 @@
             <button data-sec="rs-cats"><span class="ix">4</span>Категории</button>
             <button data-sec="rs-about"><span class="ix">5</span>Описание</button>
             <button data-sec="rs-payment"><span class="ix">6</span>Оплата</button>
-            <button data-sec="rs-banners"><span class="ix">7</span>Баннеры</button>
-            <button data-sec="rs-extra"><span class="ix">8</span>Доп. инфо</button>
+            <button data-sec="rs-extra"><span class="ix">7</span>Спонсоры</button>
           </nav>
           <div class="re-body-scroll">
             <form id="race-form">
@@ -178,6 +177,25 @@
                   <div class="re-field">
                     <label>Дата и время</label>
                     <input class="re-input" type="datetime-local" id="race-date" />
+                  </div>
+                </div>
+                <div class="re-subblock" style="margin-top:1.25rem">
+                  <p class="re-hint" style="margin-bottom:.75rem">Баннеры сайта — jpg/png/webp, макс. 5 MB</p>
+                  <div class="re-grid c2">
+                    <div class="re-field">
+                      <label>Десктопный баннер</label>
+                      <div id="banner-desktop-preview" class="banner-preview" style="margin-top:.5rem"></div>
+                      <input type="file" id="race-banner-desktop" accept=".jpg,.jpeg,.png,.webp" style="margin-top:.5rem" />
+                      <button type="button" id="upload-banner-desktop" class="re-addrow" style="margin-top:.5rem">Загрузить</button>
+                      <span class="upload-status" id="upload-status-desktop"></span>
+                    </div>
+                    <div class="re-field">
+                      <label>Мобильный баннер</label>
+                      <div id="banner-mobile-preview" class="banner-preview" style="margin-top:.5rem"></div>
+                      <input type="file" id="race-banner-mobile" accept=".jpg,.jpeg,.png,.webp" style="margin-top:.5rem" />
+                      <button type="button" id="upload-banner-mobile" class="re-addrow" style="margin-top:.5rem">Загрузить</button>
+                      <span class="upload-status" id="upload-status-mobile"></span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -260,40 +278,31 @@
                 </div>
               </div>
 
-              <!-- 7. Баннеры -->
-              <div class="re-section" id="rs-banners" style="display:none">
-                <div class="re-grid c2">
-                  <div class="re-field">
-                    <label>Десктопный баннер</label>
-                    <p class="re-hint">jpg/png/webp, макс. 5 MB</p>
-                    <div id="banner-desktop-preview" class="banner-preview" style="margin-top:.5rem"></div>
-                    <input type="file" id="race-banner-desktop" accept=".jpg,.jpeg,.png,.webp" style="margin-top:.5rem" />
-                    <button type="button" id="upload-banner-desktop" class="re-addrow" style="margin-top:.5rem">Загрузить</button>
-                    <span class="upload-status" id="upload-status-desktop"></span>
-                  </div>
-                  <div class="re-field">
-                    <label>Мобильный баннер</label>
-                    <p class="re-hint">jpg/png/webp, макс. 5 MB</p>
-                    <div id="banner-mobile-preview" class="banner-preview" style="margin-top:.5rem"></div>
-                    <input type="file" id="race-banner-mobile" accept=".jpg,.jpeg,.png,.webp" style="margin-top:.5rem" />
-                    <button type="button" id="upload-banner-mobile" class="re-addrow" style="margin-top:.5rem">Загрузить</button>
-                    <span class="upload-status" id="upload-status-mobile"></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 8. Доп. инфо -->
+              <!-- 7. Спонсоры и контакты -->
               <div class="re-section" id="rs-extra" style="display:none">
-                <div class="re-field">
-                  <label>Спонсоры</label>
-                  <p class="re-hint">Название и ссылка на сайт. Отображаются в подвале страницы гонки.</p>
-                  <div id="race-sponsors-editor" class="re-pairs" style="margin-top:.75rem"></div>
-                  <button type="button" id="add-sponsor-btn" class="re-addrow" style="margin-top:.5rem">+ Добавить спонсора</button>
+                <div class="re-subblock">
+                  <div class="re-field">
+                    <label>Спонсоры</label>
+                    <p class="re-hint">Название и ссылка на сайт. Отображаются в подвале страницы гонки.</p>
+                    <div id="race-sponsors-editor" class="re-pairs" style="margin-top:.75rem"></div>
+                    <button type="button" id="add-sponsor-btn" class="re-addrow" style="margin-top:.5rem">+ Добавить спонсора</button>
+                  </div>
                 </div>
-                <div class="re-field" style="margin-top:1.25rem">
-                  <label>Контакты (JSON)</label>
-                  <p class="re-hint">JSON-массив. {"role": "...", "entries": [{"name": "...", "phone": "..."}]}</p>
-                  <textarea class="re-textarea" id="race-contacts" rows="7" style="margin-top:.5rem"></textarea>
+                <div class="re-subblock">
+                  <div class="re-field">
+                    <label>Ссылки и ресурсы</label>
+                    <p class="re-hint">Положение, чат участников, маршрут, трансляция — любые полезные ссылки.</p>
+                    <div id="race-links-editor" class="re-pairs" style="margin-top:.75rem"></div>
+                    <button type="button" id="add-link-btn" class="re-addrow" style="margin-top:.5rem">+ Добавить ссылку</button>
+                  </div>
+                </div>
+                <div class="re-subblock">
+                  <div class="re-field">
+                    <label>Контактные лица</label>
+                    <p class="re-hint">Должность и список людей с именем и телефоном.</p>
+                    <div id="race-contacts-editor" class="re-groups" style="margin-top:.75rem"></div>
+                    <button type="button" id="add-contact-group-btn" class="re-addrow" style="margin-top:.5rem">+ Добавить должность</button>
+                  </div>
                 </div>
               </div>
 

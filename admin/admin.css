@@ -1724,6 +1724,64 @@ tr:hover {
   color: var(--wm-primary);
 }
 
+/* Sub-block separator within a section */
+.re-subblock + .re-subblock {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--wm-border);
+}
+
+/* Contact groups: role → people */
+.re-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.re-group {
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
+  background: var(--wm-bg-light);
+  padding: 12px;
+}
+
+.re-group-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 11px;
+}
+
+.re-group-role {
+  font-family: var(--wm-font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: var(--wm-text-strong);
+  background: #fff;
+  flex: 1;
+}
+
+.re-people {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-left: 12px;
+  border-left: 2px solid var(--wm-border-muted);
+}
+
+.re-person-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.re-addrow.sm {
+  padding: 7px 12px;
+  font-size: 0.72rem;
+}
+
 /* Sponsors pair rows */
 .re-pairs {
   display: flex;

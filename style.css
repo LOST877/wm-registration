@@ -69,11 +69,11 @@ html {
 
 .sc-item {
   flex: none;
-  min-width: 152px;
+  min-width: 176px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px 12px;
+  gap: 5px;
+  padding: 18px 22px 16px;
   border-top: 4px solid transparent;
   border-left: none;
   border-right: none;
@@ -101,7 +101,7 @@ html {
   font-family: var(--wm-font-display);
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -109,27 +109,27 @@ html {
   font-family: var(--wm-font-display);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: #fff;
   font-weight: 700;
   white-space: nowrap;
   line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 160px;
+  max-width: 180px;
 }
 
 .sc-foot {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 2px;
+  gap: 8px;
+  margin-top: 3px;
   flex-wrap: wrap;
 }
 
 .sc-date {
   font-family: var(--wm-font-body);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.62);
   white-space: nowrap;
 }
@@ -141,7 +141,7 @@ html {
   font-family: var(--wm-font-display);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-size: 0.6rem;
+  font-size: 0.68rem;
 }
 
 .sb-dot {
@@ -771,12 +771,12 @@ html {
   }
 
   .sc-item {
-    min-width: 130px;
-    padding: 12px 12px 10px;
+    min-width: 148px;
+    padding: 14px 14px 12px;
   }
 
   .sc-name {
-    max-width: 120px;
+    max-width: 140px;
   }
 
   .btn {

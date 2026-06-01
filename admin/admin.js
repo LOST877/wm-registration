@@ -277,20 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span><b>Дата</b> ${formatShortDate(race.date)}</span>
             ${race.location ? `<span class="rd-sep">·</span><span><b>Место</b> ${escapeHtml(race.location)}</span>` : ''}
           </div>
-          <div class="rd-toggles">
-            <label class="reg-toggle">
-              <input type="checkbox" class="toggle-open" data-race-id="${race.id}" ${race.registration_open == 1 ? 'checked' : ''} />
-              <span>Регистрация открыта</span>
-            </label>
-            <label class="reg-toggle">
-              <input type="checkbox" class="toggle-active" data-race-id="${race.id}" ${race.is_active == 1 ? 'checked' : ''} />
-              <span>Активная</span>
-            </label>
-            <label class="reg-toggle">
-              <input type="checkbox" class="toggle-finished" data-race-id="${race.id}" ${race.is_finished == 1 ? 'checked' : ''} />
-              <span>Завершена</span>
-            </label>
-          </div>
         </div>
         <div class="rd-kpis">
           <div class="kpi"><p class="kpi-label">Зарегистрировано</p><span class="kpi-val">${total}</span></div>
@@ -375,16 +361,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch { alert('Сетевая ошибка'); }
     });
 
-    // Тогглы
-    container.querySelector('.toggle-open')?.addEventListener('change', async (e) => {
-      await updateRaceField(race.id, 'registration_open', e.target.checked ? 1 : 0);
-    });
-    container.querySelector('.toggle-active')?.addEventListener('change', async (e) => {
-      await updateRaceField(race.id, 'is_active', e.target.checked ? 1 : 0);
-    });
-    container.querySelector('.toggle-finished')?.addEventListener('change', async (e) => {
-      await updateRaceField(race.id, 'is_finished', e.target.checked ? 1 : 0);
-    });
   }
 
   function renderDetailParticipants(race) {
@@ -621,7 +597,126 @@ document.addEventListener('DOMContentLoaded', () => {
       const url  = inputs[1]?.value.trim();
       if (name || url) result.push({ name: name || '', url: url || '' });
     });
-    return result.length ? JSON.stringify(result) : null;
+    return result;
+  }
+
+  // Contact links editor (Ссылки и ресурсы)
+  function renderContactLinksEditor(links) {
+    const container = document.getElementById('race-links-editor');
+    if (!container) return;
+    container.innerHTML = '';
+    (links || []).forEach(l => container.appendChild(buildContactLinkRow(l.name || '', l.link || '')));
+  }
+
+  function buildContactLinkRow(name, link) {
+    const row = document.createElement('div');
+    row.className = 're-pair-row';
+    row.innerHTML = `
+      <input class="re-input" type="text" placeholder="Название" value="${escapeHtml(name)}" />
+      <span class="re-linkwrap">
+        <i class="re-linkico">↗</i>
+        <input class="re-input" type="url" placeholder="https://" value="${escapeHtml(link)}" />
+      </span>
+      <button type="button" class="re-iconbtn" title="Удалить">×</button>
+    `;
+    row.querySelector('.re-iconbtn').addEventListener('click', () => row.remove());
+    return row;
+  }
+
+  document.getElementById('add-link-btn')?.addEventListener('click', () => {
+    document.getElementById('race-links-editor')?.appendChild(buildContactLinkRow('', ''));
+  });
+
+  function collectContactLinks() {
+    const rows = document.querySelectorAll('#race-links-editor .re-pair-row');
+    const result = [];
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const name = inputs[0]?.value.trim();
+      const link = inputs[1]?.value.trim();
+      if (name || link) result.push({ name: name || '', link: link || '' });
+    });
+    return result;
+  }
+
+  // Contact groups editor (Контактные лица)
+  function renderContactGroupsEditor(groups) {
+    const container = document.getElementById('race-contacts-editor');
+    if (!container) return;
+    container.innerHTML = '';
+    (groups || []).forEach(g => container.appendChild(buildContactGroupBlock(g.role || '', g.entries || [])));
+  }
+
+  function buildContactGroupBlock(role, people) {
+    const block = document.createElement('div');
+    block.className = 're-group';
+    const head = document.createElement('div');
+    head.className = 're-group-head';
+    head.innerHTML = `
+      <input class="re-input re-group-role" placeholder="Должность — напр. Организаторы" value="${escapeHtml(role)}" />
+      <button type="button" class="re-iconbtn" title="Удалить группу">×</button>
+    `;
+    head.querySelector('.re-iconbtn').addEventListener('click', () => block.remove());
+
+    const peopleDiv = document.createElement('div');
+    peopleDiv.className = 're-people';
+    (people || []).forEach(p => peopleDiv.appendChild(buildPersonRow(p.name || '', p.phone || '')));
+
+    const addPersonBtn = document.createElement('button');
+    addPersonBtn.type = 'button';
+    addPersonBtn.className = 're-addrow sm';
+    addPersonBtn.textContent = '+ Добавить человека';
+    addPersonBtn.addEventListener('click', () => {
+      peopleDiv.insertBefore(buildPersonRow('', ''), addPersonBtn);
+    });
+    peopleDiv.appendChild(addPersonBtn);
+
+    block.appendChild(head);
+    block.appendChild(peopleDiv);
+    return block;
+  }
+
+  function buildPersonRow(name, phone) {
+    const row = document.createElement('div');
+    row.className = 're-person-row';
+    row.innerHTML = `
+      <input class="re-input" placeholder="Имя Фамилия" value="${escapeHtml(name)}" />
+      <input class="re-input" placeholder="+7 (___) ___-__-__" value="${escapeHtml(phone)}" />
+      <button type="button" class="re-iconbtn" title="Удалить">×</button>
+    `;
+    row.querySelector('.re-iconbtn').addEventListener('click', () => row.remove());
+    return row;
+  }
+
+  document.getElementById('add-contact-group-btn')?.addEventListener('click', () => {
+    const container = document.getElementById('race-contacts-editor');
+    const addBtn = document.getElementById('add-contact-group-btn');
+    if (container && addBtn) {
+      container.appendChild(buildContactGroupBlock('', [{ name: '', phone: '' }]));
+    }
+  });
+
+  function collectContactGroups() {
+    const result = [];
+    document.querySelectorAll('#race-contacts-editor .re-group').forEach(block => {
+      const role = block.querySelector('.re-group-role')?.value.trim() || '';
+      const entries = [];
+      block.querySelectorAll('.re-person-row').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        const name  = inputs[0]?.value.trim();
+        const phone = inputs[1]?.value.trim();
+        if (name || phone) entries.push({ name: name || '', phone: phone || '' });
+      });
+      if (role || entries.length) result.push({ role, entries });
+    });
+    return result;
+  }
+
+  function buildContactsJson() {
+    const links  = collectContactLinks();
+    const groups = collectContactGroups();
+    const all = [...links, ...groups];
+    return all.length ? JSON.stringify(all) : null;
   }
 
   function setBannerPreview(previewEl, filename, alt) {
@@ -701,7 +796,26 @@ document.addEventListener('DOMContentLoaded', () => {
     try { sponsorsArr = JSON.parse(race.sponsors_json) || []; } catch (_) {}
     renderSponsorsEditor(Array.isArray(sponsorsArr) ? sponsorsArr : []);
 
-    document.getElementById('race-contacts').value = prettyJson(race.contacts_json);
+    // Split contacts_json into links and contact groups
+    let contactLinks = [], contactGroups = [];
+    try {
+      const contactsRaw = JSON.parse(race.contacts_json);
+      if (Array.isArray(contactsRaw)) {
+        contactsRaw.forEach(item => {
+          if (item && item.role !== undefined) {
+            contactGroups.push(item);
+          } else if (item && item.name !== undefined && item.link !== undefined) {
+            contactLinks.push(item);
+          } else if (item && typeof item === 'object') {
+            // legacy single-key format: {"Текст": "url"}
+            const keys = Object.keys(item);
+            if (keys.length === 1) contactLinks.push({ name: keys[0], link: item[keys[0]] });
+          }
+        });
+      }
+    } catch (_) {}
+    renderContactLinksEditor(contactLinks);
+    renderContactGroupsEditor(contactGroups);
 
     ['upload-status-desktop', 'upload-status-mobile'].forEach(id => {
       const el = document.getElementById(id);
@@ -803,8 +917,8 @@ document.addEventListener('DOMContentLoaded', () => {
       is_active:     document.getElementById('race-is-active').checked ? 1 : 0,
       registration_open: regStatus.registration_open,
       is_finished:       regStatus.is_finished,
-      sponsors_json: collectSponsors(),
-      contacts_json: document.getElementById('race-contacts').value.trim() || null,
+      sponsors_json: (() => { const s = collectSponsors(); return s.length ? JSON.stringify(s) : null; })(),
+      contacts_json: buildContactsJson(),
     };
 
     if (!formData.name) { alert('Название гонки не может быть пустым'); return; }
