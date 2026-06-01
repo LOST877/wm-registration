@@ -471,7 +471,20 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         dynamic.appendChild(groupFrag);
+      } else if (item.name !== undefined && item.link !== undefined) {
+        // Формат {name, link} из редактора "Ссылки и ресурсы"
+        const div = document.createElement('div');
+        div.className = 'socials';
+        const linkFrag = tplLink.content.cloneNode(true);
+        const a = linkFrag.querySelector('a');
+        a.href = isSafeUrl(item.link) ? item.link : '#';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = item.name;
+        div.appendChild(a);
+        dynamic.appendChild(div);
       } else {
+        // legacy single-key format: {"Текст": "url"}
         const linkKey = Object.keys(item).find((k) => k !== 'role' && k !== 'entries');
         if (linkKey && typeof item[linkKey] === 'string') {
           const div = document.createElement('div');
