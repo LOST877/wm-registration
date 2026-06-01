@@ -40,11 +40,12 @@ html {
 
 /* --- ПЕРЕКЛЮЧАТЕЛЬ ГОНОК (SCOREBOARD) --- */
 .scoreboard {
-  position: relative;
-  z-index: 2;
-  background: rgba(10, 10, 10, 0.82);
-  backdrop-filter: blur(2px);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  position: sticky;
+  top: 70px; /* обновляется через JS по реальной высоте хедера */
+  z-index: 99;
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sb-rail {
@@ -277,7 +278,7 @@ html {
   height: 100vh;
   min-height: 600px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   /* ФОНОВОЕ ФОТО. Сюда нужно вставить ссылку на ваше фото гонщика */
   background-image: url('assets/banner.png');
   background-size: cover;
@@ -296,9 +297,9 @@ html {
 }
 
 .hero-body {
-  flex: 1;
   display: flex;
   align-items: center;
+  width: 100%;
   position: relative;
   z-index: 1;
 }

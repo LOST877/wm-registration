@@ -35,7 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Прижимаем hero под фиксированный хедер по его реальной высоте
   const headerEl = document.querySelector('.header');
   const heroEl = document.querySelector('.hero');
-  if (headerEl && heroEl) heroEl.style.marginTop = headerEl.offsetHeight + 'px';
+  const scoreboardEl = document.getElementById('race-scoreboard');
+  if (headerEl) {
+    const h = headerEl.offsetHeight;
+    if (heroEl) heroEl.style.marginTop = h + 'px';
+    if (scoreboardEl) scoreboardEl.style.top = h + 'px';
+  }
 
   // Загрузка информации о гонке
   loadRaceInfo(raceId);
