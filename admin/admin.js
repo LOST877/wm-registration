@@ -540,9 +540,89 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Race Edit Modal ────────────────────────────────────────────────────
   const raceCloseBtn  = document.getElementById('race-close-btn');
   const raceCancelBtn = document.getElementById('race-cancel-btn');
+  const raceSaveBtn   = document.getElementById('race-save-btn');
   const raceForm      = document.getElementById('race-form');
   const tplBannerImg  = document.getElementById('tpl-banner-img');
   const tplBannerEmpty = document.getElementById('tpl-banner-empty');
+
+  // Sidebar nav: click section button → show corresponding section panel
+  document.querySelectorAll('.re-nav button[data-sec]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.re-nav button[data-sec]').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      document.querySelectorAll('#race-form .re-section').forEach(s => { s.style.display = 'none'; });
+      const sec = document.getElementById(btn.dataset.sec);
+      if (sec) sec.style.display = '';
+    });
+  });
+
+  // Status segmented control
+  document.querySelectorAll('#race-reg-status button[data-status]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#race-reg-status button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+    });
+  });
+
+  function setRegStatus(registrationOpen, isFinished) {
+    let status;
+    if (isFinished == 1) status = 'done';
+    else if (registrationOpen == 1) status = 'open';
+    else status = 'closed';
+    document.querySelectorAll('#race-reg-status button').forEach(b => {
+      b.classList.toggle('on', b.dataset.status === status);
+    });
+  }
+
+  function getRegStatus() {
+    const active = document.querySelector('#race-reg-status button.on');
+    const s = active?.dataset.status || 'closed';
+    return {
+      registration_open: s === 'open' ? 1 : 0,
+      is_finished: s === 'done' ? 1 : 0,
+    };
+  }
+
+  // Sponsors structured editor
+  function renderSponsorsEditor(sponsors) {
+    const container = document.getElementById('race-sponsors-editor');
+    if (!container) return;
+    container.innerHTML = '';
+    (sponsors || []).forEach(sp => {
+      container.appendChild(buildSponsorRow(sp.name || '', sp.url || ''));
+    });
+  }
+
+  function buildSponsorRow(name, url) {
+    const row = document.createElement('div');
+    row.className = 're-pair-row';
+    row.innerHTML = `
+      <input class="re-input" type="text" placeholder="Название спонсора" value="${escapeHtml(name)}" />
+      <span class="re-linkwrap">
+        <i class="re-linkico">↗</i>
+        <input class="re-input" type="url" placeholder="https://" value="${escapeHtml(url)}" />
+      </span>
+      <button type="button" class="re-iconbtn" title="Удалить">×</button>
+    `;
+    row.querySelector('.re-iconbtn').addEventListener('click', () => row.remove());
+    return row;
+  }
+
+  document.getElementById('add-sponsor-btn')?.addEventListener('click', () => {
+    document.getElementById('race-sponsors-editor')?.appendChild(buildSponsorRow('', ''));
+  });
+
+  function collectSponsors() {
+    const rows = document.querySelectorAll('#race-sponsors-editor .re-pair-row');
+    const result = [];
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const name = inputs[0]?.value.trim();
+      const url  = inputs[1]?.value.trim();
+      if (name || url) result.push({ name: name || '', url: url || '' });
+    });
+    return result.length ? JSON.stringify(result) : null;
+  }
 
   function setBannerPreview(previewEl, filename, alt) {
     previewEl.innerHTML = '';
@@ -557,44 +637,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function buildTierRow(date, amount) {
+    const row = document.createElement('div');
+    row.className = 're-sched-row';
+    row.innerHTML = `
+      <input type="date" class="re-input tier-date" value="${date || ''}" />
+      <input type="number" class="re-input tier-amount" value="${amount ?? ''}" min="0" step="1" placeholder="Сумма, руб." />
+      <button type="button" class="re-iconbtn btn-tier-remove" title="Удалить">×</button>
+    `;
+    row.querySelector('.btn-tier-remove').addEventListener('click', () => row.remove());
+    return row;
+  }
+
   function renderPaymentTiersList(tiers) {
     const container = document.getElementById('payment-tiers-list');
     if (!container) return;
     container.innerHTML = '';
-    (tiers || []).forEach((tier, idx) => {
-      const row = document.createElement('div');
-      row.className = 'tier-row';
-      row.innerHTML = `
-        <input type="date" class="tier-date" value="${tier.date || ''}" />
-        <input type="number" class="tier-amount" value="${tier.amount ?? ''}" min="0" step="1" placeholder="Сумма, руб." />
-        <button type="button" class="btn-tier-remove" data-idx="${idx}">×</button>
-      `;
-      container.appendChild(row);
-    });
-
-    container.querySelectorAll('.btn-tier-remove').forEach(btn => {
-      btn.addEventListener('click', () => {
-        btn.closest('.tier-row').remove();
-      });
+    (tiers || []).forEach(tier => {
+      container.appendChild(buildTierRow(tier.date, tier.amount));
     });
   }
 
   document.getElementById('add-tier-btn')?.addEventListener('click', () => {
-    const container = document.getElementById('payment-tiers-list');
-    if (!container) return;
-    const row = document.createElement('div');
-    row.className = 'tier-row';
-    row.innerHTML = `
-      <input type="date" class="tier-date" />
-      <input type="number" class="tier-amount" min="0" step="1" placeholder="Сумма, руб." />
-      <button type="button" class="btn-tier-remove">×</button>
-    `;
-    row.querySelector('.btn-tier-remove').addEventListener('click', () => row.remove());
-    container.appendChild(row);
+    document.getElementById('payment-tiers-list')?.appendChild(buildTierRow('', ''));
   });
 
   function collectPaymentTiers() {
-    const rows = document.querySelectorAll('#payment-tiers-list .tier-row');
+    const rows = document.querySelectorAll('#payment-tiers-list .re-sched-row');
     const tiers = [];
     rows.forEach(row => {
       const date   = row.querySelector('.tier-date')?.value.trim();
@@ -606,12 +675,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openRaceEditModal(race) {
-    document.querySelectorAll('#race-form .md-preview').forEach(p => { p.style.display = 'none'; });
-    document.querySelectorAll('#race-form textarea').forEach(t => { t.style.display = ''; });
-    document.querySelectorAll('#race-form .md-preview-toggle').forEach(b => { b.textContent = 'Предпросмотр'; });
+    // Subtitle
+    const subtitle = document.getElementById('race-modal-subtitle');
+    if (subtitle) subtitle.textContent = [race.stage, race.race_name].filter(Boolean).join(' · ');
 
     document.getElementById('race-edit-id').value       = race.id;
     document.getElementById('race-name').value          = race.race_name || '';
+    document.getElementById('race-stage').value         = race.stage || '';
     document.getElementById('race-date').value          = race.date ? race.date.replace(' ', 'T').slice(0, 16) : '';
     document.getElementById('race-location').value      = race.location || '';
     document.getElementById('race-location-link').value = race.location_link || '';
@@ -620,12 +690,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('race-payment').value       = race.payment_info || '';
     document.getElementById('race-is-active').checked   = race.is_active == 1;
 
+    setRegStatus(race.registration_open, race.is_finished);
     renderPaymentTiersList(race.payment_tiers || []);
 
     setBannerPreview(document.getElementById('banner-desktop-preview'), race.banner_desktop, 'Desktop');
     setBannerPreview(document.getElementById('banner-mobile-preview'), race.banner_mobile, 'Mobile');
 
-    document.getElementById('race-sponsors').value = prettyJson(race.sponsors_json);
+    // Sponsors structured editor
+    let sponsorsArr = [];
+    try { sponsorsArr = JSON.parse(race.sponsors_json) || []; } catch (_) {}
+    renderSponsorsEditor(Array.isArray(sponsorsArr) ? sponsorsArr : []);
+
     document.getElementById('race-contacts').value = prettyJson(race.contacts_json);
 
     ['upload-status-desktop', 'upload-status-mobile'].forEach(id => {
@@ -637,27 +712,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (el) el.value = '';
     });
 
-    renderRaceCategoryList(race.id);
-
-    const addInput = document.getElementById('race-category-add-input');
-    const addBtnEl = document.getElementById('race-category-add-btn');
     const statusEl = document.getElementById('race-category-status');
-    if (addInput) addInput.value = '';
     if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
 
-    if (addBtnEl) {
-      const newBtn = addBtnEl.cloneNode(true);
-      addBtnEl.parentNode.replaceChild(newBtn, addBtnEl);
-      newBtn.addEventListener('click', () => handleCatAdd(race.id));
-    }
-    if (addInput) {
-      addInput.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); handleCatAdd(race.id); } };
-    }
+    renderRaceCategoryList(race.id);
+    renderCatAddChips(race.id);
+
+    // Reset sidebar nav to first section
+    document.querySelectorAll('.re-nav button[data-sec]').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.querySelectorAll('#race-form .re-section').forEach((s, i) => { s.style.display = i === 0 ? '' : 'none'; });
 
     raceModal.style.display = 'flex';
   }
 
-  function closeRaceEditModal() { raceModal.style.display = 'none'; }
+  function closeRaceEditModal() {
+    raceModal.style.display = 'none';
+    document.querySelectorAll('.re-nav button[data-sec]').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.querySelectorAll('#race-form .re-section').forEach((s, i) => { s.style.display = i === 0 ? '' : 'none'; });
+  }
 
   raceCloseBtn?.addEventListener('click', closeRaceEditModal);
   raceCancelBtn?.addEventListener('click', closeRaceEditModal);
@@ -712,26 +784,32 @@ document.addEventListener('DOMContentLoaded', () => {
   setupUploadBtn('upload-banner-mobile',  'race-banner-mobile',  'mobile',  'upload-status-mobile',  'banner-mobile-preview');
 
   // Сохранение гонки
-  raceForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  async function saveRace() {
     const tiersArr = collectPaymentTiers();
+    const regStatus = getRegStatus();
+    const tiersJson = tiersArr.length ? JSON.stringify(tiersArr) : null;
+
     const formData = {
       id:            parseInt(document.getElementById('race-edit-id').value),
       name:          document.getElementById('race-name').value.trim(),
+      stage:         document.getElementById('race-stage').value.trim() || null,
       date:          document.getElementById('race-date').value || null,
       location:      document.getElementById('race-location').value.trim(),
       location_link: document.getElementById('race-location-link').value.trim(),
       iframe_html:   document.getElementById('race-iframe').value.trim(),
       description:   document.getElementById('race-description').value.trim(),
       payment_info:  document.getElementById('race-payment').value.trim(),
-      payment_tiers: tiersArr.length ? JSON.stringify(tiersArr) : null,
+      payment_tiers: tiersJson,
       is_active:     document.getElementById('race-is-active').checked ? 1 : 0,
-      sponsors_json: document.getElementById('race-sponsors').value.trim() || null,
+      registration_open: regStatus.registration_open,
+      is_finished:       regStatus.is_finished,
+      sponsors_json: collectSponsors(),
       contacts_json: document.getElementById('race-contacts').value.trim() || null,
     };
 
     if (!formData.name) { alert('Название гонки не может быть пустым'); return; }
 
+    if (raceSaveBtn) raceSaveBtn.disabled = true;
     try {
       const res = await fetch('../api/admin/race_update.php', {
         method: 'POST',
@@ -749,7 +827,11 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(result.error || 'Ошибка сохранения');
       }
     } catch { alert('Сетевая ошибка'); }
-  });
+    finally { if (raceSaveBtn) raceSaveBtn.disabled = false; }
+  }
+
+  raceSaveBtn?.addEventListener('click', saveRace);
+  raceForm?.addEventListener('submit', (e) => { e.preventDefault(); saveRace(); });
 
   // ── Category Management ────────────────────────────────────────────────
   function renderRaceCategoryList(raceId) {
@@ -762,9 +844,8 @@ document.addEventListener('DOMContentLoaded', () => {
     list.innerHTML = '';
     race.categories.forEach((cat, idx) => {
       const frag = tpl.content.cloneNode(true);
-      const item = frag.querySelector('.race-category-item');
+      const item = frag.querySelector('.re-cat');
       item.dataset.rcId = cat.race_category_id;
-      item.querySelector('.cat-name').textContent = cat.category_name;
 
       const upBtn     = item.querySelector('.btn-cat-up');
       const downBtn   = item.querySelector('.btn-cat-down');
@@ -775,17 +856,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (idx === 0) upBtn.disabled = true;
       if (idx === race.categories.length - 1) downBtn.disabled = true;
 
-      // Заполняем поля деталей
-      item.querySelector('.cat-age-from').value   = cat.age_from != null ? cat.age_from : '';
-      item.querySelector('.cat-age-to').value     = cat.age_to   != null ? cat.age_to   : '';
-      item.querySelector('.cat-distance').value   = cat.distance_km != null ? cat.distance_km : '';
-      item.querySelector('.cat-laps').value        = cat.laps       != null ? cat.laps       : '';
+      item.querySelector('.cat-name-input').value  = cat.category_name || '';
+      item.querySelector('.cat-distance').value    = cat.distance_km != null ? cat.distance_km : '';
+      item.querySelector('.cat-laps').value        = cat.laps        != null ? cat.laps        : '';
       item.querySelector('.cat-elevation').value   = cat.elevation_m != null ? cat.elevation_m : '';
       item.querySelector('.cat-description').value = cat.description || '';
+      item.querySelector('.cat-age-from').value    = cat.age_from   != null ? cat.age_from   : '';
+      item.querySelector('.cat-age-to').value      = cat.age_to     != null ? cat.age_to     : '';
 
-      // Кнопка сохранения деталей
       item.querySelector('.btn-cat-save-details').dataset.rcId = cat.race_category_id;
-      item.querySelector('.btn-cat-save-details').addEventListener('click', async (e) => {
+      item.querySelector('.btn-cat-save-details').addEventListener('click', async () => {
         await handleCatSaveDetails(raceId, cat.race_category_id, item);
       });
 
@@ -793,6 +873,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     bindCategoryListHandlers(raceId);
+  }
+
+  function renderCatAddChips(raceId) {
+    const container = document.getElementById('race-cat-add-chips');
+    if (!container) return;
+    const race = racesData.find(r => r.id === raceId);
+    const usedNames = (race?.categories || []).map(c => c.category_name);
+    const avail = allCategoriesData.filter(c => !usedNames.includes(c.name));
+    container.innerHTML = '';
+    avail.forEach(c => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 're-chip ghost';
+      btn.textContent = '+ ' + c.name;
+      btn.addEventListener('click', () => handleCatAddByName(raceId, c.name));
+      container.appendChild(btn);
+    });
+    // "custom" chip
+    const custom = document.createElement('button');
+    custom.type = 'button';
+    custom.className = 're-chip ghost';
+    custom.textContent = '+ Своя категория';
+    custom.addEventListener('click', () => {
+      const name = prompt('Название новой категории:');
+      if (name?.trim()) handleCatAddByName(raceId, name.trim());
+    });
+    container.appendChild(custom);
+  }
+
+  async function handleCatAddByName(raceId, name) {
+    const status = document.getElementById('race-category-status');
+    status.textContent = ''; status.style.color = '';
+    try {
+      const res = await fetch('../api/admin/race_category.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', race_id: raceId, name }),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        const race = racesData.find(r => r.id === raceId);
+        if (race) race.categories.push({
+          id: result.category_id, category_name: result.category_name,
+          race_category_id: result.race_category_id, sort_order: result.sort_order,
+        });
+        renderRaceCategoryList(raceId);
+        renderCatAddChips(raceId);
+      } else {
+        status.textContent = result.error || 'Ошибка'; status.style.color = 'var(--wm-danger)';
+      }
+    } catch { status.textContent = 'Сетевая ошибка'; status.style.color = 'var(--wm-danger)'; }
   }
 
   async function handleCatSaveDetails(raceId, rcId, item) {
@@ -853,10 +985,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = document.getElementById('race-category-edit-list');
     if (!list) return;
     const newList = list.cloneNode(true);
-    // Re-wire save-details buttons
     newList.querySelectorAll('.btn-cat-save-details').forEach(btn => {
       btn.addEventListener('click', async () => {
-        await handleCatSaveDetails(raceId, parseInt(btn.dataset.rcId), btn.closest('.race-category-item'));
+        await handleCatSaveDetails(raceId, parseInt(btn.dataset.rcId), btn.closest('.re-cat'));
       });
     });
     list.parentNode.replaceChild(newList, list);
@@ -875,39 +1006,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await handleCatReorder(raceId, 'down', rcId);
       }
     });
-  }
-
-  async function handleCatAdd(raceId) {
-    const input  = document.getElementById('race-category-add-input');
-    const status = document.getElementById('race-category-status');
-    const addBtn = document.getElementById('race-category-add-btn');
-    const name = input.value.trim();
-    if (!name) return;
-
-    addBtn.disabled = true;
-    status.textContent = ''; status.style.color = '';
-
-    try {
-      const res = await fetch('../api/admin/race_category.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add', race_id: raceId, name }),
-        credentials: 'same-origin',
-      });
-      const result = await res.json();
-      if (res.ok && result.success) {
-        const race = racesData.find(r => r.id === raceId);
-        if (race) race.categories.push({
-          id: result.category_id, category_name: result.category_name,
-          race_category_id: result.race_category_id, sort_order: result.sort_order,
-        });
-        input.value = '';
-        renderRaceCategoryList(raceId);
-      } else {
-        status.textContent = result.error || 'Ошибка'; status.style.color = 'var(--wm-danger)';
-      }
-    } catch { status.textContent = 'Сетевая ошибка'; status.style.color = 'var(--wm-danger)'; }
-    finally { addBtn.disabled = false; }
   }
 
   async function handleCatRemove(raceId, rcId, catName) {
@@ -929,6 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const race = racesData.find(r => r.id === raceId);
         if (race) race.categories = race.categories.filter(c => c.race_category_id !== rcId);
         renderRaceCategoryList(raceId);
+        renderCatAddChips(raceId);
       } else { status.textContent = result.error || 'Ошибка'; status.style.color = 'var(--wm-danger)'; }
     }
     try { await doRemove(false); } catch { status.textContent = 'Сетевая ошибка'; status.style.color = 'var(--wm-danger)'; }

@@ -486,30 +486,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadRaceSwitcher(currentId) {
-    const switcher = document.getElementById('race-switcher');
-    if (!switcher) return;
+    const scoreboard = document.getElementById('race-scoreboard');
+    if (!scoreboard) return;
     try {
       const res = await fetch('api/races.php');
       const races = await res.json();
       if (!Array.isArray(races) || races.length < 2) return;
 
       const activeId = currentId ? parseInt(currentId, 10) : null;
-      const tpl = document.getElementById('tpl-race-tab');
-      switcher.innerHTML = '';
+      const rail = scoreboard.querySelector('.sb-rail');
+      rail.innerHTML = '';
+
       races.forEach((r) => {
-        const frag = tpl.content.cloneNode(true);
-        const a = frag.querySelector('.race-tab');
-        a.href = `?race=${encodeURIComponent(r.id)}`;
-        a.textContent = r.name;
-        if (r.id === activeId) a.classList.add('active');
-        switcher.appendChild(frag);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sc-item' + (r.id === activeId ? ' active' : '');
+        btn.innerHTML = `
+          <span class="sc-stage">${r.stage || ''}</span>
+          <span class="sc-name">${r.name}</span>
+          <span class="sc-foot">
+            <span class="sc-date">${r.date_label || ''}</span>
+            <span class="sc-status st-${r.status}">
+              <span class="sb-dot dot-${r.status}"></span>${r.status_label || ''}
+            </span>
+          </span>`;
+        btn.addEventListener('click', () => {
+          location.href = `?race=${encodeURIComponent(r.id)}`;
+        });
+        rail.appendChild(btn);
       });
 
-      const header = document.querySelector('.header');
-      if (header) header.classList.add('has-switcher');
-      switcher.style.display = '';
-      const hero = document.querySelector('.hero');
-      if (hero) hero.style.marginTop = (header ? header.offsetHeight : 60) + 'px';
+      scoreboard.style.display = '';
     } catch (err) {
       console.warn('Не удалось загрузить список гонок:', err);
     }

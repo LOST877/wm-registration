@@ -138,139 +138,173 @@
     </div>
 
     <!-- Модальное окно редактирования гонки -->
-    <div id="race-modal" class="modal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Редактирование гонки</h3>
-          <button id="race-close-btn" class="close-btn">&times;</button>
+    <div id="race-modal" class="re-scrim" style="display:none">
+      <div class="re-modal">
+        <div class="re-mhead">
+          <div class="titles">
+            <h3>Редактирование гонки</h3>
+            <p class="sub" id="race-modal-subtitle"></p>
+          </div>
+          <button id="race-close-btn" class="re-x">&times;</button>
         </div>
-        <form id="race-form">
-          <input type="hidden" id="race-edit-id" />
+        <div class="re-split">
+          <nav class="re-nav">
+            <button class="on" data-sec="rs-main"><span class="ix">1</span>Основное</button>
+            <button data-sec="rs-place"><span class="ix">2</span>Место</button>
+            <button data-sec="rs-status"><span class="ix">3</span>Статус</button>
+            <button data-sec="rs-cats"><span class="ix">4</span>Категории</button>
+            <button data-sec="rs-about"><span class="ix">5</span>Описание</button>
+            <button data-sec="rs-payment"><span class="ix">6</span>Оплата</button>
+            <button data-sec="rs-banners"><span class="ix">7</span>Баннеры</button>
+            <button data-sec="rs-extra"><span class="ix">8</span>Доп. инфо</button>
+          </nav>
+          <div class="re-body-scroll">
+            <form id="race-form">
+              <input type="hidden" id="race-edit-id" />
 
-          <div class="form-section">
-            <h4 class="form-section-title">Основное</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="race-name">Название гонки *</label>
-                <input type="text" id="race-name" required />
+              <!-- 1. Основное -->
+              <div class="re-section" id="rs-main">
+                <div class="re-grid c3">
+                  <div class="re-field span2">
+                    <label>Название гонки <span class="star">*</span></label>
+                    <input class="re-input" type="text" id="race-name" required />
+                  </div>
+                  <div class="re-field">
+                    <label>Этап серии</label>
+                    <input class="re-input" type="text" id="race-stage" placeholder="Этап 01" />
+                  </div>
+                </div>
+                <div class="re-grid c2" style="margin-top:1rem">
+                  <div class="re-field">
+                    <label>Дата и время</label>
+                    <input class="re-input" type="datetime-local" id="race-date" />
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <label for="race-date">Дата и время</label>
-                <input type="datetime-local" id="race-date" />
+
+              <!-- 2. Место -->
+              <div class="re-section" id="rs-place" style="display:none">
+                <div class="re-grid c2">
+                  <div class="re-field">
+                    <label>Адрес / место проведения</label>
+                    <input class="re-input" type="text" id="race-location" />
+                  </div>
+                  <div class="re-field">
+                    <label>Ссылка на карту</label>
+                    <input class="re-input" type="url" id="race-location-link" placeholder="https://yandex.ru/maps/..." />
+                  </div>
+                </div>
+                <div class="re-field" style="margin-top:1rem">
+                  <label>Embed-код карты</label>
+                  <textarea class="re-textarea" id="race-iframe" rows="3" placeholder="&lt;iframe ...&gt;&lt;/iframe&gt;"></textarea>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div class="form-section">
-            <h4 class="form-section-title">Место проведения</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="race-location">Адрес</label>
-                <input type="text" id="race-location" />
+              <!-- 3. Статус -->
+              <div class="re-section" id="rs-status" style="display:none">
+                <div class="re-field">
+                  <label>Статус регистрации</label>
+                  <p class="re-hint">Определяет надпись и кнопку на публичной странице гонки.</p>
+                  <div class="re-seg" id="race-reg-status" style="margin-top:.5rem">
+                    <button type="button" data-status="open">Открыта</button>
+                    <button type="button" data-status="closed">Закрыта</button>
+                    <button type="button" data-status="soon">Скоро</button>
+                    <button type="button" data-status="done">Завершена</button>
+                  </div>
+                </div>
+                <div class="re-field" style="margin-top:1.25rem">
+                  <label>Отображение на главной</label>
+                  <div class="re-toggle-wrap" style="margin-top:.4rem">
+                    <label class="re-switch">
+                      <input type="checkbox" id="race-is-active" />
+                      <span class="track"></span><span class="knob"></span>
+                    </label>
+                    <span id="race-is-active-label">Активная гонка</span>
+                  </div>
+                  <p class="re-hint">Только одна гонка может быть активной. При включении остальные автоматически отключатся.</p>
+                </div>
               </div>
-              <div class="form-group">
-                <label for="race-location-link">Ссылка на карту</label>
-                <input type="url" id="race-location-link" placeholder="https://yandex.ru/maps/..." />
+
+              <!-- 4. Категории -->
+              <div class="re-section" id="rs-cats" style="display:none">
+                <div class="re-field">
+                  <label>Категории зачёта <span class="star">*</span></label>
+                  <p class="re-hint">Нажмите «×», чтобы убрать категорию. Порядок определяется кнопками ▲▼.</p>
+                  <div id="race-category-edit-list" class="re-cats-edit" style="margin-top:.75rem"></div>
+                  <div class="re-cat-add" id="race-cat-add-chips" style="margin-top:.5rem"></div>
+                  <span id="race-category-status" class="race-category-status" style="margin-top:.5rem;display:block"></span>
+                </div>
               </div>
-            </div>
-            <div class="form-group">
-              <label for="race-iframe">Embed-код карты</label>
-              <textarea id="race-iframe" rows="3" placeholder="<iframe ...></iframe>"></textarea>
-            </div>
-          </div>
 
-          <div class="form-section">
-            <h4 class="form-section-title">Описание</h4>
-            <div class="form-group">
-              <label for="race-description">Описание гонки</label>
-              <textarea id="race-description" rows="4"></textarea>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h4 class="form-section-title">Оплата</h4>
-            <div class="form-group">
-              <label for="race-payment">Информация об оплате (markdown)</label>
-              <textarea id="race-payment" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Тарифная сетка</label>
-              <small class="field-hint">Каждая строка: <code>ГГГГ-ММ-ДД сумма</code> (напр. <code>2026-04-01 800</code>). Текущая цена определяется последней наступившей датой.</small>
-              <div id="payment-tiers-list" class="payment-tiers-list"></div>
-              <button type="button" id="add-tier-btn" class="btn-add-tier">+ Добавить тариф</button>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h4 class="form-section-title">Статус</h4>
-            <div class="form-group form-checkbox">
-              <label class="reg-toggle">
-                <input type="checkbox" id="race-is-active" />
-                <span>Активная гонка (отображается на главной странице)</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h4 class="form-section-title">Баннеры</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Десктопный баннер (jpg/png/webp, макс. 5 MB)</label>
-                <div id="banner-desktop-preview" class="banner-preview"></div>
-                <input type="file" id="race-banner-desktop" accept=".jpg,.jpeg,.png,.webp" />
-                <button type="button" id="upload-banner-desktop" class="btn-upload">Загрузить</button>
-                <span class="upload-status" id="upload-status-desktop"></span>
+              <!-- 5. Описание -->
+              <div class="re-section" id="rs-about" style="display:none">
+                <div class="re-field">
+                  <label>Описание гонки</label>
+                  <p class="re-hint">Текст для блока «О гонке». Поддерживается Markdown.</p>
+                  <textarea class="re-textarea" id="race-description" rows="10" style="margin-top:.5rem"></textarea>
+                </div>
               </div>
-              <div class="form-group">
-                <label>Мобильный баннер (jpg/png/webp, макс. 5 MB)</label>
-                <div id="banner-mobile-preview" class="banner-preview"></div>
-                <input type="file" id="race-banner-mobile" accept=".jpg,.jpeg,.png,.webp" />
-                <button type="button" id="upload-banner-mobile" class="btn-upload">Загрузить</button>
-                <span class="upload-status" id="upload-status-mobile"></span>
+
+              <!-- 6. Оплата -->
+              <div class="re-section" id="rs-payment" style="display:none">
+                <div class="re-field">
+                  <label>Информация об оплате</label>
+                  <p class="re-hint">Описание способов оплаты, реквизиты и т.д. Поддерживается Markdown.</p>
+                  <textarea class="re-textarea" id="race-payment" rows="4" style="margin-top:.5rem"></textarea>
+                </div>
+                <div class="re-field" style="margin-top:1.25rem">
+                  <label>Тарифная сетка</label>
+                  <p class="re-hint">Текущая цена определяется последней наступившей датой.</p>
+                  <div id="payment-tiers-list" class="re-sched" style="margin-top:.75rem"></div>
+                  <button type="button" id="add-tier-btn" class="re-addrow" style="margin-top:.5rem">+ Добавить тариф</button>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div class="form-section">
-            <h4 class="form-section-title">Спонсоры</h4>
-            <div class="form-group">
-              <label for="race-sponsors">Список спонсоров (JSON)</label>
-              <textarea id="race-sponsors" rows="5" placeholder='[&#10;  {"name": "VELOKON", "url": "https://..."},&#10;  {"name": "SPORT VITAL", "url": "http://..."}&#10;]'></textarea>
-              <small class="field-hint">JSON-массив объектов с полями "name" и "url". Оставьте пустым, чтобы скрыть раздел спонсоров на сайте.</small>
-            </div>
-          </div>
+              <!-- 7. Баннеры -->
+              <div class="re-section" id="rs-banners" style="display:none">
+                <div class="re-grid c2">
+                  <div class="re-field">
+                    <label>Десктопный баннер</label>
+                    <p class="re-hint">jpg/png/webp, макс. 5 MB</p>
+                    <div id="banner-desktop-preview" class="banner-preview" style="margin-top:.5rem"></div>
+                    <input type="file" id="race-banner-desktop" accept=".jpg,.jpeg,.png,.webp" style="margin-top:.5rem" />
+                    <button type="button" id="upload-banner-desktop" class="re-addrow" style="margin-top:.5rem">Загрузить</button>
+                    <span class="upload-status" id="upload-status-desktop"></span>
+                  </div>
+                  <div class="re-field">
+                    <label>Мобильный баннер</label>
+                    <p class="re-hint">jpg/png/webp, макс. 5 MB</p>
+                    <div id="banner-mobile-preview" class="banner-preview" style="margin-top:.5rem"></div>
+                    <input type="file" id="race-banner-mobile" accept=".jpg,.jpeg,.png,.webp" style="margin-top:.5rem" />
+                    <button type="button" id="upload-banner-mobile" class="re-addrow" style="margin-top:.5rem">Загрузить</button>
+                    <span class="upload-status" id="upload-status-mobile"></span>
+                  </div>
+                </div>
+              </div>
 
-          <div class="form-section">
-            <h4 class="form-section-title">Контакты</h4>
-            <div class="form-group">
-              <label for="race-contacts">Список контактов (JSON)</label>
-              <textarea id="race-contacts" rows="8" placeholder='[&#10;  {"Группа VK": "https://vk.com/wm_xc"},&#10;  {"role": "Организаторы", "entries": [&#10;    {"name": "Антон", "phone": "+79805346277"}&#10;  ]}&#10;]'></textarea>
-              <small class="field-hint">JSON-массив. Каждый элемент: {"Текст ссылки": "url"} или {"role": "Название", "entries": [{"name": "Имя", "phone": "+7..."}]}.</small>
-            </div>
-          </div>
+              <!-- 8. Доп. инфо -->
+              <div class="re-section" id="rs-extra" style="display:none">
+                <div class="re-field">
+                  <label>Спонсоры</label>
+                  <p class="re-hint">Название и ссылка на сайт. Отображаются в подвале страницы гонки.</p>
+                  <div id="race-sponsors-editor" class="re-pairs" style="margin-top:.75rem"></div>
+                  <button type="button" id="add-sponsor-btn" class="re-addrow" style="margin-top:.5rem">+ Добавить спонсора</button>
+                </div>
+                <div class="re-field" style="margin-top:1.25rem">
+                  <label>Контакты (JSON)</label>
+                  <p class="re-hint">JSON-массив. {"role": "...", "entries": [{"name": "...", "phone": "..."}]}</p>
+                  <textarea class="re-textarea" id="race-contacts" rows="7" style="margin-top:.5rem"></textarea>
+                </div>
+              </div>
 
-          <div class="form-section" id="race-categories-section">
-            <h4 class="form-section-title">Категории</h4>
-            <div id="race-category-edit-list" class="race-category-edit-list"></div>
-            <div class="race-category-add-row">
-              <input
-                type="text"
-                id="race-category-add-input"
-                class="race-category-add-input"
-                placeholder="Название категории (напр. М, Ж, Ю16)"
-                maxlength="100"
-                autocomplete="off"
-              />
-              <button type="button" id="race-category-add-btn" class="btn-cat-add">+ Добавить</button>
-            </div>
-            <span id="race-category-status" class="race-category-status"></span>
+            </form>
           </div>
-
-          <div class="form-actions">
-            <button type="button" id="race-cancel-btn" class="btn-cancel">Отмена</button>
-            <button type="submit" class="btn-save">Сохранить</button>
-          </div>
-        </form>
+        </div>
+        <div class="re-mfoot">
+          <span class="req"><b>*</b> — обязательные поля</span>
+          <button type="button" id="race-cancel-btn" class="btn-cancel">Отмена</button>
+          <button type="button" id="race-save-btn" class="btn-save">Сохранить</button>
+        </div>
       </div>
     </div>
 
@@ -279,47 +313,42 @@
       <span class="category-tag"></span>
     </template>
 
-    <!-- Шаблон строки редактирования категории (расширенный) -->
+    <!-- Шаблон карточки категории -->
     <template id="tpl-race-category-item">
-      <div class="race-category-item">
-        <div class="cat-main-row">
-          <span class="cat-name"></span>
-          <div class="cat-actions">
-            <button type="button" class="btn-cat-up" aria-label="Выше">▲</button>
-            <button type="button" class="btn-cat-down" aria-label="Ниже">▼</button>
-            <button type="button" class="btn-cat-remove" aria-label="Удалить">×</button>
+      <div class="re-cat">
+        <div class="re-cat-head">
+          <input class="re-input re-cat-name cat-name-input" type="text" placeholder="Код" readonly />
+          <input class="re-input re-cat-desc cat-description" placeholder="Описание категории" />
+          <div style="display:flex;gap:4px;flex:0 0 auto">
+            <button type="button" class="re-iconbtn btn-cat-up" aria-label="Выше" title="Выше">▲</button>
+            <button type="button" class="re-iconbtn btn-cat-down" aria-label="Ниже" title="Ниже">▼</button>
+            <button type="button" class="re-iconbtn btn-cat-remove" aria-label="Удалить" title="Удалить">×</button>
           </div>
         </div>
-        <div class="cat-details">
-          <div class="cat-detail-row">
-            <div class="form-group">
-              <label>Возраст от</label>
-              <input type="number" class="cat-age-from" min="0" max="99" placeholder="—" />
-            </div>
-            <div class="form-group">
-              <label>Возраст до</label>
-              <input type="number" class="cat-age-to" min="0" max="99" placeholder="без огр." />
-            </div>
-            <div class="form-group">
-              <label>Дистанция, км</label>
-              <input type="number" class="cat-distance" step="0.1" min="0" placeholder="—" />
-            </div>
-            <div class="form-group">
-              <label>Кругов</label>
-              <input type="number" class="cat-laps" min="1" placeholder="—" />
-            </div>
-            <div class="form-group">
-              <label>Набор высоты, м</label>
-              <input type="number" class="cat-elevation" min="0" placeholder="—" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Описание категории</label>
-            <input type="text" class="cat-description" placeholder="напр. Общий старт в 11:00, призовые в абсолюте" />
-          </div>
-          <button type="button" class="btn-cat-save-details">Сохранить детали</button>
-          <span class="cat-save-status"></span>
+        <div class="re-cat-nums">
+          <label>Кругов
+            <input type="number" class="re-input cat-laps" min="1" placeholder="—" />
+          </label>
+          <label>Дистанция
+            <span class="re-numwrap">
+              <input type="number" class="re-input cat-distance" step="0.1" min="0" placeholder="—" />
+              <i>км</i>
+            </span>
+          </label>
+          <label>Набор высоты
+            <span class="re-numwrap">
+              <input type="number" class="re-input cat-elevation" min="0" placeholder="—" />
+              <i>м</i>
+            </span>
+          </label>
         </div>
+        <div style="margin-top:.5rem;display:flex;align-items:center;gap:10px">
+          <button type="button" class="re-addrow btn-cat-save-details" style="margin-top:0">Сохранить</button>
+          <span class="cat-save-status" style="font-size:.82rem"></span>
+        </div>
+        <!-- hidden compat fields -->
+        <input type="hidden" class="cat-age-from" />
+        <input type="hidden" class="cat-age-to" />
       </div>
     </template>
 

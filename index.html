@@ -39,22 +39,26 @@
         <!-- Кнопка мобильного меню (бургер) -->
         <button class="mobile-menu-btn" id="mobile-btn">☰</button>
       </div>
-      <!-- Переключатель гонок (скрыт, если одна гонка) -->
-      <div id="race-switcher" class="race-switcher" style="display:none"></div>
     </header>
 
     <!-- Главный блок (Hero) -->
     <section id="hero" class="hero">
       <div class="hero-overlay"></div>
-      <div class="container hero-content">
-        <h1 class="hero-title" id="hero-title">ВЕСЕННИЙ ЛАЙТ</h1>
-        <h2 class="hero-subtitle" id="hero-subtitle">
-          <span id="hero-event-name">КРОСС-КАНТРИ</span>. ВОРОНЕЖ.<br /><span id="hero-reg-status">ОТКРЫТА РЕГИСТРАЦИЯ</span>
-        </h2>
-        <div class="hero-buttons">
-          <a href="#registration" class="btn btn-primary" id="hero-reg-btn">ЗАРЕГИСТРИРОВАТЬСЯ</a>
-          <a href="#about" class="btn btn-outline">ИНФО</a>
+      <div class="hero-body">
+        <div class="container hero-content">
+          <h1 class="hero-title" id="hero-title">ВЕСЕННИЙ ЛАЙТ</h1>
+          <h2 class="hero-subtitle" id="hero-subtitle">
+            <span id="hero-event-name">КРОСС-КАНТРИ</span>. ВОРОНЕЖ.<br /><span id="hero-reg-status">ОТКРЫТА РЕГИСТРАЦИЯ</span>
+          </h2>
+          <div class="hero-buttons">
+            <a href="#registration" class="btn btn-primary" id="hero-reg-btn">ЗАРЕГИСТРИРОВАТЬСЯ</a>
+            <a href="#about" class="btn btn-outline">ИНФО</a>
+          </div>
         </div>
+      </div>
+      <!-- Переключатель гонок (скрыт, если одна гонка) -->
+      <div id="race-scoreboard" class="scoreboard" style="display:none">
+        <div class="sb-rail"></div>
       </div>
     </section>
 
@@ -323,11 +327,6 @@
     </template>
     <template id="tpl-contact-link">
       <a></a>
-    </template>
-
-    <!-- Шаблон вкладки гонки -->
-    <template id="tpl-race-tab">
-      <a class="race-tab" href=""></a>
     </template>
 
     <!-- Шаблон вкладки категории -->

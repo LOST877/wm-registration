@@ -42,7 +42,7 @@ foreach (['registration_open', 'is_finished'] as $field) {
 }
 
 // Строковые поля
-foreach (['name', 'location', 'iframe_html', 'description', 'payment_info'] as $field) {
+foreach (['name', 'stage', 'location', 'iframe_html', 'description', 'payment_info'] as $field) {
   if (array_key_exists($field, $data)) {
     $updates[] = "$field = ?";
     $params[] = $data[$field] !== null ? trim((string)$data[$field]) : null;
