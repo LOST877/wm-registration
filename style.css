@@ -7,14 +7,14 @@
 }
 
 body {
-  overflow-x: hidden;
+  overflow-x: clip; /* clip не создаёт scroll-контейнер, sticky работает */
   width: 100%;
   /* font-family, color, line-height, background, font-smoothing — в tokens.css */
 }
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
   width: 100%;
 }
 
