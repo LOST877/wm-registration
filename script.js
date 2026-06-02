@@ -56,6 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const regForm = document.getElementById('regForm');
   const submitBtn = document.getElementById('submitBtn');
 
+  const ERROR_MESSAGES = {
+    DUPLICATE:           'Участник с таким именем, фамилией и телефоном уже зарегистрирован на эту гонку.',
+    MISSING_FIELDS:      'Пожалуйста, заполните все обязательные поля.',
+    REGISTRATION_CLOSED: 'Регистрация на эту гонку закрыта.',
+    RACE_NOT_FOUND:      'Гонка не найдена. Обновите страницу.',
+    INVALID_CATEGORY:    'Выбранная категория недоступна для этой гонки.',
+    INVALID_RACE_ID:     'Некорректный идентификатор гонки. Обновите страницу.',
+    EMPTY_JSON:          'Не удалось отправить данные формы. Попробуйте ещё раз.',
+    DB_ERROR:            'Ошибка на сервере. Попробуйте позже.',
+  };
+
   regForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -119,14 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showPopup('success', 'Спасибо!', 'Ваша заявка успешно отправлена.');
         regForm.reset();
         loadParticipants(currentRaceId);
-      } else if (response.status === 409) {
-        showPopup('error', 'Ошибка', result.error);
       } else {
-        showPopup(
-          'error',
-          'Ошибка',
-          result.error || 'Не удалось отправить заявку.'
-        );
+        const msg = ERROR_MESSAGES[result.code] || result.error || 'Не удалось отправить заявку.';
+        showPopup('error', 'Ошибка', msg);
       }
     } catch (error) {
       if (submitBtn) {

@@ -18,7 +18,7 @@ try {
 
   if (!$data || empty($data)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Empty or invalid JSON']);
+    echo json_encode(['success' => false, 'error' => 'Empty or invalid JSON', 'code' => 'EMPTY_JSON']);
     exit;
   }
 
@@ -26,7 +26,7 @@ try {
   $raceId = $data['race_id'] ?? null;
   if ($raceId === null || !is_numeric($raceId) || (int)$raceId <= 0) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Invalid race_id']);
+    echo json_encode(['success' => false, 'error' => 'Invalid race_id', 'code' => 'INVALID_RACE_ID']);
     exit;
   }
 
@@ -36,13 +36,13 @@ try {
 
   if (!$race) {
     http_response_code(404);
-    echo json_encode(['success' => false, 'error' => 'Race not found']);
+    echo json_encode(['success' => false, 'error' => 'Race not found', 'code' => 'RACE_NOT_FOUND']);
     exit;
   }
 
   if (!$race['registration_open']) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Регистрация на эту гонку закрыта']);
+    echo json_encode(['success' => false, 'error' => 'Регистрация на эту гонку закрыта', 'code' => 'REGISTRATION_CLOSED']);
     exit;
   }
 
@@ -59,15 +59,15 @@ try {
 
   if ($firstName === '' || $lastName === '' || $phone === '' || $email === '' || $city === '' || $birthDate === null) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Fill all required fields']);
+    echo json_encode(['success' => false, 'error' => 'Fill all required fields', 'code' => 'MISSING_FIELDS']);
     exit;
   }
 
   // Форматирование ФИО и города
-  $firstName = ucfirst(strtolower($firstName));
-  $lastName = ucfirst(strtolower($lastName));
-  $middleName = $middleName ? ucfirst(strtolower($middleName)) : null;
-  $city = ucfirst(strtolower($city));
+  $firstName = mb_convert_case(mb_strtolower($firstName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+  $lastName = mb_convert_case(mb_strtolower($lastName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+  $middleName = $middleName ? mb_convert_case(mb_strtolower($middleName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8') : null;
+  $city = mb_convert_case(mb_strtolower($city, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
 
   // Проверка дубля по (race_id, phone, first_name, last_name)
   $stmt = $pdo->prepare('
@@ -79,7 +79,7 @@ try {
 
   if ($existing) {
     http_response_code(409);
-    echo json_encode(['success' => false, 'error' => 'Duplicate registration']);
+    echo json_encode(['success' => false, 'error' => 'Duplicate registration', 'code' => 'DUPLICATE']);
     exit;
   }
 
@@ -91,7 +91,7 @@ try {
 
     if (!$cat || (int)$cat['race_id'] !== (int)$raceId) {
       http_response_code(400);
-      echo json_encode(['success' => false, 'error' => 'Invalid category for this race']);
+      echo json_encode(['success' => false, 'error' => 'Invalid category for this race', 'code' => 'INVALID_CATEGORY']);
       exit;
     }
   }
@@ -126,6 +126,6 @@ try {
 } catch (PDOException $e) {
   error_log('Register error: ' . $e->getMessage());
   http_response_code(500);
-  echo json_encode(['success' => false, 'error' => 'Database error']);
+  echo json_encode(['success' => false, 'error' => 'Database error', 'code' => 'DB_ERROR']);
   exit;
 }
