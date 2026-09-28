@@ -62,6 +62,7 @@ $firstName = ucfirst(strtolower($data['firstName']));
 - **PHP:** смешанный процедурно-объектный стиль, PDO с `prepare()` для всех запросов, всегда `exit` после `json_encode()`
 - **JS:** ES6+, без библиотек, цепочки `fetch().then()`
 - **HTML/CSS:** семантический HTML5, без inline-стилей кроме крайней необходимости
+- **Кэш статики:** nginx на хостинге отдаёт JS/CSS с `Cache-Control: max-age=31536000`. При любом изменении `script.js`, `style.css` или `tokens.css` поднимать `?v=N` в их подключении (`index.html`, `policy.html`), иначе у пользователей останется старая версия
 - Все ответы API — JSON; формат ошибки: `{"success": false, "error": "..."}` с соответствующим HTTP-статусом
 
 ## Безопасность (не обсуждается)
