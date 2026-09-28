@@ -742,6 +742,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const results = data.results;
 
+      const exportBtn = document.getElementById('results-export-btn');
+      if (exportBtn) {
+        exportBtn.href = `api/results_export.php?race_id=${raceId}`;
+        exportBtn.hidden = false;
+      }
+
       const seenCats = new Set();
       const categories = [];
       results.forEach((r) => {

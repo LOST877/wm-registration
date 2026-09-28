@@ -677,6 +677,37 @@ html {
   overflow-y: auto;
 }
 
+/* Заголовок результатов с кнопкой выгрузки протокола */
+.results-head {
+  margin-bottom: 20px;
+}
+.results-head .section-title { margin-bottom: 12px; }
+
+.results-export-btn {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  text-align: center;
+}
+.results-export-btn[hidden] { display: none; }
+
+@media (min-width: 600px) {
+  .results-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .results-head .section-title { margin-bottom: 0; }
+  .results-export-btn {
+    display: inline-block;
+    width: auto;
+    flex-shrink: 0;
+  }
+}
+
 /* --- СПОНСОРЫ --- */
 .sponsor-logos {
   display: flex;
