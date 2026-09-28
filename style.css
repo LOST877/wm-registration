@@ -480,6 +480,8 @@ html {
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 .pay-info strong { color: #fff; font-weight: 500; }
+.pay-info .md-content h2,
+.pay-info .md-content h3 { color: #fff; font-size: 0.9rem; }
 
 /* Описание */
 .about-desc { margin-bottom: 24px; }

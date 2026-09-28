@@ -310,7 +310,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const strong = document.createElement('strong');
       strong.textContent = 'Оплата: ';
       infoEl.appendChild(strong);
-      infoEl.appendChild(document.createTextNode(race.payment_info));
+      const content = document.createElement('div');
+      content.className = 'md-content';
+      if (typeof marked !== 'undefined') {
+        content.innerHTML = marked.parse(race.payment_info);
+      } else {
+        content.textContent = race.payment_info;
+      }
+      infoEl.appendChild(content);
       infoEl.hidden = false;
     }
 
