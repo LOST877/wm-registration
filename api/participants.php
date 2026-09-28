@@ -12,16 +12,13 @@ try {
 
   $raceId = (int)($_GET['race_id'] ?? 1);
 
+  // Публичный список: только данные, которые показываются на сайте.
+  // Телефон, email, отчество и дату рождения не отдавать (152-ФЗ).
   $stmt = $pdo->prepare("
         SELECT 
-            r.id,
             r.last_name,
             r.first_name,
-            r.middle_name,
-            r.birth_date,
             r.city,
-            r.phone,
-            r.email,
             r.team,
             r.is_paid,
             c.name AS category

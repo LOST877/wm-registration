@@ -18,7 +18,7 @@ try {
   ]);
 
   $stmt = $pdo->prepare("
-    SELECT place, bib_number, last_name, first_name, middle_name,
+    SELECT place, bib_number, last_name, first_name,
            city, birth_year, category, laps
     FROM race_results
     WHERE race_id = ?
