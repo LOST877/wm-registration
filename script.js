@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     REGISTRATION_CLOSED: 'Регистрация на эту гонку закрыта.',
     RACE_NOT_FOUND:      'Гонка не найдена. Обновите страницу.',
     INVALID_CATEGORY:    'Выбранная категория недоступна для этой гонки.',
+    CONSENT_REQUIRED:    'Подтвердите согласие на обработку персональных данных.',
     INVALID_RACE_ID:     'Некорректный идентификатор гонки. Обновите страницу.',
     EMPTY_JSON:          'Не удалось отправить данные формы. Попробуйте ещё раз.',
     DB_ERROR:            'Ошибка на сервере. Попробуйте позже.',
@@ -110,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       race_category_id: regForm.querySelector('[name="race_category_id"]')
         .value,
       race_id: currentRaceId,
+      consent: regForm.querySelector('[name="consent"]').checked,
     };
 
     try {

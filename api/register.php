@@ -63,6 +63,13 @@ try {
     exit;
   }
 
+  // Согласие на обработку персональных данных (152-ФЗ) — только явное true
+  if (($data['consent'] ?? null) !== true) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Consent to personal data processing is required', 'code' => 'CONSENT_REQUIRED']);
+    exit;
+  }
+
   // Форматирование ФИО и города
   $firstName = mb_convert_case(mb_strtolower($firstName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
   $lastName = mb_convert_case(mb_strtolower($lastName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
@@ -99,8 +106,8 @@ try {
   // Вставка новой регистрации
   $stmt = $pdo->prepare('
         INSERT INTO registrations 
-        (first_name, last_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, is_paid) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        (first_name, last_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, consent_given, consent_at, is_paid) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), 0)
     ');
   $stmt->execute([
     $firstName,

@@ -28,6 +28,7 @@
 ```
 / (корень, как на TimeWeb, так и в репозитории)
 ├── index.html                      # Главная страница
+├── policy.html                     # Политика обработки персональных данных (152-ФЗ)
 ├── style.css                       # Основные стили сайта
 ├── script.js                       # Логика: загрузка гонки, категорий, участников, регистрация
 ├── assets/
@@ -71,10 +72,11 @@
 | `races` | Гонки (id, name, date, location, location_link, iframe_html, description, payment_info, **payment_tiers JSON**, is_active, created_at) |
 | `categories` | Категории (id, name, **age_from INT**, **age_to INT**, **description TEXT**, created_at) |
 | `race_categories` | Связь N:M (id, race_id, category_id, sort_order, **distance_km DECIMAL**, **laps INT**, **elevation_m INT**) |
-| `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, is_paid, payment_amount, created_at) |
+| `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, **consent_given TINYINT**, **consent_at DATETIME**, is_paid, payment_amount, created_at) |
 | `admin_users` | Администраторы (id, username, password (hash), full_name, created_at) |
 
-> Миграция v2: `sql/migrate_v2.sql`
+> Миграция v2: `sql/migrate_v2.sql`  
+> Согласие на обработку ПД: `sql/migration_add_consent.sql`
 
 ### Важные правила:
 - Активной может быть **только одна гонка** (`is_active = 1`)
@@ -88,6 +90,7 @@
 - `age_from`/`age_to` (INT, NULL) — возрастной диапазон категории; `age_to = NULL` означает «без верхней границы»
 - `distance_km` (DECIMAL(5,1), NULL), `laps` (INT, NULL), `elevation_m` (INT, NULL) — параметры дистанции per race_category
 - Поле `email` — **обязательное** (`NOT NULL`)
+- `consent_given`/`consent_at` — факт и время согласия на обработку ПД (доказательство по ст. 9 ч. 3 152-ФЗ); у заявок до миграции `consent_given = 0`
 
 ---
 
@@ -128,19 +131,14 @@
 ---
 
 ### 3. `GET api/participants.php?race_id=1`  
-**Описание:** Возвращает список участников текущей гонки  
+**Описание:** Возвращает список участников текущей гонки. Публичный — отдаёт **только** поля, которые показываются на сайте. Телефон, email, отчество и дату рождения не возвращать (152-ФЗ).  
 **Пример ответа:**  
 ```json
 [
   {
-    "id": 42,
     "last_name": "Иванов",
     "first_name": "Иван",
-    "middle_name": "Иванович",
-    "birth_date": "2000-01-01",
     "city": "Воронеж",
-    "phone": "+7 (999) 000-00-00",
-    "email": "mail@example.com",
     "team": "Воронеж Team",
     "category": "М",
     "is_paid": 1
@@ -164,7 +162,8 @@
   "email": "mail@example.com",
   "team": "Воронеж Team",
   "race_category_id": 1,
-  "race_id": 1
+  "race_id": 1,
+  "consent": true
 }
 ```
 
@@ -172,6 +171,7 @@
 - Уникальность `(race_id, phone, first_name, last_name)`  
 - Активность гонки  
 - Форматирование ФИО и города на сервере  
+- Согласие на обработку ПД: `consent` должно быть строго `true`, иначе `400` с кодом `CONSENT_REQUIRED`. В БД пишется `consent_given = 1`, `consent_at = NOW()`  
 
 **Пример ответа:**  
 - `200 OK`: `{"success": true, "message": "Registration successful", "id": 42}`  
@@ -236,6 +236,7 @@
 - ✅ Форматирование ФИО и города на клиенте и сервере
 - ✅ `PDO::prepare()` для предотвращения SQL-инъекций
 - ✅ Проверка CSRF-токена в админке через `hash_equals()`
+- ✅ 152-ФЗ: согласие на обработку ПД в форме регистрации + серверная проверка, политика `policy.html`, публичные API не отдают контакты участников
 
 ### Внедрение CSRF-защиты:
 - Генерировать `csrf_token` при загрузке страницы (`<input type="hidden" name="csrf_token" ...>` или через `<meta>`)
@@ -335,3 +336,4 @@ VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5);
 Версия: v1.1 (добавлена колонка `payment_amount`, перенесена колонка "Действия" в начало таблицы, обновлены API-ограничения)
 Версия: v1.2 (добавлен `GET api/admin/export_csv.php` — выгрузка участников в CSV для программы отсечки)
 Версия: v1.3 (добавлен `GET api/results_export.php` — выгрузка протокола гонки в Excel)
+Версия: v1.4 (152-ФЗ: согласие на обработку ПД, `policy.html`, из `participants.php` убраны контакты участников)

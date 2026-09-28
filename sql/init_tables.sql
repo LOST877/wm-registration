@@ -55,6 +55,8 @@ CREATE TABLE registrations (
   phone VARCHAR(50) NOT NULL,
   email VARCHAR(255) NOT NULL,
   team VARCHAR(255),
+  consent_given TINYINT(1) NOT NULL DEFAULT 0,
+  consent_at DATETIME NULL,
   is_paid TINYINT(1) NOT NULL DEFAULT 0,
   payment_amount DECIMAL(10,2) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
