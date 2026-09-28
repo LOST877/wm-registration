@@ -124,10 +124,11 @@
 **Пример ответа:**  
 ```json
 [
-  { "id": 1, "name": "М", "sort_order": 0 },
-  { "id": 2, "name": "Ж", "sort_order": 0 }
+  { "race_category_id": 12, "id": 1, "name": "М", "sort_order": 1, "...": "..." },
+  { "race_category_id": 13, "id": 2, "name": "Ж", "sort_order": 2, "...": "..." }
 ]
 ```
+> **Важно:** в заявку (`race_category_id` в `api/register.php`) передаётся `race_category_id` (= `race_categories.id`), а **не** `id` — это `categories.id` из общего справочника.
 
 ---
 

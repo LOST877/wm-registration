@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       categories.forEach((cat) => {
         const opt = document.createElement('option');
-        opt.value = cat.id;
+        opt.value = cat.race_category_id;
         opt.textContent = cat.name;
         select.appendChild(opt);
       });

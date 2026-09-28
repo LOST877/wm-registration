@@ -13,7 +13,7 @@ try {
   $raceId = (int)($_GET['race_id'] ?? 1);
 
   $stmt = $pdo->prepare("
-    SELECT c.id, c.name, c.age_from, c.age_to, c.description,
+    SELECT rc.id AS race_category_id, c.id, c.name, c.age_from, c.age_to, c.description,
            COALESCE(rc.sort_order, 0) AS sort_order,
            rc.distance_km, rc.laps, rc.elevation_m
     FROM categories c
@@ -27,6 +27,7 @@ try {
   // Приводим числовые поля к правильным типам
   $categories = array_map(function ($r) {
     return [
+      'race_category_id' => (int)$r['race_category_id'], // для заявки (registrations.race_category_id)
       'id'          => (int)$r['id'],
       'name'        => $r['name'],
       'age_from'    => $r['age_from'] !== null ? (int)$r['age_from'] : null,
