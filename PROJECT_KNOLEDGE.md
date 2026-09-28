@@ -72,11 +72,11 @@
 | `races` | Гонки (id, name, date, location, location_link, iframe_html, description, payment_info, **payment_tiers JSON**, is_active, created_at) |
 | `categories` | Категории (id, name, **age_from INT**, **age_to INT**, **description TEXT**, created_at) |
 | `race_categories` | Связь N:M (id, race_id, category_id, sort_order, **distance_km DECIMAL**, **laps INT**, **elevation_m INT**) |
-| `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, **consent_given TINYINT**, **consent_at DATETIME**, is_paid, payment_amount, created_at) |
+| `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, **consent_given TINYINT**, **consent_at DATETIME**, **consent_publication TINYINT**, is_paid, payment_amount, created_at) |
 | `admin_users` | Администраторы (id, username, password (hash), full_name, created_at) |
 
 > Миграция v2: `sql/migrate_v2.sql`  
-> Согласие на обработку ПД: `sql/migration_add_consent.sql`
+> Согласие на обработку ПД: `sql/migration_add_consent.sql`, согласие на распространение: `sql/migration_add_consent_publication.sql`
 
 ### Важные правила:
 - Активной может быть **только одна гонка** (`is_active = 1`)
@@ -91,6 +91,7 @@
 - `distance_km` (DECIMAL(5,1), NULL), `laps` (INT, NULL), `elevation_m` (INT, NULL) — параметры дистанции per race_category
 - Поле `email` — **обязательное** (`NOT NULL`)
 - `consent_given`/`consent_at` — факт и время согласия на обработку ПД (доказательство по ст. 9 ч. 3 152-ФЗ); у заявок до миграции `consent_given = 0`
+- `consent_publication` — отдельное согласие на распространение ПД (ст. 10.1 152-ФЗ): публикация в списках и протоколах на https://wmxc.ru/; время — общее `consent_at`
 
 ---
 
@@ -163,7 +164,8 @@
   "team": "Воронеж Team",
   "race_category_id": 1,
   "race_id": 1,
-  "consent": true
+  "consent": true,
+  "consent_publication": true
 }
 ```
 
@@ -172,6 +174,7 @@
 - Активность гонки  
 - Форматирование ФИО и города на сервере  
 - Согласие на обработку ПД: `consent` должно быть строго `true`, иначе `400` с кодом `CONSENT_REQUIRED`. В БД пишется `consent_given = 1`, `consent_at = NOW()`  
+- Согласие на распространение ПД (ст. 10.1): `consent_publication` должно быть строго `true`, иначе `400` с кодом `CONSENT_PUBLICATION_REQUIRED`. В БД пишется `consent_publication = 1`  
 
 **Пример ответа:**  
 - `200 OK`: `{"success": true, "message": "Registration successful", "id": 42}`  
@@ -337,3 +340,4 @@ VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5);
 Версия: v1.2 (добавлен `GET api/admin/export_csv.php` — выгрузка участников в CSV для программы отсечки)
 Версия: v1.3 (добавлен `GET api/results_export.php` — выгрузка протокола гонки в Excel)
 Версия: v1.4 (152-ФЗ: согласие на обработку ПД, `policy.html`, из `participants.php` убраны контакты участников)
+Версия: v1.5 (отдельное согласие на распространение ПД — `consent_publication`, раздел 9 в `policy.html`)

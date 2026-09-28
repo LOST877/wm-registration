@@ -70,6 +70,13 @@ try {
     exit;
   }
 
+  // Отдельное согласие на распространение ПД (ст. 10.1 152-ФЗ): публикация в списках и протоколах
+  if (($data['consent_publication'] ?? null) !== true) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Consent to personal data publication is required', 'code' => 'CONSENT_PUBLICATION_REQUIRED']);
+    exit;
+  }
+
   // Форматирование ФИО и города
   $firstName = mb_convert_case(mb_strtolower($firstName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
   $lastName = mb_convert_case(mb_strtolower($lastName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
@@ -106,8 +113,8 @@ try {
   // Вставка новой регистрации
   $stmt = $pdo->prepare('
         INSERT INTO registrations 
-        (first_name, last_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, consent_given, consent_at, is_paid) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), 0)
+        (first_name, last_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, consent_given, consent_at, consent_publication, is_paid) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), 1, 0)
     ');
   $stmt->execute([
     $firstName,

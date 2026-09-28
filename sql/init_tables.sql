@@ -57,6 +57,7 @@ CREATE TABLE registrations (
   team VARCHAR(255),
   consent_given TINYINT(1) NOT NULL DEFAULT 0,
   consent_at DATETIME NULL,
+  consent_publication TINYINT(1) NOT NULL DEFAULT 0,
   is_paid TINYINT(1) NOT NULL DEFAULT 0,
   payment_amount DECIMAL(10,2) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
