@@ -737,6 +737,17 @@ html {
   overflow-y: auto;
 }
 
+/* Строка заголовков закреплена при вертикальной прокрутке таблицы.
+   border-bottom у sticky-ячейки при border-collapse уезжает вместе с таблицей,
+   поэтому линию под заголовком рисуем через box-shadow */
+.results .participants-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: none;
+  box-shadow: inset 0 -1px 0 #ddd;
+}
+
 /* Заголовок результатов с кнопкой выгрузки протокола */
 .results-head {
   margin-bottom: 20px;
