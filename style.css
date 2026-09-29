@@ -286,6 +286,24 @@ html {
   margin-top: 70px; /* fallback до выполнения JS */
 }
 
+/* Пока не загружены данные гонки — не показываем баннер и текст по умолчанию,
+   иначе при открытии ?race_id=N на мгновение мелькает чужая гонка */
+.hero.is-loading {
+  background-image: none;
+  background-color: var(--wm-bg-dark);
+}
+
+.hero.is-loading .hero-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-content {
+    transition: none;
+  }
+}
+
 .hero-overlay {
   position: absolute;
   top: 0;
@@ -308,6 +326,7 @@ html {
   position: relative;
   margin-left: 10%;
   color: var(--wm-text-light);
+  transition: opacity 0.4s ease;
 }
 
 .hero-title {

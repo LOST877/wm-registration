@@ -213,6 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.warn('Не удалось загрузить данные гонки:', err);
+    } finally {
+      document.querySelector('.hero')?.classList.remove('is-loading');
     }
   }
 
