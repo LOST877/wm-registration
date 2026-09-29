@@ -215,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Не удалось загрузить данные гонки:', err);
     } finally {
       document.querySelector('.hero')?.classList.remove('is-loading');
+      updateBanner();
     }
   }
 
@@ -412,20 +413,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!hero) return;
     hero.dataset.bannerDesktop = race.banner_desktop || '';
     hero.dataset.bannerMobile  = race.banner_mobile  || '';
+  }
+
+  // Показывает баннер только после полной загрузки картинки — с плавным появлением.
+  // Если у гонки нет своего баннера (или API не ответил) — баннер по умолчанию.
+  function updateBanner() {
+    const hero = document.querySelector('.hero');
+    const bg = document.getElementById('hero-bg');
+    if (!hero || !bg) return;
     const isMobile = window.innerWidth <= 768;
-    const file = isMobile ? race.banner_mobile : race.banner_desktop;
-    if (file) hero.style.backgroundImage = `url('assets/races/${encodeURIComponent(file)}')`;
+    const file = isMobile ? hero.dataset.bannerMobile : hero.dataset.bannerDesktop;
+    const url = file
+      ? `assets/races/${encodeURIComponent(file)}`
+      : (isMobile ? 'assets/banner-mobile.png' : 'assets/banner.png');
+    if (bg.dataset.src === url) return;
+    bg.dataset.src = url;
+
+    const img = new Image();
+    img.src = url;
+    img.decode()
+      .then(() => {
+        if (bg.dataset.src !== url) return; // за время загрузки баннер уже сменился
+        bg.style.backgroundImage = `url('${url}')`;
+        bg.classList.add('is-visible');
+      })
+      .catch(() => console.warn('Не удалось загрузить баннер:', url));
   }
 
   let bannerResizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(bannerResizeTimer);
     bannerResizeTimer = setTimeout(() => {
-      const hero = document.querySelector('.hero');
-      if (!hero) return;
-      const isMobile = window.innerWidth <= 768;
-      const file = isMobile ? hero.dataset.bannerMobile : hero.dataset.bannerDesktop;
-      if (file) hero.style.backgroundImage = `url('assets/races/${encodeURIComponent(file)}')`;
+      if (!document.querySelector('.hero.is-loading')) updateBanner();
     }, 150);
   });
 

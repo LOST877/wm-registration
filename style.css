@@ -279,26 +279,37 @@ html {
   min-height: 600px;
   display: flex;
   align-items: center;
-  /* ФОНОВОЕ ФОТО. Сюда нужно вставить ссылку на ваше фото гонщика */
-  background-image: url('assets/banner.png');
-  background-size: cover;
-  background-position: center;
+  background-color: var(--wm-bg-dark);
   margin-top: 70px; /* fallback до выполнения JS */
 }
 
-/* Пока не загружены данные гонки — не показываем баннер и текст по умолчанию,
-   иначе при открытии ?race_id=N на мгновение мелькает чужая гонка */
-.hero.is-loading {
-  background-image: none;
-  background-color: var(--wm-bg-dark);
+/* Фоновое фото гонки. Картинку подставляет script.js (updateBanner)
+   только после её полной загрузки, затем слой плавно проявляется */
+.hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
 }
 
+.hero-bg.is-visible {
+  opacity: 1;
+}
+
+/* Пока не загружены данные гонки — не показываем текст по умолчанию,
+   иначе при открытии ?race_id=N на мгновение мелькает чужая гонка */
 .hero.is-loading .hero-content {
   opacity: 0;
   pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-bg,
   .hero-content {
     transition: none;
   }
@@ -838,11 +849,6 @@ html {
 
 /* --- АДАПТИВНОСТЬ (МОБИЛЬНЫЕ УСТРОЙСТВА) --- */
 @media (max-width: 768px) {
-  .hero {
-    background-image: url('assets/banner-mobile.png');
-    background-position: center;
-  }
-
   .hero-title {
     font-size: 3rem;
     word-wrap: break-word;
