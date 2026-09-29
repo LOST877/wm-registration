@@ -246,6 +246,14 @@ html {
   display: flex;
   list-style: none;
   gap: 30px;
+  transition: opacity 0.4s ease;
+}
+
+/* Пункты меню зависят от гонки (спонсоры, «Регистрация» → «Результаты»),
+   поэтому показываем меню только после загрузки её данных */
+.nav-list.is-loading {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .nav-link {
@@ -310,7 +318,8 @@ html {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-bg,
-  .hero-content {
+  .hero-content,
+  .nav-list {
     transition: none;
   }
 }

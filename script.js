@@ -215,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Не удалось загрузить данные гонки:', err);
     } finally {
       document.querySelector('.hero')?.classList.remove('is-loading');
+      document.querySelector('.nav-list')?.classList.remove('is-loading');
       updateBanner();
     }
   }
