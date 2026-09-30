@@ -252,8 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderAbout(race) {
     // --- Факт: Дата ---
+    document.getElementById('hero-date-line').hidden = !race.date;
     if (race.date) {
       const { text, sub } = formatDate(race.date);
+      const [y, m, d] = race.date.split(' ')[0].split('-').map(Number);
+      document.getElementById('hero-date').textContent =
+        `${d} ${MONTHS[m - 1]} ${y}`.toUpperCase();
       document.getElementById('fact-date-v').textContent = text;
       document.getElementById('fact-date-sub').textContent = sub;
     }
