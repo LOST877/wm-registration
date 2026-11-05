@@ -1,6 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
+header("Cache-Control: no-store, no-cache, must-revalidate");
 
 if (!isset($_GET['race_id']) || !is_numeric($_GET['race_id'])) {
   http_response_code(400);

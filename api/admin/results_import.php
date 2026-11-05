@@ -50,10 +50,20 @@ try {
   $handle = fopen($tmpConverted, 'r');
   if (!$handle) throw new Exception('Не удалось открыть файл');
 
-  fgetcsv($handle); // пропустить заголовок
+  // Автоопределение разделителя (запятая или точка с запятой) по строке заголовка
+  $delimiter = ',';
+  $headerLine = fgets($handle);
+  if ($headerLine !== false) {
+    $semicolons = substr_count($headerLine, ';');
+    $commas     = substr_count($headerLine, ',');
+    if ($semicolons > $commas) $delimiter = ';';
+  }
+  rewind($handle);
+
+  fgetcsv($handle, 0, $delimiter); // пропустить заголовок
 
   $rows = [];
-  while (($line = fgetcsv($handle)) !== false) {
+  while (($line = fgetcsv($handle, 0, $delimiter)) !== false) {
     if (count($line) < 8) continue;
     $rows[] = $line;
   }

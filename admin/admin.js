@@ -306,6 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <tr>
                 <th>Действия</th>
                 <th>Фамилия Имя</th>
+                <th>Дата рождения</th>
                 <th>Телефон</th>
                 <th>Email</th>
                 <th>Город</th>
@@ -319,10 +320,27 @@ document.addEventListener('DOMContentLoaded', () => {
           </table>
         </div>
       </div>
+
+      <!-- Results import -->
+      <div class="rd-participants">
+        <h3 class="rd-h">Результаты</h3>
+        <div class="results-import">
+          <label>Протокол (.csv)</label>
+          <input type="file" class="csv-file-input" id="results-csv-input" accept=".csv" />
+          <button type="button" class="import-csv-btn" id="import-results-btn">Загрузить</button>
+          <span class="import-status" id="import-results-status"></span>
+        </div>
+        <p class="re-hint">Колонки CSV: Место, Номер, Фамилия, Имя, Отчество, Город, Год рождения, Категория, Круг1…N. Повторная загрузка заменяет результаты гонки.</p>
+      </div>
     `;
 
     // Рендер таблицы участников
     renderDetailParticipants(race);
+
+    // Импорт результатов
+    container.querySelector('#import-results-btn')?.addEventListener('click', () => {
+      importResults(race.id);
+    });
 
     // Биндинг действий
     container.querySelector('[data-back]')?.addEventListener('click', () => showView('races'));
@@ -363,6 +381,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   }
 
+  async function importResults(raceId) {
+    const input  = document.getElementById('results-csv-input');
+    const status = document.getElementById('import-results-status');
+    const btn    = document.getElementById('import-results-btn');
+    if (!input || !input.files.length) {
+      if (status) status.textContent = 'Выберите CSV-файл';
+      return;
+    }
+    const fd = new FormData();
+    fd.append('race_id', raceId);
+    fd.append('file', input.files[0]);
+    if (btn) btn.disabled = true;
+    if (status) status.textContent = 'Загрузка...';
+    try {
+      const res = await fetch('../api/admin/results_import.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        if (status) status.textContent = `Импортировано строк: ${result.imported}`;
+        if (input) input.value = '';
+      } else {
+        if (status) status.textContent = result.error || 'Ошибка импорта';
+      }
+    } catch {
+      if (status) status.textContent = 'Сетевая ошибка';
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   function renderDetailParticipants(race) {
     const tbody = document.getElementById('detail-tbody');
     if (!tbody) return;
@@ -370,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!race.participants.length) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="9" class="no-data">Участников пока нет</td>`;
+      tr.innerHTML = `<td colspan="10" class="no-data">Участников пока нет</td>`;
       tbody.appendChild(tr);
       return;
     }
@@ -381,6 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tr.innerHTML = `
         <td><button class="edit-btn" data-pid="${p.id}" data-rid="${race.id}">Изм.</button></td>
         <td>${escapeHtml(p.last_name)} ${escapeHtml(p.first_name)}</td>
+        <td>${p.birth_date ? p.birth_date.split('-').reverse().join('.') : '—'}</td>
         <td>${escapeHtml(p.phone || '—')}</td>
         <td>${escapeHtml(p.email || '—')}</td>
         <td>${escapeHtml(p.city || '—')}</td>

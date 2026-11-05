@@ -52,6 +52,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Загрузка информации о гонке
   loadRaceInfo(raceId);
 
+  // При возврате из back/forward-кэша браузера перезапрашиваем данные гонки,
+  // чтобы не показывать устаревшее состояние (например, открытую форму при закрытой регистрации)
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+      loadRaceInfo(raceId);
+    }
+  });
+
   // 3. Отправка формы
   const regForm = document.getElementById('regForm');
   const submitBtn = document.getElementById('submitBtn');
@@ -726,31 +734,47 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyRaceState(race) {
     const regStatus = document.getElementById('hero-reg-status');
     const regBtn = document.getElementById('hero-reg-btn');
-    const navRegLink = document.getElementById('nav-reg-link');
+    const navRegItem = document.getElementById('nav-reg-item');
+    const navParticipantsItem = document.getElementById('nav-participants-item');
+    const navResultsItem = document.getElementById('nav-results-item');
     const regSection = document.getElementById('registration');
     const participantsSection = document.getElementById('participants');
     const resultsSection = document.getElementById('results');
+    const payRegBtn = document.getElementById('pay-reg-btn');
+    const payPanel = document.getElementById('about-pay');
+
+    // Кнопка «Зарегистрироваться» в панели оплаты видна только при открытой регистрации
+    if (payRegBtn) payRegBtn.style.display = 'none';
 
     if (race.is_finished == 1) {
       regStatus.textContent = 'ГОНКА ЗАВЕРШЕНА';
       regBtn.textContent = 'РЕЗУЛЬТАТЫ';
       regBtn.href = '#results';
-      if (navRegLink) {
-        navRegLink.textContent = 'Результаты';
-        navRegLink.href = '#results';
-      }
+      if (navRegItem) navRegItem.style.display = 'none';
+      if (navParticipantsItem) navParticipantsItem.style.display = 'none';
+      if (navResultsItem) navResultsItem.style.display = '';
       if (regSection) regSection.style.display = 'none';
       if (participantsSection) participantsSection.style.display = 'none';
       if (resultsSection) resultsSection.style.display = 'block';
+      if (payPanel) payPanel.hidden = true;
     } else if (race.registration_open != 1) {
       regStatus.textContent = 'РЕГИСТРАЦИЯ ЗАКРЫТА';
       regBtn.textContent = 'СПИСОК УЧАСТНИКОВ';
       regBtn.href = '#participants';
-      if (navRegLink) {
-        navRegLink.textContent = 'Участники';
-        navRegLink.href = '#participants';
-      }
+      if (navRegItem) navRegItem.style.display = 'none';
+      if (navParticipantsItem) navParticipantsItem.style.display = '';
+      if (navResultsItem) navResultsItem.style.display = 'none';
       if (regSection) regSection.style.display = 'none';
+      if (participantsSection) participantsSection.style.display = '';
+      if (resultsSection) resultsSection.style.display = 'none';
+      if (payPanel) payPanel.hidden = true;
+    } else {
+      if (payRegBtn) payRegBtn.style.display = '';
+      if (navRegItem) navRegItem.style.display = '';
+      if (navParticipantsItem) navParticipantsItem.style.display = '';
+      if (navResultsItem) navResultsItem.style.display = 'none';
+      if (participantsSection) participantsSection.style.display = '';
+      if (resultsSection) resultsSection.style.display = 'none';
     }
   }
 

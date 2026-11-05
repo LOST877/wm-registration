@@ -3,6 +3,26 @@ session_start();
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
+header("Cache-Control: no-store, no-cache, must-revalidate");
+
+/**
+ * Нормализация названия города: схлопывание пробелов, словарь частых составных
+ * названий (в т.ч. слитный ввод) и приведение регистра к «Как В Словах».
+ */
+function normalizeCity($city) {
+  $city = preg_replace('/\s+/u', ' ', trim($city));
+  $lower = mb_strtolower($city, 'UTF-8');
+  $known = [
+    'старыйоскол'      => 'Старый Оскол',
+    'старый оскол'     => 'Старый Оскол',
+    'нижнийновгород'   => 'Нижний Новгород',
+    'набережныечелны'  => 'Набережные Челны',
+    'ростовнадону'     => 'Ростов-на-Дону',
+    'ростов на дону'   => 'Ростов-на-Дону',
+  ];
+  if (isset($known[$lower])) return $known[$lower];
+  return mb_convert_case($lower, MB_CASE_TITLE, 'UTF-8');
+}
 
 try {
   $config = require_once __DIR__ . '/../config/db.php';
@@ -30,13 +50,19 @@ try {
     exit;
   }
 
-  $stmt = $pdo->prepare('SELECT id, name, registration_open FROM races WHERE id = ?');
+  $stmt = $pdo->prepare('SELECT id, name, registration_open, is_finished FROM races WHERE id = ?');
   $stmt->execute([(int)$raceId]);
   $race = $stmt->fetch(PDO::FETCH_ASSOC);
 
   if (!$race) {
     http_response_code(404);
     echo json_encode(['success' => false, 'error' => 'Race not found', 'code' => 'RACE_NOT_FOUND']);
+    exit;
+  }
+
+  if ($race['is_finished']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Гонка завершена, регистрация закрыта', 'code' => 'REGISTRATION_CLOSED']);
     exit;
   }
 
@@ -77,11 +103,13 @@ try {
     exit;
   }
 
-  // Форматирование ФИО и города
+  // Форматирование ФИО
   $firstName = mb_convert_case(mb_strtolower($firstName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
   $lastName = mb_convert_case(mb_strtolower($lastName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
   $middleName = $middleName ? mb_convert_case(mb_strtolower($middleName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8') : null;
-  $city = mb_convert_case(mb_strtolower($city, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+
+  // Нормализация города (словарь составных названий + регистр)
+  $city = normalizeCity($city);
 
   // Проверка дубля по (race_id, phone, first_name, last_name)
   $stmt = $pdo->prepare('
