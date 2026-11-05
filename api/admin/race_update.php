@@ -119,13 +119,28 @@ try {
     $stmt->execute($params);
   }
 
-  // is_active: при установке в 1 — сбросить у всех остальных
+  // is_active: при установке в 1 — сбросить у всех остальных.
+  // Снять активность можно только если остаётся другая активная гонка.
   if ($hasIsActive) {
     $isActive = (int)(bool)$data['is_active'];
     if ($isActive === 1) {
       $pdo->prepare('UPDATE races SET is_active = 0')->execute();
+      $pdo->prepare('UPDATE races SET is_active = 1 WHERE id = ?')->execute([$raceId]);
+    } else {
+      $stmt = $pdo->prepare('SELECT COUNT(*) FROM races WHERE is_active = 1 AND id <> ?');
+      $stmt->execute([$raceId]);
+      $otherActive = (int)$stmt->fetchColumn();
+      $stmt = $pdo->prepare('SELECT is_active FROM races WHERE id = ?');
+      $stmt->execute([$raceId]);
+      $currentlyActive = (int)$stmt->fetchColumn();
+      if ($currentlyActive === 1 && $otherActive === 0) {
+        $pdo->rollBack();
+        http_response_code(400);
+        echo json_encode(['error' => 'Нельзя снять признак активной гонки: назначьте активной другую гонку']);
+        exit;
+      }
+      $pdo->prepare('UPDATE races SET is_active = 0 WHERE id = ?')->execute([$raceId]);
     }
-    $pdo->prepare('UPDATE races SET is_active = ? WHERE id = ?')->execute([$isActive, $raceId]);
   }
 
   $pdo->commit();
