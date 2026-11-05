@@ -38,6 +38,20 @@ if ($encoding && strtolower($encoding) !== 'utf-8') {
 $tmpConverted = tempnam(sys_get_temp_dir(), 'csv_');
 file_put_contents($tmpConverted, $content);
 
+/**
+ * Колонка заголовка — итоговое время, а не отдельный круг.
+ * Для раздельного старта протокол содержит «СУ 1» и «Общее»:
+ * «Общее» равно времени СУ, поэтому второй колонкой его в круги не пишем.
+ */
+function is_total_column($name) {
+  $n = mb_strtolower(trim((string)$name), 'UTF-8');
+  if ($n === '') return false;
+  foreach (['общее', 'итог', 'итого', 'сумма', 'всего', 'total', 'результат'] as $label) {
+    if (mb_strpos($n, $label) === 0) return true;
+  }
+  return false;
+}
+
 try {
   $config = require __DIR__ . '/../../config/db.php';
   $pdo = new PDO(
@@ -60,7 +74,25 @@ try {
   }
   rewind($handle);
 
-  fgetcsv($handle, 0, $delimiter); // пропустить заголовок
+  // Читаем заголовок: по нему определяем, какие колонки — круги,
+  // а какие — итоговое время (в круги не входят).
+  $header = fgetcsv($handle, 0, $delimiter);
+  if (!is_array($header)) $header = [];
+
+  $hasHeader = false;
+  foreach ($header as $h) {
+    if (trim((string)$h) !== '') { $hasHeader = true; break; }
+  }
+
+  // null = заголовка нет, тогда круги — все колонки начиная с 8-й
+  $lapIndexes = null;
+  if ($hasHeader) {
+    $lapIndexes = [];
+    for ($i = 8; $i < count($header); $i++) {
+      if (is_total_column($header[$i] ?? '')) continue;
+      $lapIndexes[] = $i;
+    }
+  }
 
   $rows = [];
   while (($line = fgetcsv($handle, 0, $delimiter)) !== false) {
@@ -91,10 +123,19 @@ try {
     $category   = trim($row[7] ?? '') ?: null;
 
     $laps = [];
-    for ($i = 8; isset($row[$i]); $i++) {
-      $v = trim($row[$i]);
-      if ($v === '' || $v === '-') break;
-      $laps[] = $v;
+    if ($lapIndexes === null) {
+      for ($i = 8; isset($row[$i]); $i++) {
+        $v = trim($row[$i]);
+        if ($v === '' || $v === '-') break;
+        $laps[] = $v;
+      }
+    } else {
+      foreach ($lapIndexes as $i) {
+        if (!isset($row[$i])) continue;
+        $v = trim($row[$i]);
+        if ($v === '' || $v === '-') break;
+        $laps[] = $v;
+      }
     }
 
     if (!$lastName || !$firstName) continue;

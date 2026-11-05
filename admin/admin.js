@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" class="import-csv-btn" id="import-results-btn">Загрузить</button>
           <span class="import-status" id="import-results-status"></span>
         </div>
-        <p class="re-hint">Колонки CSV: Место, Номер, Фамилия, Имя, Отчество, Город, Год рождения, Категория, Круг1…N. Повторная загрузка заменяет результаты гонки.</p>
+        <p class="re-hint">Колонки CSV: Место, Номер, Фамилия, Имя, Отчество, Город, Год рождения, Категория, Круг1…N (или СУ 1…N). Колонка итогового времени («Общее», «Итог», «Сумма») в круги не попадает. Повторная загрузка заменяет результаты гонки.</p>
       </div>
     `;
 
