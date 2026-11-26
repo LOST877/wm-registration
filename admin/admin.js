@@ -829,6 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('race-edit-id').value       = race.id;
     document.getElementById('race-name').value          = race.race_name || '';
     document.getElementById('race-stage').value         = race.stage || '';
+    document.getElementById('race-subtitle').value      = race.subtitle || '';
     document.getElementById('race-date').value          = race.date ? race.date.replace(' ', 'T').slice(0, 16) : '';
     document.getElementById('race-location').value      = race.location || '';
     document.getElementById('race-location-link').value = race.location_link || '';
@@ -959,6 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
       id:            parseInt(document.getElementById('race-edit-id').value),
       name:          document.getElementById('race-name').value.trim(),
       stage:         document.getElementById('race-stage').value.trim() || null,
+      subtitle:      document.getElementById('race-subtitle').value.trim() || null,
       date:          document.getElementById('race-date').value || null,
       location:      document.getElementById('race-location').value.trim(),
       location_link: document.getElementById('race-location-link').value.trim(),

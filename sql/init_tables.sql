@@ -3,6 +3,7 @@ CREATE TABLE races (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   stage VARCHAR(50) NULL,
+  subtitle VARCHAR(255) NULL,
   date DATETIME NOT NULL,
   location VARCHAR(255),
   location_link VARCHAR(255),

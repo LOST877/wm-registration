@@ -69,14 +69,15 @@
 ### Таблицы:
 | Таблица | Описание |
 |---------|----------|
-| `races` | Гонки (id, name, date, location, location_link, iframe_html, description, payment_info, **payment_tiers JSON**, is_active, created_at) |
+| `races` | Гонки (id, name, **subtitle**, stage, date, location, location_link, iframe_html, description, payment_info, **payment_tiers JSON**, is_active, created_at) |
 | `categories` | Категории (id, name, **age_from INT**, **age_to INT**, **description TEXT**, created_at) |
 | `race_categories` | Связь N:M (id, race_id, category_id, sort_order, **distance_km DECIMAL**, **laps INT**, **elevation_m INT**) |
 | `registrations` | Заявки (id, last_name, first_name, middle_name, birth_date, race_id, race_category_id, phone, email, city, team, **consent_given TINYINT**, **consent_at DATETIME**, **consent_publication TINYINT**, is_paid, payment_amount, created_at) |
 | `admin_users` | Администраторы (id, username, password (hash), full_name, created_at) |
 
 > Миграция v2: `sql/migrate_v2.sql`  
-> Согласие на обработку ПД: `sql/migration_add_consent.sql`, согласие на распространение: `sql/migration_add_consent_publication.sql`
+> Согласие на обработку ПД: `sql/migration_add_consent.sql`, согласие на распространение: `sql/migration_add_consent_publication.sql`  
+> Подзаголовок гонки на главной: `sql/migration_add_race_subtitle.sql`
 
 ### Важные правила:
 - Активной может быть **только одна гонка** (`is_active = 1`)
@@ -86,6 +87,7 @@
 - `is_paid` (TINYINT) — флаг оплаты: `0` или `1`
 - `payment_amount` (DECIMAL(10,2), NULL) — сумма оплаты (в админке)
 - `payment_info` (TEXT) — описание способа оплаты в формате markdown
+- `subtitle` (VARCHAR(255), NULL) — подзаголовок гонки на главной; если пусто, выводится «КРОСС-КАНТРИ. ВОРОНЕЖ.»
 - `payment_tiers` (JSON, NULL) — тарифная сетка: `[{"date":"YYYY-MM-DD","amount":1000},...]`; текущая цена = последний тир где `date <= today`
 - `age_from`/`age_to` (INT, NULL) — возрастной диапазон категории; `age_to = NULL` означает «без верхней границы»
 - `distance_km` (DECIMAL(5,1), NULL), `laps` (INT, NULL), `elevation_m` (INT, NULL) — параметры дистанции per race_category
@@ -104,6 +106,7 @@
 {
   "id": 1,
   "name": "Весенний Лайт",
+  "subtitle": "КРОСС-КАНТРИ. ВОРОНЕЖ.",
   "date": "2026-05-16",
   "location": "г.Воронеж, лес за СОК \"Олимпик\"",
   "location_link": "https://yandex.ru/maps/-/CPFvIN43",
@@ -356,3 +359,4 @@ VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5);
 Версия: v1.4 (152-ФЗ: согласие на обработку ПД, `policy.html`, из `participants.php` убраны контакты участников)
 Версия: v1.5 (отдельное согласие на распространение ПД — `consent_publication`, раздел 9 в `policy.html`)
 Версия: v1.6 (загрузка результатов в админке `api/admin/results_import.php` + UI, защита регистрации от закрытой/завершённой гонки, `normalizeCity()`, запрет снятия `is_active` у единственной активной гонки, `Cache-Control: no-store` для API, прокрутка списка участников)
+Версия: v1.7 (поле `subtitle` — редактируемый подзаголовок гонки на главной, вкладка «Основное» в админке)
