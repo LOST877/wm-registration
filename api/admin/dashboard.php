@@ -24,6 +24,7 @@ try {
             r.id,
             r.name AS race_name,
             r.stage,
+            r.subtitle,
             r.date,
             r.location,
             r.location_link,

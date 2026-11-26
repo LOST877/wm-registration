@@ -194,6 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hero
         document.getElementById('hero-title').textContent =
           race.name.toUpperCase();
+        document.getElementById('hero-subtitle-text').textContent =
+          (race.subtitle && race.subtitle.trim()) || 'КРОСС-КАНТРИ. ВОРОНЕЖ.';
 
         renderAbout(race);
 
