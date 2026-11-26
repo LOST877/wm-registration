@@ -1230,9 +1230,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Helpers ────────────────────────────────────────────────────────────
   function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str ?? '';
-    return div.innerHTML;
+    // Явное экранирование, включая кавычки: textContent/innerHTML не
+    // трогает " и ', из-за чего ломались атрибуты value="..."
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function prettyJson(val) {
